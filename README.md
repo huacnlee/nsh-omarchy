@@ -83,7 +83,58 @@ pub fn App() -> impl IntoElement {
 
 ## In a Rust + TSX app
 
-<!-- TSX-MIXED -->
+A mixed app links the crate and imports its exports in TSX from the bare specifier `nsh-omarchy`. Put the crate (a git
+submodule, a checkout, a symlink) in the app and list it in `nsh.json`'s `"rust"`:
+
+```json
+{
+  "name": "My App",
+  "id": "com.example.myapp",
+  "version": "1.0.0",
+  "build": 1,
+  "rust": ["vendor/nsh-omarchy"]
+}
+```
+
+```tsx
+import { mount, signal, Text, View } from "nsh";
+import { BarChart, Icon, Markdown, Omarchy, type ThemeInfo } from "nsh-omarchy";
+
+function App() {
+  // Rust owns the theme; TSX applies one and hears every change.
+  Omarchy.followSystem();
+  const theme = signal<ThemeInfo | null>(Omarchy.current());
+  Omarchy.onChange((t) => theme.set(t));
+  return (
+    <View class="flex-1 gap-4 p-6 bg-background">
+      <View class="flex-row items-center gap-2">
+        <Icon name="sun" label="Theme" />
+        <Text class="text-foreground">{() => theme()?.name ?? "…"}</Text>
+      </View>
+      <BarChart data={[{ label: "Mon", value: 12 }, { label: "Tue", value: 18 }]} accessibilityLabel="Builds" />
+      <Markdown source="Read the **manual**." />
+    </View>
+  );
+}
+
+mount(App);
+```
+
+| Export | What it is |
+| --- | --- |
+| `Omarchy` | `followSystem()`, `stopFollowing()`, `applyTheme("tokyo-night" \| "flexoki-light")`, `current(): ThemeInfo \| null`, `onChange(listener): stop` |
+| `<LineChart>`, `<AreaChart>`, `<BarChart>`, `<PieChart>` | `data: { label, value }[]` or `series: { name, values }[]`, with `grid`, `xAxis`, `yAxis`, `legend`, `unit`, `stacked`, `curve`, `donut`, … |
+| `<Markdown>` | `source`, `selectable`, `onLinkPress(e: { value })` |
+| `<Icon>` | `name` (a Lucide name such as `"chevron-down"`), `label`, `size` |
+| `<Gallery>` | The whole gallery, as one component |
+
+When the Rust theme changes, the `nsh.json` theme's Tailwind classes follow it (`bg-background`, `text-foreground`,
+`bg-surface`, `border-omarchy-accent`), so TSX screens drawn with them match the Rust components. `App.tsx` and
+`App.test.tsx` in this repository are a working example; `nsh check`, `nsh build App.tsx` and `nsh test` cover them.
+
+> NSH 0.5.0 from crates.io and the nightly CLI disagree on an `nsh-ios-app` feature, so `nsh check`/`nsh test` of a
+> mixed app currently need an NSH CLI that matches the crates, or a local `.cargo/config.toml` that patches `nsh-*` to
+> the CLI's own checkout.
 
 ## In a TSX app
 

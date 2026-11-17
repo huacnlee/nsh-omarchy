@@ -76,12 +76,30 @@ impl Theme {
             danger: c(0xf7768e),
             warning: c(0xe0af68),
             success: c(0x9ece6a),
-            chart: [c(0x7aa2f7), c(0xbb9af7), c(0x7dcfff), c(0xe0af68), c(0x9ece6a)],
+            chart: [
+                c(0x7aa2f7),
+                c(0xbb9af7),
+                c(0x7dcfff),
+                c(0xe0af68),
+                c(0x9ece6a),
+            ],
             ansi: Some([
-                c(0x32344a), c(0xf7768e), c(0x9ece6a), c(0xe0af68),
-                c(0x7aa2f7), c(0xad8ee6), c(0x449dab), c(0x787c99),
-                c(0x444b6a), c(0xff7a93), c(0xb9f27c), c(0xff9e64),
-                c(0x7da6ff), c(0xbb9af7), c(0x0db9d7), c(0xacb0d0),
+                c(0x32344a),
+                c(0xf7768e),
+                c(0x9ece6a),
+                c(0xe0af68),
+                c(0x7aa2f7),
+                c(0xad8ee6),
+                c(0x449dab),
+                c(0x787c99),
+                c(0x444b6a),
+                c(0xff7a93),
+                c(0xb9f27c),
+                c(0xff9e64),
+                c(0x7da6ff),
+                c(0xbb9af7),
+                c(0x0db9d7),
+                c(0xacb0d0),
             ]),
         }
     }
@@ -104,7 +122,13 @@ impl Theme {
             danger: c(0xaf3029),
             warning: c(0x855b00),
             success: c(0x526600),
-            chart: [c(0x205ea6), c(0xa02f6f), c(0x24837b), c(0x855b00), c(0x526600)],
+            chart: [
+                c(0x205ea6),
+                c(0xa02f6f),
+                c(0x24837b),
+                c(0x855b00),
+                c(0x526600),
+            ],
             ansi: None,
         }
     }
@@ -169,7 +193,11 @@ impl Theme {
         .map(|(n, c)| (n.to_owned(), c))
         .collect();
         if let Some(ansi) = self.ansi {
-            roles.extend(ansi.iter().enumerate().map(|(i, c)| (format!("ansi-{i}"), *c)));
+            roles.extend(
+                ansi.iter()
+                    .enumerate()
+                    .map(|(i, c)| (format!("ansi-{i}"), *c)),
+            );
         }
         roles
     }
@@ -182,7 +210,9 @@ impl Theme {
             theme
                 .roles()
                 .iter()
-                .map(|(name, color)| format!("      \"{name}\": \"{}\"", color.to_hex().to_lowercase()))
+                .map(|(name, color)| {
+                    format!("      \"{name}\": \"{}\"", color.to_hex().to_lowercase())
+                })
                 .collect::<Vec<_>>()
                 .join(",\n")
         };
@@ -204,6 +234,7 @@ impl Theme {
     /// Applies the palette without changing whether the system theme is followed.
     pub(crate) fn apply_palette(self) {
         set_tokens(self.to_tokens());
+        crate::tsx::omarchy::theme_applied(&self);
         global::<ActiveTheme>().set(ActiveTheme(Some(self)));
     }
 }
@@ -221,7 +252,9 @@ pub struct ActiveTheme(pub Option<Theme>);
 /// The active palette (Tokyo Night until another one is applied). Reading it
 /// in a binding subscribes to theme changes.
 pub fn active_theme() -> Theme {
-    global::<ActiveTheme>().with(|t| t.0.clone()).unwrap_or_default()
+    global::<ActiveTheme>()
+        .with(|t| t.0.clone())
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -242,6 +275,10 @@ mod tests {
         assert!(ignored.is_empty(), "{ignored:?}");
         assert_eq!(parsed.number("radius"), Some(0.0));
         assert!(parsed.color("omarchy-accent").is_some());
-        assert_eq!(std::fs::read_to_string(path).unwrap(), json, "run with UPDATE_THEME_JSON=1");
+        assert_eq!(
+            std::fs::read_to_string(path).unwrap(),
+            json,
+            "run with UPDATE_THEME_JSON=1"
+        );
     }
 }

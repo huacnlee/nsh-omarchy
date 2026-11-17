@@ -48,19 +48,8 @@ pub fn Gallery() -> impl IntoElement {
 }
 
 fn top_bar() -> impl IntoElement {
-    view()
-        .flex_row()
-        .items_center()
-        .gap(px(tokens::SPACE_2))
-        .h(px(36.0))
-        .px(px(tokens::SPACE_3))
-        .border_b_1()
-        .border_color(move || tokens::border())
-        .child(
-            text("Omarchy")
-                .font_weight(FontWeight::SEMIBOLD)
-                .text_color(move || tokens::bright()),
-        )
+    crate::components::title_bar()
+        .child(crate::components::title_bar_title("Omarchy"))
         .child(text(move || active_theme().name.clone()).text_color(move || tokens::secondary()))
         .child(view().flex_1())
         .child(bar_button("System", || {

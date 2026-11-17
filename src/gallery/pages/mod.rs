@@ -3,13 +3,13 @@
 use nsh_core::prelude::*;
 
 pub mod actions;
+pub mod charts;
 pub mod choices;
+pub mod data;
+pub mod display;
 pub mod fields;
 pub mod navigation;
 pub mod overlays;
-pub mod display;
-pub mod data;
-pub mod charts;
 
 /// A page not built yet.
 pub fn placeholder(name: &'static str) -> AnyElement {

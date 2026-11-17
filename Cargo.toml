@@ -23,6 +23,8 @@ log = "0.4"
 toml = "0.8"
 
 [dev-dependencies]
+# The exports tests read the set's TypeScript declarations.
+nsh-core = { version = "0.5.0", features = ["declarations"] }
 nsh-engine = { version = "0.5.0", default-features = false }
 nsh-testing = { version = "0.5.0", default-features = false }
 tempfile = "3"

@@ -9,6 +9,7 @@ pub mod gallery;
 pub mod system_theme;
 pub mod theme;
 pub mod tokens;
+pub mod tsx;
 
 pub use components::*;
 pub use system_theme::follow_system;
@@ -22,9 +23,17 @@ pub fn init() {
     system_theme::follow_system();
 }
 
-/// The UI set a TSX entry may import from `nsh-omarchy`.
+/// The UI set a TSX entry may import from `nsh-omarchy`: the `Omarchy`
+/// theme module, the charts, `Markdown`, `Icon` and the `Gallery`.
 #[native_module("nsh-omarchy")]
 fn native(registry: &mut Registry) {
-    registry.register::<gallery::Gallery>();
+    registry
+        .module::<tsx::Omarchy>()
+        .register::<tsx::LineChart>()
+        .register::<tsx::AreaChart>()
+        .register::<tsx::BarChart>()
+        .register::<tsx::PieChart>()
+        .register::<components::text_view::Markdown>()
+        .register::<tsx::Icon>()
+        .register::<gallery::Gallery>();
 }
-

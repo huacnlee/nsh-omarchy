@@ -149,8 +149,8 @@ pub fn badge(label: impl Into<SharedString>, variant: BadgeVariant) -> View {
 
 // ---- Keycaps --------------------------------------------------------------
 
-/// One key as printed on a keyboard (`ctrl`, `⌘K`, `esc`): bold monospace
-/// on an inset square with a border. Screen readers read it as a key.
+/// One key as printed on a keyboard (`ctrl`, `⌘K`, `esc`): regular-weight
+/// monospace on an inset square with a border. Screen readers read it as a key.
 pub fn keycap(key: impl Into<SharedString>) -> View {
     view()
         .flex_row()
@@ -168,7 +168,6 @@ pub fn keycap(key: impl Into<SharedString>) -> View {
             text(key.into())
                 .font_family(move || tokens::font_mono())
                 .text_size(px(tokens::TEXT_XS))
-                .font_weight(FontWeight::BOLD)
                 .text_color(move || tokens::foreground()),
         )
 }

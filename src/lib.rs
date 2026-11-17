@@ -22,8 +22,8 @@ pub fn init() {
     system_theme::follow_system();
 }
 
-/// The UI set a TSX entry may import from `nsh-omarchy/native`.
-#[native_module("nsh-omarchy/native")]
+/// The UI set a TSX entry may import from `nsh-omarchy`.
+#[native_module("nsh-omarchy")]
 fn native(registry: &mut Registry) {
     registry.register::<gallery::Gallery>();
 }

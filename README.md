@@ -26,18 +26,18 @@ the `nsh` you run (keep the `nsh-*` dependencies at that version when you upgrad
 ## Adding a TSX entry
 
 TSX screens can use the Rust components and modules, with hot reloading for the TSX. The crate's set,
-`#[native_module("nsh-omarchy/native")]` in `src/lib.rs`, already exports `App`. Add an `App.tsx`:
+`#[native_module("nsh-omarchy")]` in `src/lib.rs`, already exports `Gallery`. Add an `App.tsx`:
 
 ```tsx
 import { mount } from "nsh";
-import { App } from "nsh-omarchy/native";
+import { Gallery } from "nsh-omarchy";
 
-mount(App);
+mount(Gallery);
 ```
 
 then run it with `nsh run App.tsx` (`tsconfig.json` is there for it and the test): a named TSX entry
 runs on QuickJS, while `nsh run` alone keeps running the Rust root. The first `nsh build App.tsx` writes the TypeScript
-declarations of `nsh-omarchy/native` into `.nsh/types`. Register more with `registry.register::<…>()` (components),
+declarations of `nsh-omarchy` into `.nsh/types`. Register more with `registry.register::<…>()` (components),
 `registry.module::<…>()` and `registry.class::<…>()`.
 
 NSH-generated files stay in `.nsh/`: runner sources in `.nsh/rust/` and default packages in `.nsh/out/`.

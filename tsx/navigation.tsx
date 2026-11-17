@@ -43,7 +43,7 @@ export interface TabsProps {
   value: string;
   /** The tab asked for: write it back to `value`, and show its panel. */
   onChange?: (event: { value: string }) => void;
-  /** `underline` (default): a 2pt accent bar under the selected tab. `segmented`: a selected fill behind it in a frame. */
+  /** `underline` (default): a divider under the row, the selected tab in the selected fill. `segmented`: the same fill in a frame. */
   variant?: "underline" | "segmented";
   /** What screen readers call the list ("Sections"). */
   accessibilityLabel?: string;
@@ -65,7 +65,7 @@ export function Tabs(props: TabsProps) {
         props.class,
       )}
       accessibilityLabel={props.accessibilityLabel}
-      indicatorClass={segmented() ? "inset-y-0.5 bg-foreground/18" : "bottom-0 h-0.5 bg-omarchy-accent"}
+      indicatorClass={segmented() ? "inset-y-0.5 bg-foreground/18" : "inset-y-0 bg-foreground/18"}
     >
       <Each of={props.items} key={(item) => item.value}>
         {(item) => (

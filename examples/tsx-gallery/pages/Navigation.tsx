@@ -33,7 +33,7 @@ export function Navigation() {
   const page = signal(1);
   return (
     <View class="gap-6">
-      <Section title="Tabs" description="Underline and segmented; the arrows move and select, the bar slides.">
+      <Section title="Tabs" description="Plain and segmented; the arrows move and select, the selected fill slides.">
         <Tabs accessibilityLabel="Settings" items={tabItems} value={tab()} onChange={({ value }) => tab.set(value)} />
         <Body>{`Panel: ${tab()}`}</Body>
         <Tabs

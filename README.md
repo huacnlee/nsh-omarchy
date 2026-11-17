@@ -138,7 +138,71 @@ When the Rust theme changes, the `nsh.json` theme's Tailwind classes follow it (
 
 ## In a TSX app
 
-<!-- TSX-PURE -->
+A TSX-only app links no Rust, so it cannot import the crate's `nsh-omarchy` specifier. It uses the library's TSX
+source in `tsx/` instead: the same components rebuilt on `nsh/base` and drawn with the classes of
+`themes/omarchy.json`. Put the repository in the app (a git submodule, a checkout, a symlink), name its theme file in
+`nsh.json`, and import `tsx/` by path:
+
+```json
+{
+  "name": "My App",
+  "id": "com.example.myapp",
+  "theme": "vendor/nsh-omarchy/themes/omarchy.json"
+}
+```
+
+```json
+// tsconfig.json: type check the app and the library's TSX, not the rest of the repository
+{
+  "extends": "./.nsh/tsconfig.json",
+  "include": ["*.ts", "*.tsx", "vendor/nsh-omarchy/tsx"]
+}
+```
+
+```tsx
+import { mount, signal, Text, View } from "nsh";
+import { Button, Card, Switch, Toaster, toast } from "./vendor/nsh-omarchy/tsx";
+
+function App() {
+  const notify = signal(true);
+  const saved = signal(0);
+  const save = () => {
+    saved.set(saved() + 1);
+    toast({ title: "Settings saved" });
+  };
+  return (
+    <View class="flex-1 gap-4 p-6 bg-background">
+      <Card title="Settings" footer={<Button label="Save" variant="primary" onPress={save} />}>
+        <Switch label="Notifications" checked={notify()} onChange={({ checked }) => notify.set(checked)} />
+      </Card>
+      <Text class="text-foreground">{() => `Saved ${saved()} times`}</Text>
+      <Toaster />
+    </View>
+  );
+}
+
+mount(App);
+```
+
+| File | Components |
+| --- | --- |
+| `button.tsx` | `Button`, `IconButton`, `Toggle`, `ToggleGroup`, `ButtonGroup` |
+| `choices.tsx` | `Checkbox`, `Switch`, `RadioGroup`, `Radio`, `Slider`, `Progress` |
+| `fields.tsx` | `Input`, `Textarea`, `NumberInput`, `Select`, `Combobox`, `Field` |
+| `navigation.tsx` | `Tabs`, `DropdownMenu`, `ContextMenu`, `MenuItem`, `Accordion`, `Pagination`, `Sidebar`, `Link` |
+| `overlays.tsx` | `Dialog`, `AlertDialog`, `Sheet`, `Popover`, `Tooltip`, `HoverCard`, `Toaster`, `toast()` |
+| `display.tsx` | `Card`, `Panel`, `Separator`, `Badge`, `Keycap`, `Shortcut`, `EmptyState`, `Avatar`, `Heading`, `Title`, `Body`, `Caption`, `Code` |
+| `theme.ts` | The class sets the components share (`fill.hover`, `ink.secondary`, `surface.raised`, …) for your own views |
+
+Components are controlled (`checked` with `onChange`, `value` with `onChange`), as in Rust. The theme follows the
+system's light or dark appearance (`setColorScheme` from `nsh` pins one); the live Omarchy theme and the charts need the
+Rust side, so use a [Rust + TSX app](#in-a-rust--tsx-app) for them. `examples/tsx-gallery` shows every component:
+
+```sh
+cd examples/tsx-gallery
+nsh run          # the gallery
+nsh test         # its headless tests
+```
 
 ## Developing
 

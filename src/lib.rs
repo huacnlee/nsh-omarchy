@@ -27,4 +27,3 @@ pub fn init() {
 fn native(registry: &mut Registry) {
     registry.register::<gallery::Gallery>();
 }
-

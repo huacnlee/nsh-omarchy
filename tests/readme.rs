@@ -25,7 +25,9 @@ pub fn App() -> impl IntoElement {
                 )
                 .child(om::button_primary("Save").on_press(move || saved.update(|n| *n += 1))),
         )
-        .child(om::body_text(move || format!("Saved {} times", saved.get())))
+        .child(om::body_text(move || {
+            format!("Saved {} times", saved.get())
+        }))
 }
 
 #[test]

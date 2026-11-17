@@ -169,7 +169,10 @@ pub const TEXT_2XL: f32 = 20.0;
 
 /// The monospaced family, used for keycaps, code and tabular data.
 pub fn font_mono() -> SharedString {
-    theme().font_mono.clone().unwrap_or_else(|| "monospace".into())
+    theme()
+        .font_mono
+        .clone()
+        .unwrap_or_else(|| "monospace".into())
 }
 
 // ---- Motion ---------------------------------------------------------------

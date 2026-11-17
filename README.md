@@ -1,53 +1,108 @@
 # nsh-omarchy
 
-An app written in Rust: its UI is `src/lib.rs`, and `nsh.json` names the root component (`"root": "App"`).
+[Omarchy](https://omarchy.org)'s look for [NSH (Native Shell)](https://nsh.dev) apps: square corners, one accent,
+foreground-tinted state fills, a visible focus border, compact desktop type, and keyboard-first controls. It is a port of
+[gpui-omarchy](https://github.com/huacnlee/gpui-omarchy) from GPUI to NSH: `nsh_base` supplies the behavior (focus,
+keyboard, popups, accessibility) and this library supplies the presentation.
+
+The colors follow the Omarchy theme the system uses (`~/.local/state/omarchy/current/theme/colors.toml`), switching
+live when it changes. Without Omarchy, it draws Tokyo Night (dark) or Flexoki Light.
+
+| Family | Components |
+| --- | --- |
+| Actions | Button (default, primary, ghost, danger × sm, md, lg), icon button, toggle, toggle group, button group, link |
+| Choices | Checkbox, switch, radio group, slider, progress |
+| Fields | Text input, textarea, number field, OTP field, select, combobox |
+| Navigation | Tabs, menu, context menu, accordion, collapsible, pagination, sidebar |
+| Overlays | Dialog, alert dialog, sheet, popover, tooltip, hover card, toast |
+| Display | Card, panel, separator, badge, keycap, empty state, avatar, icons, typography, Markdown |
+| Data | Table, list, tree, calendar, date picker, color picker, resizable panels |
+| Charts | Line, bar, area, pie |
+
+Run the gallery, a page per component, with a theme switch:
 
 ```sh
-nsh run                      # this machine's backend; --target ios, android, web, macos, linux or windows
-nsh check                    # cargo check of the crate, then type checks App.test.tsx
-nsh test                     # cargo test, then App.test.tsx: the root tested from TypeScript, headless; --target to run it on a platform
-nsh test nsh.json --trace    # headless: what the root mounts, and the time of each commit
-nsh package --target web     # or ios, android, macos, linux, windows
+cargo run            # or: nsh run
 ```
 
-`nsh run` and `nsh package` mount the root on every platform, the browser included, without QuickJS: the app is Rust
-and native code from start to end (in the browser, with NSH's page script). Rust edits rebuild and restart the app.
+How you use the library depends on the kind of NSH app: [Rust](#in-a-rust-app), [Rust with TSX](#in-a-rust--tsx-app)
+or [TSX only](#in-a-tsx-app).
+
+## In a Rust app
+
+Add the crate next to `nsh-core` and `nsh-base` (0.5):
+
+```toml
+[dependencies]
+nsh-core = "0.5.0"
+nsh-base = "0.5.0"
+nsh-omarchy = { git = "https://github.com/huacnlee/nsh-omarchy" }
+```
+
+Call `nsh_omarchy::init()` once in the root component: it applies the system's Omarchy theme and follows it. Then build
+screens from the library's constructors. Each returns the styled `nsh_base` element, so its builder API
+(`.on_press`, `.disabled`, `.checked`, `.on_change`, …) is all there. This example is `tests/readme.rs`:
+
+```rust
+use nsh_core::prelude::*;
+use nsh_omarchy::{self as om, tokens};
+
+#[component]
+pub fn App() -> impl IntoElement {
+    // Draw with the Omarchy theme the system uses, and follow its changes.
+    om::init();
+    let saved = signal(0_u32);
+    let notify = signal(true);
+    view()
+        .flex_1()
+        .p(px(tokens::SPACE_6))
+        .gap(px(tokens::SPACE_4))
+        .bg(move || tokens::background())
+        .child(
+            om::panel("Settings")
+                .child(
+                    om::switch("Notifications")
+                        .checked(move || notify.get())
+                        .on_change(move |on: &bool| notify.set(*on)),
+                )
+                .child(om::button_primary("Save").on_press(move || saved.update(|n| *n += 1))),
+        )
+        .child(om::body_text(move || format!("Saved {} times", saved.get())))
+}
+```
+
+- **Colors and sizes come from `nsh_omarchy::tokens`**: `tokens::surface()`, `tokens::accent()`,
+  `tokens::hover_fill()`, `tokens::CONTROL_MD`, `tokens::SPACE_4`, `tokens::TEXT_SM`, `tokens::DURATION_FAST`, …
+  Read color tokens in a closure (`.bg(move || tokens::surface())`) so they follow a theme change. They are also
+  Tailwind classes: `bg-surface`, `text-bright`, `border-omarchy-accent`, `text-text-secondary`.
+- **Themes**: `Theme::tokyo_night().apply()` or `Theme::flexoki_light().apply()` pins a palette;
+  `nsh_omarchy::follow_system()` goes back to following the system. `active_theme()` is the palette in use.
+- **Components are controlled**: you pass the value and write back what `on_change` reports.
+- The public API of every family is documented in its file under `src/components/`; the gallery pages in
+  `src/gallery/pages/` show each one in use.
+
+## In a Rust + TSX app
+
+<!-- TSX-MIXED -->
+
+## In a TSX app
+
+<!-- TSX-PURE -->
+
+## Developing
 
 ```sh
-cargo run
+cargo test                   # every component headless: presses, keys, focus, theme following
+cargo run                    # the gallery on this machine's desktop backend
+nsh run --target web         # or ios, android, macos, linux, windows
 ```
 
-This starts the root directly on the machine's native desktop backend: GTK 4 on Linux, AppKit on macOS, Win32 on
-Windows. Install the backend's development libraries before building.
-
-The `nsh` commands build the app's runners from the NSH crates `Cargo.toml` depends on: crates.io's at the version of
-the `nsh` you run (keep the `nsh-*` dependencies at that version when you upgrade `nsh`), or an NSH checkout's by path.
-
-## Adding a TSX entry
-
-TSX screens can use the Rust components and modules, with hot reloading for the TSX. The crate's set,
-`#[native_module("nsh-omarchy")]` in `src/lib.rs`, already exports `Gallery`. Add an `App.tsx`:
-
-```tsx
-import { mount } from "nsh";
-import { Gallery } from "nsh-omarchy";
-
-mount(Gallery);
-```
-
-then run it with `nsh run App.tsx` (`tsconfig.json` is there for it and the test): a named TSX entry
-runs on QuickJS, while `nsh run` alone keeps running the Rust root. The first `nsh build App.tsx` writes the TypeScript
-declarations of `nsh-omarchy` into `.nsh/types`. Register more with `registry.register::<…>()` (components),
-`registry.module::<…>()` and `registry.class::<…>()`.
-
-NSH-generated files stay in `.nsh/`: runner sources in `.nsh/rust/` and default packages in `.nsh/out/`.
-Cargo keeps its normal `target/` directory and respects your existing `CARGO_TARGET_DIR`.
-
-We recommend building with [huacnlee/cargo](https://github.com/huacnlee/cargo), the Cargo NSH is developed with: a
-drop-in fork that builds each dependency once for all your projects and Git worktrees and keeps its build directory
-under a size limit on its own, with nothing to configure. It builds under `~/.cargo/targets/` and still puts the
-binaries in `target/`; it replaces `~/.cargo/bin/cargo`, and its README says how to put rustup's back.
-
-```sh
-curl -fsSL https://huacnlee.github.io/cargo/install.sh | sh     # Windows: irm https://huacnlee.github.io/cargo/install.ps1 | iex
-```
+| Path | Holds |
+| --- | --- |
+| `src/theme.rs` | The palettes and their projection onto NSH's design tokens |
+| `src/system_theme/` | Reading and following the system's Omarchy theme |
+| `src/tokens.rs` | The tokens every component draws with |
+| `src/components/` | The components, one family per file |
+| `src/gallery/` | The gallery app |
+| `themes/omarchy.json` | The palettes as an NSH theme file, generated by `cargo test` (`UPDATE_THEME_JSON=1` rewrites it) |
+| `DESIGN.md` | The visual language and the rules for code |

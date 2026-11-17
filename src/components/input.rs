@@ -25,23 +25,7 @@ const TEXTAREA_MIN_HEIGHT: f32 = 80.0;
 /// reach (a part's typed style has no `hover:` / `focus:`). Each is one
 /// token of [`crate::tokens`] written as the theme roles it is made of, so
 /// it follows the theme as the token does.
-pub(crate) mod state_classes {
-    /// `tokens::hover_fill()` while hovered.
-    pub const HOVER: &str = "hover:bg-foreground/8";
-    /// `tokens::pressed_fill()` while pressed.
-    pub const PRESSED: &str = "active:bg-foreground/22";
-    /// `tokens::hover_fill()` on the highlighted row of a list (`focus:`).
-    pub const HIGHLIGHT: &str = "focus:bg-foreground/8";
-    /// `tokens::control_border()`, as a class so a `focus:` class can
-    /// replace it (a part's typed style is over its classes).
-    pub const CONTROL_BORDER: &str = "border-foreground/40";
-    /// `tokens::focus_border()` on the part that takes the next keystroke.
-    pub const FOCUS_BORDER: &str = "focus:border-omarchy-accent";
-    /// `tokens::disabled()`: the foreground at 38%.
-    pub const DISABLED: &str = "disabled:opacity-40";
-    /// `tokens::secondary()` for a part's placeholder.
-    pub const PLACEHOLDER: &str = "placeholder:text-text-secondary";
-}
+pub(crate) use crate::tokens::classes as state_classes;
 
 /// The text styles every Omarchy field shares.
 fn field_text<E: Styled>(field: E) -> E {

@@ -114,7 +114,20 @@ impl Theme {
     pub fn to_tokens(&self) -> Tokens {
         let same = |h: Hsla| AdaptiveColor::new(h, h);
         let mut t = BaseTheme::default();
-        let pairs: [(&str, Hsla); 33] = [
+        for (name, color) in self.roles() {
+            t.set_color(&name, same(color));
+        }
+        // Omarchy draws square corners.
+        t.set_number("radius", 0.0);
+        t.into_tokens()
+    }
+
+    /// Every token name this palette sets, with its color: shadcn's roles
+    /// (for `nsh_base` and Tailwind's `bg-primary`, ...) and Omarchy's own
+    /// (`surface`, `inset`, `bright`, `selection`, `text-secondary`,
+    /// `omarchy-accent`, ...).
+    pub fn roles(&self) -> Vec<(String, Hsla)> {
+        let mut roles: Vec<(String, Hsla)> = [
             ("background", self.background),
             ("foreground", self.foreground),
             ("card", self.surface),
@@ -149,20 +162,35 @@ impl Theme {
             ("danger", self.danger),
             ("warning", self.warning),
             ("success", self.success),
-        ];
-        for (name, color) in pairs {
-            t.set_color(name, same(color));
-        }
-        t.set_color("text-secondary", same(self.secondary));
-        t.set_color("omarchy-accent", same(self.accent));
+            ("text-secondary", self.secondary),
+            ("omarchy-accent", self.accent),
+        ]
+        .into_iter()
+        .map(|(n, c)| (n.to_owned(), c))
+        .collect();
         if let Some(ansi) = self.ansi {
-            for (i, color) in ansi.iter().enumerate() {
-                t.set_color(&format!("ansi-{i}"), same(*color));
-            }
+            roles.extend(ansi.iter().enumerate().map(|(i, c)| (format!("ansi-{i}"), *c)));
         }
-        // Omarchy draws square corners.
-        t.set_number("radius", 0.0);
-        t.into_tokens()
+        roles
+    }
+
+    /// A theme file (shadcn's `cssVars`, what `nsh.json` `"theme"` takes)
+    /// drawing `light` in the light appearance and `dark` in the dark one.
+    /// `themes/omarchy.json` is `theme_json(&flexoki_light(), &tokyo_night())`.
+    pub fn theme_json(light: &Theme, dark: &Theme) -> String {
+        let section = |theme: &Theme| {
+            theme
+                .roles()
+                .iter()
+                .map(|(name, color)| format!("      \"{name}\": \"{}\"", color.to_hex().to_lowercase()))
+                .collect::<Vec<_>>()
+                .join(",\n")
+        };
+        format!(
+            "{{\n  \"cssVars\": {{\n    \"theme\": {{\n      \"radius\": \"0rem\"\n    }},\n    \"light\": {{\n{}\n    }},\n    \"dark\": {{\n{}\n    }}\n  }}\n}}\n",
+            section(light),
+            section(dark)
+        )
     }
 
     /// Draws the app with this palette and records it as the active theme.
@@ -194,4 +222,26 @@ pub struct ActiveTheme(pub Option<Theme>);
 /// in a binding subscribes to theme changes.
 pub fn active_theme() -> Theme {
     global::<ActiveTheme>().with(|t| t.0.clone()).unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Theme;
+
+    /// `themes/omarchy.json` is generated from the palettes; set
+    /// `UPDATE_THEME_JSON=1` to write it after changing one.
+    #[test]
+    fn theme_json_is_current() {
+        let json = Theme::theme_json(&Theme::flexoki_light(), &Theme::tokyo_night());
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/themes/omarchy.json");
+        if std::env::var_os("UPDATE_THEME_JSON").is_some() {
+            std::fs::create_dir_all(std::path::Path::new(path).parent().unwrap()).unwrap();
+            std::fs::write(path, &json).unwrap();
+        }
+        let (parsed, ignored) = nsh_base::Theme::from_json_lenient(&json).unwrap();
+        assert!(ignored.is_empty(), "{ignored:?}");
+        assert_eq!(parsed.number("radius"), Some(0.0));
+        assert!(parsed.color("omarchy-accent").is_some());
+        assert_eq!(std::fs::read_to_string(path).unwrap(), json, "run with UPDATE_THEME_JSON=1");
+    }
 }

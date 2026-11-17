@@ -16,6 +16,8 @@ use registry::{PAGES, Page};
 #[component]
 pub fn Gallery() -> impl IntoElement {
     crate::init();
+    // One toast stack for every page, provided before the pages are built.
+    let toaster = crate::components::toaster();
     let current = signal(0_usize);
     let step = move |by: isize| {
         let next = (current.get_untracked() as isize + by).clamp(0, PAGES.len() as isize - 1);
@@ -42,6 +44,7 @@ pub fn Gallery() -> impl IntoElement {
                 .child(sidebar(current))
                 .child(content(current)),
         )
+        .child(toaster.view())
 }
 
 fn top_bar() -> impl IntoElement {

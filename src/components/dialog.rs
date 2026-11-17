@@ -128,7 +128,7 @@ pub fn overlay_close_button(
 /// The dimming behind modal overlays. A private token: the window
 /// background, mostly opaque, so it follows light and dark themes.
 pub(crate) fn overlay_scrim() -> AdaptiveColor {
-    tokens::background().opacity(0.72)
+    tokens::scrim()
 }
 
 /// Focuses `target` each time `open` goes from true to false: the focus

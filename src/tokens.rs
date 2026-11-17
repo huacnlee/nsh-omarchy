@@ -131,6 +131,11 @@ pub fn text_selection() -> AdaptiveColor {
     foreground().opacity(0.35)
 }
 
+/// The backdrop behind modal surfaces (dialogs, sheets).
+pub fn scrim() -> AdaptiveColor {
+    background().opacity(0.72)
+}
+
 // ---- Geometry -------------------------------------------------------------
 
 /// Corner radius: Omarchy is square.
@@ -179,3 +184,27 @@ pub const DURATION_SLOW: f32 = 220.0;
 pub const PRESS_SCALE: f32 = 0.97;
 /// Distance a popup travels as it enters.
 pub const ENTER_DISTANCE: f32 = 4.0;
+
+// ---- Theme-role classes --------------------------------------------------
+
+/// The interaction tokens above as Tailwind classes, for the parts of
+/// `nsh_base` components whose states only a class reaches (list rows, part
+/// borders, placeholders). Each names the same theme role as its function,
+/// so it follows a theme change.
+pub mod classes {
+    /// `tokens::hover_fill()` while hovered.
+    pub const HOVER: &str = "hover:bg-foreground/8";
+    /// `tokens::pressed_fill()` while pressed.
+    pub const PRESSED: &str = "active:bg-foreground/22";
+    /// `tokens::hover_fill()` on the highlighted row of a list (`focus:`).
+    pub const HIGHLIGHT: &str = "focus:bg-foreground/8";
+    /// `tokens::control_border()`, as a class so a `focus:` class can
+    /// replace it (a part's typed style is over its classes).
+    pub const CONTROL_BORDER: &str = "border-foreground/40";
+    /// `tokens::focus_border()` on the part that takes the next keystroke.
+    pub const FOCUS_BORDER: &str = "focus:border-omarchy-accent";
+    /// `tokens::disabled()`: the foreground at 38%.
+    pub const DISABLED: &str = "disabled:opacity-40";
+    /// `tokens::secondary()` for a part's placeholder.
+    pub const PLACEHOLDER: &str = "placeholder:text-text-secondary";
+}

@@ -298,8 +298,12 @@ pub fn hover_card() -> AnyElement {
 }
 
 pub fn toast() -> AnyElement {
-    // The gallery shows its own stack; an app makes one toaster in its root.
-    let toaster = c::toaster();
+    // The gallery root provides the toaster and places its stack once; a
+    // page mounted elsewhere (a test) makes and places its own.
+    let (toaster, own) = match c::use_toaster() {
+        Some(toaster) => (toaster, false),
+        None => (c::toaster(), true),
+    };
     let restored = signal(0_u32);
     let show = move |message: c::ToastMessage| {
         move || {
@@ -352,6 +356,6 @@ pub fn toast() -> AnyElement {
                 .text_size(px(tokens::TEXT_SM))
                 .text_color(move || tokens::secondary()),
         )
-        .child(toaster.view())
+        .child(own.then(|| toaster.view()))
         .into_element()
 }

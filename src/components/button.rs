@@ -1,1 +1,218 @@
-//! Omarchy `button` components (owned by the `actions` group).
+//! Omarchy buttons: content-sized actions with quiet hover, focus and
+//! pressed washes, after gpui-omarchy's `button` and `icon_button`.
+//!
+//! Every variant rests transparent. Primary is an accent outline with accent
+//! text (fills mark state, not priority), Danger the same in `danger()`,
+//! Default a control-colored outline and Ghost no outline at all. Hover and
+//! keyboard focus wash the fill with `hover_fill()`; focus also draws the
+//! `focus_border()`; a press deepens the fill to `pressed_fill()` and scales
+//! the button by `PRESS_SCALE`; `selected` keeps `selected_fill()`. A
+//! disabled button draws `disabled()` text and none of those states.
+//!
+//! The constructors return `nsh_base`'s [`ButtonElement`], so callers keep
+//! its builder API: `.on_press(..)`, `.disabled(..)`, `.selected(..)`,
+//! `.accessibility_label(..)` and every style method.
+
+use nsh_base::{ButtonElement, button as base_button};
+use nsh_core::prelude::*;
+
+use crate::tokens;
+
+/// How a button presents its action.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ButtonVariant {
+    /// A control-colored outline with body text: most actions.
+    #[default]
+    Default,
+    /// The accent outline with accent text: the action a view leads with.
+    Primary,
+    /// No outline until focused: toolbars, dense rows, secondary actions.
+    Ghost,
+    /// The danger outline with danger text: destructive actions.
+    Danger,
+}
+
+/// A control height: 24, 28 or 32 points.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ButtonSize {
+    Sm,
+    #[default]
+    Md,
+    Lg,
+}
+
+impl ButtonSize {
+    /// The control's height in points.
+    pub fn height(self) -> f32 {
+        match self {
+            ButtonSize::Sm => tokens::CONTROL_SM,
+            ButtonSize::Md => tokens::CONTROL_MD,
+            ButtonSize::Lg => tokens::CONTROL_LG,
+        }
+    }
+
+    /// The horizontal padding of a labelled control.
+    pub fn padding(self) -> f32 {
+        match self {
+            ButtonSize::Sm => tokens::SPACE_2,
+            ButtonSize::Md => tokens::SPACE_3,
+            ButtonSize::Lg => tokens::SPACE_4,
+        }
+    }
+
+    /// The label's text size.
+    pub fn text_size(self) -> f32 {
+        match self {
+            ButtonSize::Sm => tokens::TEXT_SM,
+            ButtonSize::Md => tokens::TEXT_MD,
+            ButtonSize::Lg => tokens::TEXT_LG,
+        }
+    }
+
+    /// The gap between an icon and a label.
+    pub fn gap(self) -> f32 {
+        match self {
+            ButtonSize::Sm => tokens::SPACE_1,
+            ButtonSize::Md | ButtonSize::Lg => tokens::SPACE_2,
+        }
+    }
+}
+
+/// A transition's length, or none while the user asks for less motion.
+/// Read it in a binding: `.duration(move || actions_duration(..))`.
+pub(crate) fn actions_duration(ms: f32) -> f32 {
+    if reduce_motion() { 0.0 } else { ms }
+}
+
+fn rest_border(variant: ButtonVariant) -> AdaptiveColor {
+    match variant {
+        ButtonVariant::Default => tokens::control_border(),
+        ButtonVariant::Primary => tokens::accent(),
+        ButtonVariant::Ghost => AdaptiveColor::TRANSPARENT,
+        ButtonVariant::Danger => tokens::danger(),
+    }
+}
+
+fn hover_border(variant: ButtonVariant) -> AdaptiveColor {
+    match variant {
+        ButtonVariant::Default => tokens::focus_border(),
+        other => rest_border(other),
+    }
+}
+
+fn disabled_border(variant: ButtonVariant) -> AdaptiveColor {
+    match variant {
+        ButtonVariant::Ghost => AdaptiveColor::TRANSPARENT,
+        _ => tokens::divider(),
+    }
+}
+
+fn label_color(variant: ButtonVariant) -> AdaptiveColor {
+    match variant {
+        ButtonVariant::Default | ButtonVariant::Ghost => tokens::foreground(),
+        ButtonVariant::Primary => tokens::accent(),
+        ButtonVariant::Danger => tokens::danger(),
+    }
+}
+
+/// A styled button with no content: add the label, an icon or both with
+/// `.child(..)`. Give an icon-only button an `.accessibility_label(..)`.
+pub fn button_style(variant: ButtonVariant, size: ButtonSize) -> ButtonElement {
+    base_button()
+        .flex_row()
+        .flex_shrink_0()
+        .self_start()
+        .items_center()
+        .justify_center()
+        .h(px(size.height()))
+        .px(px(size.padding()))
+        .gap(px(size.gap()))
+        .rounded(px(tokens::RADIUS))
+        .border(px(tokens::BORDER))
+        .border_color(move || rest_border(variant))
+        .bg(AdaptiveColor::TRANSPARENT)
+        .text_color(move || label_color(variant))
+        .text_size(px(size.text_size()))
+        .cursor_pointer()
+        .transition()
+        .duration(move || actions_duration(tokens::DURATION_FAST))
+        // The `selected:` variant (the element's own `.selected(..)` is the
+        // prop that sets the state).
+        .map(|b| Styled::selected(b, |s| s.bg(move || tokens::selected_fill())))
+        .hover(|s| {
+            s.bg(move || tokens::hover_fill())
+                .border_color(move || hover_border(variant))
+        })
+        .focus_visible(|s| {
+            s.bg(move || tokens::hover_fill())
+                .border_color(move || tokens::focus_border())
+        })
+        .active(|s| {
+            s.bg(move || tokens::pressed_fill())
+                .scale(tokens::PRESS_SCALE)
+        })
+        // `disabled:` ranks above hover, focus and press: it puts back the
+        // resting look, so a disabled button shows none of them.
+        .disabled_style(|s| {
+            s.bg(AdaptiveColor::TRANSPARENT)
+                .border_color(move || disabled_border(variant))
+                .text_color(move || tokens::disabled())
+                .scale(1.0)
+                .cursor(Cursor::Default)
+        })
+}
+
+/// A labelled button of `variant` and `size`.
+pub fn button_variant(
+    label: impl IntoReactive<SharedString>,
+    variant: ButtonVariant,
+    size: ButtonSize,
+) -> ButtonElement {
+    button_style(variant, size).child(text(label))
+}
+
+/// A labelled default button, medium size: `button("Save").on_press(..)`.
+pub fn button(label: impl IntoReactive<SharedString>) -> ButtonElement {
+    button_variant(label, ButtonVariant::Default, ButtonSize::Md)
+}
+
+/// A labelled primary button (accent outline, accent text).
+pub fn button_primary(label: impl IntoReactive<SharedString>) -> ButtonElement {
+    button_variant(label, ButtonVariant::Primary, ButtonSize::Md)
+}
+
+/// A labelled ghost button (no outline at rest).
+pub fn button_ghost(label: impl IntoReactive<SharedString>) -> ButtonElement {
+    button_variant(label, ButtonVariant::Ghost, ButtonSize::Md)
+}
+
+/// A labelled destructive button.
+pub fn button_danger(label: impl IntoReactive<SharedString>) -> ButtonElement {
+    button_variant(label, ButtonVariant::Danger, ButtonSize::Md)
+}
+
+/// A button with an icon before its label.
+pub fn button_with_icon(
+    icon: impl IntoElement,
+    label: impl IntoReactive<SharedString>,
+    variant: ButtonVariant,
+    size: ButtonSize,
+) -> ButtonElement {
+    button_style(variant, size).child(icon).child(text(label))
+}
+
+/// A square, icon-only button. `label` names the action for screen readers
+/// and test selectors (`label:Add workspace`).
+pub fn icon_button(
+    icon: impl IntoElement,
+    label: impl IntoReactive<SharedString>,
+    variant: ButtonVariant,
+    size: ButtonSize,
+) -> ButtonElement {
+    let label: Prop<SharedString> = label.into_reactive().into();
+    button_style(variant, size)
+        .accessibility_label(move || Some(label.get()))
+        .w(px(size.height()))
+        .px(px(0.0))
+        .child(icon)
+}

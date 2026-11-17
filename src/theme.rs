@@ -67,7 +67,7 @@ impl Theme {
             surface: c(0x24283b),
             inset: c(0x13141c),
             foreground: c(0xa9b1d6),
-            secondary: c(0x787c99),
+            secondary: c(0xa9b1d6),
             bright: c(0xc0caf5),
             accent: c(0x7aa2f7),
             on_accent: c(0x13141c),

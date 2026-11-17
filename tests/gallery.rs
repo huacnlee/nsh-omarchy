@@ -25,7 +25,7 @@ fn every_page_opens() -> Result<(), String> {
 #[test]
 fn switches_theme() -> Result<(), String> {
     let mut app = start();
-    app.wait_for("Tokyo Night")?;
+    app.wait_for("Omarchy")?;
     app.press("Light")?;
     app.wait_for("Flexoki Light")?;
     app.press("Dark")?;

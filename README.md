@@ -23,22 +23,33 @@ Windows. Install the backend's development libraries before building.
 The `nsh` commands build the app's runners from the NSH crates `Cargo.toml` depends on: crates.io's at the version of
 the `nsh` you run (keep the `nsh-*` dependencies at that version when you upgrade `nsh`), or an NSH checkout's by path.
 
-## Adding a TSX entry
+## From TSX: a Rust + TSX app
 
-TSX screens can use the Rust components and modules, with hot reloading for the TSX. The crate's set,
-`#[native_module("nsh-omarchy")]` in `src/lib.rs`, already exports `Gallery`. Add an `App.tsx`:
+`#[native_module("nsh-omarchy")]` in `src/lib.rs` exports what only Rust draws well (`src/tsx/`); everyday controls
+are the TSX library's (`tsx/`), themed by `themes/omarchy.json`.
 
-```tsx
-import { mount } from "nsh";
-import { Gallery } from "nsh-omarchy";
+| Export | TSX |
+| --- | --- |
+| `Omarchy` module | `followSystem()`, `stopFollowing()`, `applyTheme("tokyo-night" \| "flexoki-light")`, `current(): ThemeInfo \| null`, `onChange((theme) => …): () => void` |
+| Charts | `<LineChart>`, `<AreaChart>`, `<BarChart>`, `<PieChart>`: `data={[{ label, value }]}`, `series={[{ name, values }]}`, `unit`, `decimals`, … |
+| `<Markdown>` | `source`, `selectable`, `onLinkPress={(e) => e.value}` |
+| `<Icon>` | `name="chevron-down"` (Lucide names), `label`, `size`; tint with `class="text-primary"` |
+| `<Gallery>` | Every component, as `nsh run` shows it |
 
-mount(Gallery);
+Rust owns the theme: mirror it in a signal from `Omarchy.onChange`; token classes (`bg-primary`) follow it on their
+own. `App.tsx` and `App.test.tsx` here exercise each export (`nsh run App.tsx`, `nsh test`); `nsh run` alone keeps
+running the Rust root. Another app lists this crate in its `nsh.json` and imports it by its specifier:
+
+```json
+{ "name": "My App", "id": "com.example.myapp", "rust": ["vendor/nsh-omarchy"] }
 ```
 
-then run it with `nsh run App.tsx` (`tsconfig.json` is there for it and the test): a named TSX entry
-runs on QuickJS, while `nsh run` alone keeps running the Rust root. The first `nsh build App.tsx` writes the TypeScript
-declarations of `nsh-omarchy` into `.nsh/types`. Register more with `registry.register::<…>()` (components),
-`registry.module::<…>()` and `registry.class::<…>()`.
+```tsx
+import { BarChart, Icon, Markdown, Omarchy } from "nsh-omarchy";
+```
+
+Add the app's own crate to the list (`"rust": [".", "vendor/nsh-omarchy"]`) when it has one; only listed crates export
+to TSX.
 
 NSH-generated files stay in `.nsh/`: runner sources in `.nsh/rust/` and default packages in `.nsh/out/`.
 Cargo keeps its normal `target/` directory and respects your existing `CARGO_TARGET_DIR`.

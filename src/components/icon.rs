@@ -16,10 +16,15 @@ const ICON_SIZE: f32 = 16.0;
 
 macro_rules! icons {
     ($( $variant:ident => $name:literal, $body:literal; )*) => {
-        /// The name of an icon of the built-in set.
-        #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+        /// The name of an icon of the built-in set; in TSX its Lucide name
+        /// (`"chevron-down"`).
+        #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PropEnum)]
         pub enum IconName {
-            $( $variant, )*
+            $(
+                #[doc = concat!("`", $name, "`")]
+                #[prop(rename = $name)]
+                $variant,
+            )*
         }
 
         impl IconName {

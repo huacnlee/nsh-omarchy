@@ -204,6 +204,7 @@ impl Theme {
     /// Applies the palette without changing whether the system theme is followed.
     pub(crate) fn apply_palette(self) {
         set_tokens(self.to_tokens());
+        crate::tsx::omarchy::theme_applied(&self);
         global::<ActiveTheme>().set(ActiveTheme(Some(self)));
     }
 }

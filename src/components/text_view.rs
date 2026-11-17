@@ -174,8 +174,12 @@ pub enum MarkdownEvent {
     LinkPress(SharedString),
 }
 
-/// A Markdown document in Omarchy's type: `markdown().source("# Notes ...")`.
-/// It does not scroll; put it in a `scroll` for long documents.
+/// A Markdown document in Omarchy's type. It does not scroll; put it in a
+/// scroll view for long documents.
+///
+/// # Rust
+///
+/// `markdown().source("# Notes ...")`, in a `scroll` for long documents.
 #[component]
 pub fn Markdown(props: MarkdownProps, cx: Scope<MarkdownEvent>) -> impl IntoElement {
     provide_context(prose_parts());

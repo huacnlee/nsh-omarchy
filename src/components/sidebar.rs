@@ -181,7 +181,8 @@ pub fn NavSidebar(props: NavSidebarProps, cx: Scope<NavSidebarEvent>) -> impl In
             let mut children: Vec<AnyElement> = Vec::new();
             for group in groups {
                 if !group.title.is_empty() {
-                    children.push(heading(group.title).into_element());
+                    let first = children.is_empty();
+                    children.push(section_heading(group.title, first).into_element());
                 }
                 for item in group.items {
                     children.push(row(item, props.value, focused, rows, cx).into_element());
@@ -197,13 +198,20 @@ pub fn NavSidebar(props: NavSidebarProps, cx: Scope<NavSidebarEvent>) -> impl In
         .child(list)
 }
 
-fn heading(title: SharedString) -> Text {
-    text(title)
+/// A group's heading, a tier apart from its rows: caption size, bold, in
+/// the secondary colour, with a group's gap above it (less over the first)
+/// and a small one to its first row. Shared with the gallery's sidebar.
+pub(crate) fn section_heading(title: impl Into<SharedString>, first: bool) -> Text {
+    text(title.into())
         .px(px(tokens::SPACE_3))
-        .pt(px(tokens::SPACE_3))
+        .pt(px(if first {
+            tokens::SPACE_2
+        } else {
+            tokens::SPACE_4
+        }))
         .pb(px(tokens::SPACE_1))
         .text_size(px(tokens::TEXT_XS))
-        .font_weight(FontWeight::SEMIBOLD)
+        .font_weight(FontWeight::BOLD)
         .text_color(move || tokens::secondary())
 }
 

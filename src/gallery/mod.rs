@@ -72,36 +72,53 @@ fn bar_button(label: &'static str, on_press: impl Fn() + 'static) -> impl IntoEl
 }
 
 fn sidebar(current: Signal<usize>) -> impl IntoElement {
+    let refs: Vec<ElementRef> = PAGES.iter().map(|_| element_ref()).collect();
+    // The current page's row stays in view as the keys move it (End jumps
+    // past the rows the window shows).
+    let reveal = refs.clone();
+    effect(move || {
+        reveal[current.get()].reveal(
+            RevealOptions::default()
+                .vertical(ScrollAlignment::Nearest)
+                .animated(false),
+        );
+    });
     let mut rows: Vec<AnyElement> = Vec::new();
     let mut last_group = "";
     for (index, page) in PAGES.iter().enumerate() {
         if page.group != last_group {
             last_group = page.group;
+            let first = rows.is_empty();
             rows.push(
-                text(page.group)
-                    .px(px(tokens::SPACE_3))
-                    .pt(px(tokens::SPACE_3))
-                    .pb(px(tokens::SPACE_1))
-                    .text_size(px(tokens::TEXT_XS))
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .text_color(move || tokens::secondary())
-                    .into_element(),
+                crate::components::sidebar::section_heading(page.group, first).into_element(),
             );
         }
-        rows.push(sidebar_row(current, index, page).into_element());
+        rows.push(
+            sidebar_row(current, index, page)
+                .element_ref(&refs[index])
+                .into_element(),
+        );
     }
+    // `min_h(0)`: the row's height bounds it, so its rows scroll inside it
+    // rather than overflow the window.
     scroll()
         .w(px(200.0))
+        .min_h(px(0.0))
         .border_r_1()
         .border_color(move || tokens::border())
         .child(view().py(px(tokens::SPACE_1)).children(rows))
 }
 
-fn sidebar_row(current: Signal<usize>, index: usize, page: &'static Page) -> impl IntoElement {
+fn sidebar_row(
+    current: Signal<usize>,
+    index: usize,
+    page: &'static Page,
+) -> nsh_base::ButtonElement {
     let selected = computed(move || current.get() == index);
     button()
         .on_press(move || current.set(index))
         .accessibility_label(page.title)
+        .selected(selected)
         .flex_row()
         .items_center()
         .h(px(tokens::CONTROL_SM))

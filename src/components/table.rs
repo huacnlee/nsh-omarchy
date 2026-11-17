@@ -1,10 +1,10 @@
 //! Omarchy tables: [`table`] for a few rows the app writes (a header of
-//! secondary titles, divider rows, a hover wash, a selected row's fill and
-//! accent bar), and [`data_table`] for any number of rows, styled over
+//! secondary titles, divider rows, a hover wash, a selected row's fill),
+//! and [`data_table`] for any number of rows, styled over
 //! `nsh_base`'s `DataTable` (virtualized, sortable, keyboard-selectable).
 //!
 //! Motion: a row's hover and selection washes are fast color transitions
-//! (`DURATION_FAST`); the selected row's bar appears with its fill.
+//! (`DURATION_FAST`).
 
 use nsh_base::text_view::PartStyle;
 use nsh_base::{
@@ -16,9 +16,6 @@ use nsh_core::element::{IntoProp, Style, StyleRefinement};
 use nsh_core::prelude::*;
 
 use crate::tokens;
-
-/// Width of a selected row's accent bar.
-const MARKER: f32 = 2.0;
 
 // ---- Static table -------------------------------------------------------
 
@@ -47,8 +44,6 @@ pub fn table_header_row() -> TableRowElement {
     nsh_base::table_row()
         .items_center()
         .min_h(px(tokens::CONTROL_MD))
-        .border_l(px(MARKER))
-        .border_color(move || AdaptiveColor::TRANSPARENT)
 }
 
 /// A column title: small, semibold, secondary. `width` fixes the column's
@@ -78,7 +73,7 @@ pub fn table_body() -> TableBodyElement {
 
 /// A body row: pressable and focusable (role `row`, Tab reaches it, Space
 /// and Return press it) with a divider above it, a hover wash and, while
-/// `selected`, the selected fill and a 2px accent bar at its start. Give it
+/// `selected`, the selected fill and bright text. Give it
 /// `.on_press(..)` to select it and `.accessibility_label(..)` to name it.
 pub fn table_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
     button()
@@ -86,15 +81,13 @@ pub fn table_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
         .selected(selected)
         .selected_style(|s: StyleRefinement| {
             s.bg(move || tokens::selected_fill())
-                .border_l_color(move || tokens::accent())
+                .text_color(move || tokens::bright())
         })
         .flex_row()
         .items_center()
         .min_h(px(tokens::CONTROL_MD))
         .border_t_1()
-        .border_l(px(MARKER))
         .border_t_color(move || tokens::divider())
-        .border_l_color(move || AdaptiveColor::TRANSPARENT)
         .transition_colors()
         .duration(tokens::DURATION_FAST)
         .hover(|s| s.bg(move || tokens::hover_fill()))
@@ -165,8 +158,8 @@ pub fn data_column_numeric(
 }
 
 /// A virtualized table of any number of rows: secondary titles on a raised
-/// strip, divider rows, a hover wash, the selected row's fill and accent
-/// bar, the sorted column's title bright with its chevron in the accent.
+/// strip, divider rows, a hover wash, the selected row's fill and bright
+/// text, the sorted column's title bright with its chevron in the accent.
 /// Rows select by a press and by the arrow keys, Home, End, Page Up and
 /// Down while the table has the keyboard. Sortable columns report the next
 /// sort with `on_sort_change`: the owner sorts its rows and sets `.sort(..)`.
@@ -218,9 +211,7 @@ fn data_table_styles() -> DataTableStyles {
     styles.resize_handle = part(|s| s.bg(move || tokens::divider()));
     styles.row = part(|s| {
         s.border_b_1()
-            .border_l(px(MARKER))
             .border_b_color(move || tokens::divider())
-            .border_l_color(move || AdaptiveColor::TRANSPARENT)
             .transition_colors()
             .duration(tokens::DURATION_FAST)
     });
@@ -228,7 +219,6 @@ fn data_table_styles() -> DataTableStyles {
     styles.row_hover = part(|s| s.bg(move || tokens::hover_fill()));
     styles.row_selected = part(|s| {
         s.bg(move || tokens::selected_fill())
-            .border_l_color(move || tokens::accent())
             .text_color(move || tokens::bright())
     });
     styles.row_active = part(|s| s.bg(move || tokens::hover_fill()));

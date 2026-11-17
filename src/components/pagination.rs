@@ -5,7 +5,8 @@
 //! Return/Space press it, focus follows the page), Previous/Next disabled at
 //! the ends and the navigation landmark. [`pagination_bar`] draws each item
 //! as a compact square cell: a hover wash and pressed fill, a 1px focus
-//! border, and for the current page a selected fill with a 2px accent bar.
+//! border, and for the current page the selected fill with bright text
+//! (its weight stays the same).
 //!
 //! Chain `.page(..)`, `.total_pages(..)` and `.on_change(..)` (controlled).
 
@@ -53,11 +54,6 @@ fn pagination_cell(state: &PaginationItemState) -> AnyElement {
         .child(
             text(label)
                 .text_size(px(tokens::TEXT_MD))
-                .font_weight(if current {
-                    FontWeight::SEMIBOLD
-                } else {
-                    FontWeight::NORMAL
-                })
                 .text_color(move || {
                     if ellipsis {
                         tokens::secondary()
@@ -78,17 +74,7 @@ fn pagination_cell(state: &PaginationItemState) -> AnyElement {
             .group_focus_visible(|s| s.border_color(move || tokens::focus_border()))
     };
     if current {
-        cell.bg(move || tokens::selected_fill())
-            .child(
-                view()
-                    .absolute()
-                    .left(px(0.0))
-                    .right(px(0.0))
-                    .bottom(px(0.0))
-                    .h(px(2.0))
-                    .bg(move || tokens::accent()),
-            )
-            .into_element()
+        cell.bg(move || tokens::selected_fill()).into_element()
     } else {
         cell.into_element()
     }

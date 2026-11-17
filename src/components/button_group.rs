@@ -4,11 +4,10 @@
 //! - [`button_group`]: a setting with one value (a toolbar's position).
 //!   Left / Right (and Up / Down, Home, End) move the keyboard focus between
 //!   segments without choosing; Space and Return choose the focused one.
-//!   The chosen segment keeps `selected_fill()`, `bright()` text and a 2pt
-//!   accent bar under its label.
+//!   The chosen segment keeps `selected_fill()` and `bright()` text.
 //! - [`tab_list`]: page tabs. The arrows move the focus and select as they
-//!   go (WAI-ARIA's automatic activation); the selection is a fill with an
-//!   accent outline that slides to the selected tab.
+//!   go (WAI-ARIA's automatic activation); the selection is the selected
+//!   fill, which slides to the selected tab.
 //!
 //! Both skip disabled items and are controlled: they show `selected` and
 //! report the index asked for with `on_change`, never the current one.
@@ -126,7 +125,6 @@ fn segment(
                 change_to(selected, &on_change, index);
             }
         })
-        .relative()
         .flex_1()
         .flex_row()
         .items_center()
@@ -159,19 +157,6 @@ fn segment(
                 .cursor(Cursor::Default)
         })
         .child(text(item.label))
-        // The selection marker: a 2pt accent bar along the bottom edge.
-        .child(
-            view()
-                .absolute()
-                .left(px(tokens::SPACE_2))
-                .right(px(tokens::SPACE_2))
-                .bottom(px(0.0))
-                .h(px(2.0))
-                .bg(move || tokens::accent())
-                .pointer_events(PointerEvents::None)
-                .accessibility_elements_hidden(true)
-                .style_when(move || !chosen(), |s| s.hidden()),
-        )
 }
 
 /// Page tabs in one square frame, named `label` for screen readers. The
@@ -206,8 +191,6 @@ pub fn tab_list(
             s.top(px(tokens::SPACE_1))
                 .bottom(px(tokens::SPACE_1))
                 .rounded(px(tokens::RADIUS))
-                .border(px(tokens::BORDER))
-                .border_color(move || tokens::accent())
                 .bg(move || tokens::selected_fill())
         })
         .children(tabs);

@@ -1,7 +1,7 @@
 //! Omarchy lists: [`list`], a native virtualized list for any number of
 //! rows (only the rows near the viewport exist, their cells recycled),
 //! [`list_row`], its pressable row with the hover wash and the selected
-//! fill and accent bar, and [`scrollbar`], a square thumb over a scroll
+//! fill, and [`scrollbar`], a square thumb over a scroll
 //! view or list.
 //!
 //! A list's cell is made once per cell, not per row: read the row's data
@@ -17,8 +17,6 @@ use nsh_core::prelude::*;
 
 use crate::tokens;
 
-/// Width of a selected row's accent bar.
-const MARKER: f32 = 2.0;
 /// Width of a scrollbar's track.
 const SCROLLBAR_TRACK: f32 = 8.0;
 /// Inset of a scrollbar's thumb in its track.
@@ -42,21 +40,21 @@ pub fn list<R: IntoElement>(
 
 /// A list's row: a focusable button (Tab reaches it, Space and Return
 /// press it) a control tall, with a hover wash, the focus border and,
-/// while `selected`, the selected fill and a 2px accent bar at its start.
+/// while `selected`, the selected fill and bright text.
 /// Give it `.on_press(..)` and its content.
 pub fn list_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
     button()
         .selected(selected)
         .selected_style(|s: StyleRefinement| {
             s.bg(move || tokens::selected_fill())
-                .border_l_color(move || tokens::accent())
+                .text_color(move || tokens::bright())
         })
         .flex_row()
         .items_center()
         .gap(px(tokens::SPACE_2))
         .h(px(tokens::CONTROL_MD))
         .px(px(tokens::SPACE_2))
-        .border_l(px(MARKER))
+        .border_1()
         .border_color(move || AdaptiveColor::TRANSPARENT)
         .transition_colors()
         .duration(tokens::DURATION_FAST)

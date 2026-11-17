@@ -56,10 +56,16 @@ fn top_bar() -> impl IntoElement {
         .px(px(tokens::SPACE_3))
         .border_b_1()
         .border_color(move || tokens::border())
-        .child(text("Omarchy").font_weight(FontWeight::SEMIBOLD).text_color(move || tokens::bright()))
+        .child(
+            text("Omarchy")
+                .font_weight(FontWeight::SEMIBOLD)
+                .text_color(move || tokens::bright()),
+        )
         .child(text(move || active_theme().name.clone()).text_color(move || tokens::secondary()))
         .child(view().flex_1())
-        .child(bar_button("System", || crate::system_theme::follow_system()))
+        .child(bar_button("System", || {
+            crate::system_theme::follow_system()
+        }))
         .child(bar_button("Dark", || Theme::tokyo_night().apply()))
         .child(bar_button("Light", || Theme::flexoki_light().apply()))
 }
@@ -112,18 +118,20 @@ fn sidebar_row(current: Signal<usize>, index: usize, page: &'static Page) -> imp
         .h(px(tokens::CONTROL_SM))
         .mx(px(tokens::SPACE_1))
         .px(px(tokens::SPACE_2))
-        .border_l(px(2.0))
-        .border_color(move || AdaptiveColor::TRANSPARENT)
         .hover(|s| s.bg(move || tokens::hover_fill()))
         .active(|s| s.bg(move || tokens::pressed_fill()))
         .focus_visible(|s| s.bg(move || tokens::hover_fill()))
-        .style_when(selected, |s| {
-            s.bg(move || tokens::selected_fill()).border_color(move || tokens::accent())
-        })
+        .style_when(selected, |s| s.bg(move || tokens::selected_fill()))
         .child(
             text(page.title)
                 .text_size(px(tokens::TEXT_MD))
-                .text_color(move || if selected.get() { tokens::bright() } else { tokens::foreground() }),
+                .text_color(move || {
+                    if selected.get() {
+                        tokens::bright()
+                    } else {
+                        tokens::foreground()
+                    }
+                }),
         )
 }
 

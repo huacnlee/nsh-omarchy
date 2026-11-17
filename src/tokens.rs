@@ -3,8 +3,8 @@
 //! changes: `.bg(move || tokens::surface())`.
 //!
 //! Omarchy's look: square corners, a single accent, foreground-tinted fills
-//! for interaction states, a visible border for focus and a fill plus a
-//! marker for persistent selection.
+//! for interaction states, a visible border for focus and a stronger fill
+//! (no marker, no accent) for persistent selection.
 
 use nsh_base::theme;
 use nsh_core::element::AdaptiveColor;
@@ -122,7 +122,7 @@ pub fn hover_fill() -> AdaptiveColor {
 pub fn pressed_fill() -> AdaptiveColor {
     foreground().opacity(0.22)
 }
-/// Persistent selection (with a marker).
+/// Persistent selection: the fill alone, border width 0, no accent marker.
 pub fn selected_fill() -> AdaptiveColor {
     foreground().opacity(0.18)
 }
@@ -169,7 +169,10 @@ pub const TEXT_2XL: f32 = 20.0;
 
 /// The monospaced family, used for keycaps, code and tabular data.
 pub fn font_mono() -> SharedString {
-    theme().font_mono.clone().unwrap_or_else(|| "monospace".into())
+    theme()
+        .font_mono
+        .clone()
+        .unwrap_or_else(|| "monospace".into())
 }
 
 // ---- Motion ---------------------------------------------------------------
@@ -198,6 +201,14 @@ pub mod classes {
     pub const PRESSED: &str = "active:bg-foreground/22";
     /// `tokens::hover_fill()` on the highlighted row of a list (`focus:`).
     pub const HIGHLIGHT: &str = "focus:bg-foreground/8";
+    /// `tokens::hover_fill()` while the keyboard focus shows
+    /// (`focus-visible:`): the keys' row of a tree.
+    pub const FOCUS_FILL: &str = "focus-visible:bg-foreground/8";
+    /// A border reserved but not drawn, as a class so a state class (the
+    /// focus border) can colour it.
+    pub const CLEAR_BORDER: &str = "border-transparent";
+    /// `tokens::focus_border()` while the keyboard focus shows.
+    pub const FOCUS_VISIBLE_BORDER: &str = "focus-visible:border-omarchy-accent";
     /// `tokens::control_border()`, as a class so a `focus:` class can
     /// replace it (a part's typed style is over its classes).
     pub const CONTROL_BORDER: &str = "border-foreground/40";

@@ -10,11 +10,16 @@ crate supplies the presentation.
 
 - Square corners everywhere (`tokens::RADIUS` = 0). No shadows except popups'
   1px border; no gradients.
-- One accent (`tokens::accent()`), used for focus, primary actions and the current item.
+- One accent (`tokens::accent()`), used for focus, primary actions, links and a
+  menu's cursor text. Never for persistent selection.
 - Interaction states are foreground-tinted fills: `normal_fill` (4%),
   `hover_fill` (8%), `selected_fill` (18%), `pressed_fill` (22%).
-- Focus is a visible 1px border in `focus_border()`; persistent selection is a
-  fill plus a marker (a 2px accent bar or check).
+- Focus is a visible 1px border in `focus_border()` over the hover fill.
+  Persistent selection is `selected_fill()` alone (border width 0, no accent
+  bar, outline or underline), with `bright()` text and a constant label
+  weight. A menu's cursor row is the exception: `hover_fill()` with accent text.
+- Row states (hover, focus, pressed, selected) fill the whole row, edge to edge:
+  put them on the row element itself, never on an inner content box.
 - Primary buttons are transparent with an accent outline and accent text;
   fills mark selected/active state, not priority. Destructive uses `danger()`.
 - Compact desktop type: `TEXT_XS` 10 … `TEXT_2XL` 20; controls 24/28/32 tall.
@@ -48,6 +53,6 @@ crate supplies the presentation.
 
 ## Motion inventory (gallery)
 
-- Sidebar row: hover wash (fast color transition); selection moves fill + accent bar.
+- Sidebar row: hover wash (fast color transition); selection moves the selected fill.
 - Page change: content swaps under a keyed region.
 - Each component page lists its own state changes in its component docs.

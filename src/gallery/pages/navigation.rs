@@ -80,7 +80,7 @@ pub fn tabs() -> AnyElement {
         }));
 
     page(vec![
-        section("Underline: arrow keys move and select", underline).into_element(),
+        section("Plain: arrow keys move and select", underline).into_element(),
         section("Segmented", segmented).into_element(),
     ])
 }

@@ -7,8 +7,8 @@
 //! trigger, screen readers' combobox / listbox / option roles. This module
 //! draws it the Omarchy way: a square trigger in the control look, a
 //! popup on the popover background with a 1px border, rows that wash with
-//! `hover_fill` while highlighted and carry `selected_fill` plus a 2px
-//! accent bar while chosen.
+//! `hover_fill` while highlighted and carry `selected_fill` with bright
+//! text while chosen.
 //!
 //! Items are `nsh_base::SelectItem`s (re-exported here). The names avoid
 //! `nsh_base::select` / `nsh_base::combobox`.
@@ -24,8 +24,6 @@ use crate::tokens;
 
 /// The tallest the list grows before it scrolls.
 const LIST_MAX_HEIGHT: f32 = 224.0;
-/// The width of the marker bar of the chosen row.
-const MARKER_WIDTH: f32 = 2.0;
 /// What the chevron of a closed list shows.
 const CHEVRON: &str = "\u{25be}";
 
@@ -51,15 +49,12 @@ fn item_style(s: StyleRefinement) -> StyleRefinement {
         .items_center()
         .h(px(tokens::CONTROL_MD))
         .px(px(tokens::SPACE_2))
-        .border_l(px(MARKER_WIDTH))
-        .border_color(move || AdaptiveColor::TRANSPARENT)
         .text_size(px(tokens::TEXT_MD))
         .text_color(move || tokens::foreground())
         .transition_colors()
         .duration(tokens::DURATION_FAST)
         .selected(|s| {
             s.bg(move || tokens::selected_fill())
-                .border_color(move || tokens::accent())
                 .text_color(move || tokens::bright())
         })
 }

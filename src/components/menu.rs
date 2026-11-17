@@ -8,7 +8,8 @@
 //! - the popup: popover surface, 1px border, square, a short fade and
 //!   [`ENTER_DISTANCE`](tokens::ENTER_DISTANCE) slide in over
 //!   [`DURATION_BASE`](tokens::DURATION_BASE) (none under reduced motion);
-//! - rows: hover/focus wash, pressed fill, disabled text without washes;
+//! - rows: hover/focus wash with accent text (the cursor), pressed fill,
+//!   disabled text without washes;
 //! - shortcuts: right-aligned monospaced keycap text;
 //! - checkable rows: an accent check while checked;
 //! - separators (1px divider) and group headings.
@@ -119,8 +120,16 @@ fn row_look(item: MenuItemElement) -> MenuItemElement {
         .text_color(move || tokens::foreground())
         .transition_colors()
         .duration(tokens::DURATION_FAST)
-        .hover(|s| s.bg(move || tokens::hover_fill()))
-        .focus(|s| s.bg(move || tokens::hover_fill()))
+        // The cursor row: the hover fill with accent text (a menu's own
+        // cursor colour, not a persistent selection).
+        .hover(|s| {
+            s.bg(move || tokens::hover_fill())
+                .text_color(move || tokens::accent())
+        })
+        .focus(|s| {
+            s.bg(move || tokens::hover_fill())
+                .text_color(move || tokens::accent())
+        })
         .active(|s| s.bg(move || tokens::pressed_fill()))
         .disabled_style(|s| {
             s.text_color(move || tokens::disabled())

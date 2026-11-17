@@ -5,7 +5,8 @@
 //! the selected tab natively with a spring (at once under reduced motion).
 //! This module gives it Omarchy's look:
 //!
-//! - [`nav_tabs`]: an underline list, a 2px accent bar under the selected tab.
+//! - [`nav_tabs`]: a plain list over a divider, a selected fill behind the
+//!   selected tab.
 //! - [`nav_tabs_segmented`]: a segmented list, a selected fill behind the tab.
 //! - [`nav_tab`]: one tab, secondary text, bright when selected.
 //! - [`nav_tab_panel`]: a panel that stays mounted and hides while not shown.
@@ -19,15 +20,20 @@ use nsh_core::prelude::*;
 
 use crate::tokens;
 
-/// An underline tab list: a divider under the row and a 2px accent bar that
-/// slides to the selected tab. Put [`nav_tab`]s in it.
+/// A plain tab list: a divider under the row and a selected fill that
+/// slides behind the selected tab (no accent bar: selection is a fill).
+/// Put [`nav_tab`]s in it.
 pub fn nav_tabs() -> TabsElement {
     tabs()
         .flex_row()
         .items_end()
         .border_b_1()
         .border_color(move || tokens::divider())
-        .indicator_style(|s| s.bottom(px(0.0)).h(px(2.0)).bg(move || tokens::accent()))
+        .indicator_style(|s| {
+            s.top(px(0.0))
+                .bottom(px(0.0))
+                .bg(move || tokens::selected_fill())
+        })
 }
 
 /// A segmented tab list: a resting fill around the row and a selected fill
@@ -96,7 +102,7 @@ pub struct NavTabStripProps {
     /// The selected tab's index. The owner holds it and follows `on_change`.
     #[prop(default)]
     pub selected: Prop<u32>,
-    /// The segmented look instead of the underline (read once).
+    /// The segmented look instead of the plain one (read once).
     #[prop(default)]
     pub segmented: Prop<bool>,
 }

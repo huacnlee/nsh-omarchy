@@ -1,5 +1,5 @@
-//! Omarchy navigation sidebar: grouped rows, the current one marked with a
-//! selected fill and a 2px accent bar, as the gallery's own sidebar.
+//! Omarchy navigation sidebar: grouped rows, the current one carrying the
+//! selected fill and bright text, as the gallery's own sidebar.
 //!
 //! [`NavSidebar`] (`nav_sidebar()`) is controlled: it shows `value` (the
 //! current item's id) and reports the item the user picks with
@@ -250,8 +250,6 @@ fn row(
         .h(px(tokens::CONTROL_SM))
         .mx(px(tokens::SPACE_1))
         .px(px(tokens::SPACE_2))
-        .border_l(px(2.0))
-        .border_color(move || AdaptiveColor::TRANSPARENT)
         .transition_colors()
         .duration(tokens::DURATION_FAST)
         .hover(|s| s.bg(move || tokens::hover_fill()))
@@ -260,10 +258,7 @@ fn row(
             s.outline(px(tokens::FOCUS_BORDER))
                 .outline_color(move || tokens::focus_border())
         })
-        .style_when(selected, |s| {
-            s.bg(move || tokens::selected_fill())
-                .border_color(move || tokens::accent())
-        })
+        .style_when(selected, |s| s.bg(move || tokens::selected_fill()))
         .disabled_style(|s| s.bg(move || AdaptiveColor::TRANSPARENT))
         .child(
             text(item.label)

@@ -2,8 +2,8 @@
 //! month's days to pick a date (or a range) from, with month and year
 //! views behind the header's toggles.
 //!
-//! The selected day (every day of a range) has the selected fill and an
-//! accent border; today's number is in the accent with a bar under it; the
+//! The selected day (every day of a range) has the selected fill, no
+//! border; today's number is in the accent with a bar under it; the
 //! days of the months around are secondary. Keyboard: the days are one Tab
 //! stop; the arrows move a day or a week, Home and End to the week's ends,
 //! Page Up and Down a month (with Shift a year), Return and Space pick.
@@ -75,7 +75,7 @@ pub(crate) fn calendar_row_style(s: StyleRefinement) -> StyleRefinement {
     s.flex_row()
 }
 
-/// Each item: a control tall, square, the selected fill and accent border.
+/// Each item: a control tall, square, the selected fill while selected.
 pub(crate) fn calendar_item_style(s: StyleRefinement) -> StyleRefinement {
     s.h(px(tokens::CONTROL_MD))
         .min_w(px(DAY))
@@ -85,10 +85,7 @@ pub(crate) fn calendar_item_style(s: StyleRefinement) -> StyleRefinement {
         .border_color(move || AdaptiveColor::TRANSPARENT)
         .transition_colors()
         .duration(tokens::DURATION_FAST)
-        .selected(|s| {
-            s.bg(move || tokens::selected_fill())
-                .border_color(move || tokens::accent())
-        })
+        .selected(|s| s.bg(move || tokens::selected_fill()))
 }
 
 /// An item's content, from what it is (its state is the item's).

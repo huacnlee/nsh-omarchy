@@ -50,7 +50,7 @@ export const fill = {
   highlight: "focus:bg-foreground/8",
   /** A press in progress: 22%. */
   pressed: "active:bg-foreground/22",
-  /** Persistent selection (with a marker): 18%. */
+  /** Persistent selection, alone (no marker, no accent): 18%. */
   selected: "bg-foreground/18",
 } as const;
 
@@ -66,8 +66,6 @@ export const line = {
   focus: "focus-visible:border-omarchy-accent",
   /** The focus of a part nsh/base marks `focus:` (an input that edits). */
   focusPart: "focus:border-omarchy-accent",
-  /** The 2pt accent marker of the current item. */
-  marker: "bg-omarchy-accent",
 } as const;
 
 /** Surfaces. Square everywhere: Omarchy's radius is 0. */

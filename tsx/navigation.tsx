@@ -3,8 +3,8 @@
 //
 // Rows wash under the pointer and the keyboard, deepen while pressed and dim
 // while disabled; the current item carries the selected fill and bright text,
-// with no marker. Underline tabs keep their 2pt accent underline, which
-// slides natively (at once under reduced motion).
+// with no marker. The tabs' selected fill slides natively (at once under
+// reduced motion).
 import type { JSX } from "nsh";
 import { Text, View } from "nsh";
 import {

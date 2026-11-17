@@ -138,30 +138,42 @@ When the Rust theme changes, the `nsh.json` theme's Tailwind classes follow it (
 
 ## In a TSX app
 
-A TSX-only app links no Rust, so it cannot import the crate's `nsh-omarchy` specifier. It uses the library's TSX
+A TSX-only app links no Rust, so the crate's native `nsh-omarchy` module is not there. It uses the library's TSX
 source in `tsx/` instead: the same components rebuilt on `nsh/base` and drawn with the classes of
 `themes/omarchy.json`. Put the repository in the app (a git submodule, a checkout, a symlink), name its theme file in
-`nsh.json`, and import `tsx/` by path:
+`nsh.json`, and alias `nsh-omarchy` to `tsx/` for the bundler and for TypeScript:
 
 ```json
 {
   "name": "My App",
   "id": "com.example.myapp",
-  "theme": "vendor/nsh-omarchy/themes/omarchy.json"
+  "theme": "vendor/nsh-omarchy/themes/omarchy.json",
+  "resolve": { "alias": { "nsh-omarchy": "./vendor/nsh-omarchy/tsx/index.ts" } }
 }
 ```
 
 ```json
-// tsconfig.json: type check the app and the library's TSX, not the rest of the repository
+// tsconfig.json: `paths` replaces the inherited one, so it repeats nsh's entries
 {
   "extends": "./.nsh/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "nsh": ["./.nsh/types/nsh/index.d.ts"],
+      "nsh/*": ["./.nsh/types/nsh/*.d.ts"],
+      "nsh-omarchy": ["./vendor/nsh-omarchy/tsx/index.ts"],
+      "*": ["./.nsh/types/*.d.ts"]
+    }
+  },
   "include": ["*.ts", "*.tsx", "vendor/nsh-omarchy/tsx"]
 }
 ```
 
+Without the alias, import it by path: `from "./vendor/nsh-omarchy/tsx"`. Keep `include` to the app's files and `tsx/`:
+`**/*.tsx` would also type check the rest of the repository.
+
 ```tsx
 import { mount, signal, Text, View } from "nsh";
-import { Button, Card, Switch, Toaster, toast } from "./vendor/nsh-omarchy/tsx";
+import { Button, Card, Switch, Toaster, toast } from "nsh-omarchy";
 
 function App() {
   const notify = signal(true);

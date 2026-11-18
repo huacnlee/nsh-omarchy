@@ -151,9 +151,14 @@ fn tooltip_shows_after_hover_delay() -> Result<(), String> {
     let mut app = start_manual();
     open_page(&mut app, "Tooltip")?;
     app.hover("label:Save")?;
-    assert!(!app.screen().shows("Save  Ctrl+S"), "not before the delay");
+    let tip = |app: &mut _| {
+        SAVE_TIPS
+            .iter()
+            .any(|t| nsh_testing::Headless::screen(app).shows(t))
+    };
+    assert!(!tip(&mut app), "not before the delay");
     app.run_for(Duration::from_millis(600))?;
-    app.wait_for("text:Save  Ctrl+S")?;
+    assert!(tip(&mut app), "the tooltip shows after the delay");
     Ok(())
 }
 
@@ -314,3 +319,6 @@ fn sheet_returns_focus_to_its_trigger() -> Result<(), String> {
     wait_for_focus(&mut app, "label:Display settings", before + 1)?;
     Ok(())
 }
+
+/// The tooltip's `mod-s`, as the platform the app reports writes it.
+const SAVE_TIPS: [&str; 2] = ["Save  cmd-s", "Save  ctrl-s"];

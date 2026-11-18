@@ -22,7 +22,7 @@ import {
 } from "nsh/base";
 import { Button, IconButton } from "./button";
 import { Glyph } from "./icons";
-import { cx, ink, motion, surface, text } from "./theme";
+import { cx, ink, motion, shortcutLabel, surface, text } from "./theme";
 
 /** A modal's title and description, as the dialog and the sheet draw them. */
 function Heading(props: { title: string; description?: string }) {
@@ -253,7 +253,7 @@ export interface TooltipProps {
 
 /**
  * A small square label next to a control, given to its `tooltip` prop:
- * `<IconButton tooltip={<Tooltip label="Save" shortcut="Ctrl+S" />} …>`. It
+ * `<IconButton tooltip={<Tooltip label="Save" shortcut="ctrl-s" />} …>`. It
  * shows after the pointer rests, at once with the keyboard focus, and hides
  * on Escape. Keep an accessible label on the control: a tooltip only adds.
  */
@@ -268,7 +268,7 @@ export function Tooltip(props: TooltipProps) {
     >
       <Text>{props.label}</Text>
       <If when={props.shortcut}>
-        <Text class={cx("font-mono", ink.secondary)}>{props.shortcut}</Text>
+        <Text class={cx("font-mono", ink.secondary)}>{shortcutLabel(props.shortcut ?? "")}</Text>
       </If>
     </BaseTooltip>
   );

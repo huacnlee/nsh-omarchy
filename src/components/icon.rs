@@ -116,6 +116,14 @@ pub fn icon(name: IconName) -> Svg {
         .accessibility_elements_hidden(true)
 }
 
+/// A control's indicator icon (a chevron, a check, a close mark): `size`
+/// points, in the secondary text colour unless retinted.
+pub(crate) fn indicator(name: IconName, size: f32) -> Svg {
+    icon(name)
+        .size(px(size))
+        .text_color(move || crate::tokens::secondary())
+}
+
 /// An icon that stands alone and means something: screen readers say
 /// `label` for it, as an image.
 pub fn labeled_icon(name: IconName, label: impl Into<SharedString>) -> Svg {

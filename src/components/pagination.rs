@@ -31,12 +31,13 @@ pub fn pagination_bar() -> PaginationElement {
 
 /// One item's cell, drawn from its state.
 fn pagination_cell(state: &PaginationItemState) -> AnyElement {
-    let label: SharedString = match state.kind {
-        PaginationItemKind::Previous => "‹".into(),
-        PaginationItemKind::Next => "›".into(),
-        PaginationItemKind::Ellipsis => "…".into(),
-        PaginationItemKind::Page => state.page.to_string().into(),
+    let glyph = match state.kind {
+        PaginationItemKind::Previous => Some(super::icon::IconName::ChevronLeft),
+        PaginationItemKind::Next => Some(super::icon::IconName::ChevronRight),
+        PaginationItemKind::Ellipsis => Some(super::icon::IconName::MoreHorizontal),
+        PaginationItemKind::Page => None,
     };
+    let page = state.page;
     let current = state.current;
     let (ellipsis, disabled) = (state.kind == PaginationItemKind::Ellipsis, state.disabled);
     let inert = ellipsis || disabled;
@@ -51,21 +52,29 @@ fn pagination_cell(state: &PaginationItemState) -> AnyElement {
         .border_color(move || AdaptiveColor::TRANSPARENT)
         .transition_colors()
         .duration(tokens::DURATION_FAST)
-        .child(
-            text(label)
-                .text_size(px(tokens::TEXT_MD))
-                .text_color(move || {
-                    if ellipsis {
-                        tokens::secondary()
-                    } else if disabled {
-                        tokens::disabled()
-                    } else if current {
-                        tokens::bright()
-                    } else {
-                        tokens::foreground()
-                    }
-                }),
-        );
+        .child({
+            let color = move || {
+                if ellipsis {
+                    tokens::secondary()
+                } else if disabled {
+                    tokens::disabled()
+                } else if current {
+                    tokens::bright()
+                } else {
+                    tokens::foreground()
+                }
+            };
+            match glyph {
+                Some(name) => super::icon::icon(name)
+                    .size(px(14.0))
+                    .text_color(color)
+                    .into_element(),
+                None => text(page.to_string())
+                    .text_size(px(tokens::TEXT_MD))
+                    .text_color(color)
+                    .into_element(),
+            }
+        });
     let cell = if inert {
         cell
     } else {

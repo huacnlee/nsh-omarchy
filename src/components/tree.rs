@@ -74,11 +74,7 @@ fn tree_row(entry: &TreeEntry) -> View {
         .pr(px(tokens::SPACE_2))
         .when(disabled, |row| row.opacity(0.45))
         .child(match folder {
-            true => text("\u{203A}")
-                .w(px(CHEVRON))
-                .text_center()
-                .text_size(px(tokens::TEXT_LG))
-                .text_color(move || tokens::secondary())
+            true => super::icon::indicator(super::icon::IconName::ChevronRight, CHEVRON)
                 .transition_transform()
                 .duration(tokens::DURATION_BASE)
                 .app_class(Some(SharedString::from("group-aria-expanded:rotate-90")))

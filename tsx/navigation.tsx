@@ -25,7 +25,7 @@ import {
   Tabs as BaseTabs,
 } from "nsh/base";
 import { Glyph } from "./icons";
-import { cx, fill, ink, line, motion, surface, text } from "./theme";
+import { cx, fill, ink, line, motion, shortcutLabel, surface, text } from "./theme";
 
 /** One tab, sidebar row or segment. */
 export interface NavItem {
@@ -161,7 +161,7 @@ export function ContextMenu(props: ContextMenuProps) {
 
 export interface MenuItemProps {
   label: string;
-  /** A shortcut shown at the row's end, in monospace ("Ctrl+S"). */
+  /** A shortcut shown at the row's end, in monospace ("ctrl-s"). */
   shortcut?: string;
   /** A checkable row: an accent check while checked. */
   checked?: boolean;
@@ -206,7 +206,7 @@ export function MenuItem(props: MenuItemProps) {
     >
       <Text class="flex-1">{props.label}</Text>
       <If when={props.shortcut}>
-        <Text class={cx("font-mono", text.sm, ink.secondary)}>{props.shortcut}</Text>
+        <Text class={cx("font-mono", text.sm, ink.secondary)}>{shortcutLabel(props.shortcut ?? "")}</Text>
       </If>
     </BaseMenuItem>
   );

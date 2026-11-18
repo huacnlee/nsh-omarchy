@@ -4,6 +4,33 @@
 // follow the light (Flexoki) and dark (Tokyo Night) palettes and any theme
 // change at run time. Mirrors `src/tokens.rs` of the Rust crate.
 
+import { platform } from "nsh";
+
+/**
+ * A keyboard shortcut as this platform writes it, in Omarchy's form: lowercase
+ * keys joined by `-`. `mod` is the command key (`cmd` on macOS and iOS, `ctrl`
+ * elsewhere); any spelling is accepted: `shortcutLabel("Ctrl+C")` is `ctrl-c`.
+ */
+export function shortcutLabel(keys: string): string {
+  const apple = platform.os === "macos" || platform.os === "ios";
+  return keys
+    .split(/[+\- ]/)
+    .filter(Boolean)
+    .map((raw) => {
+      const key = raw.toLowerCase();
+      if (key === "mod") return apple ? "cmd" : "ctrl";
+      if (key === "command" || key === "meta" || key === "⌘") return "cmd";
+      if (key === "control" || key === "⌃") return "ctrl";
+      if (key === "alt" || key === "option" || key === "⌥") return apple ? "option" : "alt";
+      if (key === "escape") return "esc";
+      if (key === "return") return "enter";
+      if (key === "del" || key === "delete") return apple ? "delete" : "del";
+      if (key === "⇧") return "shift";
+      return key;
+    })
+    .join("-");
+}
+
 /** Joins class lists, dropping the empty ones: `cx(base, on && "x", props.class)`. */
 export function cx(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(" ");

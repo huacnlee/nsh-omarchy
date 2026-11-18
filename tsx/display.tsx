@@ -84,7 +84,7 @@ export function Badge(props: { label: string; tone?: BadgeTone; solid?: boolean;
         props.class,
       )}
     >
-      <Text class={cx(text.xs, "font-semibold uppercase tracking-wide")}>{props.label}</Text>
+      <Text class={cx(text.xs, "uppercase tracking-wide")}>{props.label}</Text>
     </View>
   );
 }

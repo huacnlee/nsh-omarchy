@@ -112,7 +112,7 @@ fn MenuHarness() -> impl IntoElement {
                 .child(
                     menu_row("New file")
                         .on_select(move || last.set("New file".into()))
-                        .child(menu_shortcut("Ctrl N")),
+                        .child(menu_shortcut("mod-n")),
                 )
                 .child(
                     menu_row("Save")
@@ -137,10 +137,10 @@ fn a_menu_row_is_chosen_and_closes_the_menu() -> Result<(), String> {
     app.wait_for("Chose nothing")?;
     app.press("File")?;
     app.wait_for("New file")?;
-    assert!(app.shows("Ctrl N"));
+    assert!(app.shows(NEW_SHORTCUT));
     app.press("New file")?;
     app.wait_for("Chose New file")?;
-    app.wait_for_gone("text:Ctrl N", SHORT)?;
+    app.wait_for_gone(NEW_SHORTCUT_TEXT, SHORT)?;
     Ok(())
 }
 
@@ -177,12 +177,12 @@ fn the_keyboard_opens_the_menu_and_chooses() -> Result<(), String> {
     app.wait_for("New file")?;
     app.press_key("enter")?;
     app.wait_for("Chose New file")?;
-    app.wait_for_gone("text:Ctrl N", SHORT)?;
+    app.wait_for_gone(NEW_SHORTCUT_TEXT, SHORT)?;
     // Escape closes it without choosing.
     app.press("File")?;
     app.wait_for("New file")?;
     app.press_key("escape")?;
-    app.wait_for_gone("text:Ctrl N", SHORT)?;
+    app.wait_for_gone(NEW_SHORTCUT_TEXT, SHORT)?;
     assert!(app.shows("Chose New file"));
     Ok(())
 }
@@ -388,3 +388,15 @@ fn navigation_pages_are_interactive() -> Result<(), String> {
     app.wait_for("page 2 of 5")?;
     Ok(())
 }
+
+/// The menu's `mod-n` as the host platform writes it.
+const NEW_SHORTCUT: &str = if cfg!(target_os = "macos") {
+    "cmd-n"
+} else {
+    "ctrl-n"
+};
+const NEW_SHORTCUT_TEXT: &str = if cfg!(target_os = "macos") {
+    "text:cmd-n"
+} else {
+    "text:ctrl-n"
+};

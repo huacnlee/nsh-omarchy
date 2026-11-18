@@ -118,11 +118,7 @@ pub fn overlay_close_button(
         .hover(|s| s.bg(move || tokens::hover_fill()))
         .active(|s| s.bg(move || tokens::pressed_fill()))
         .focus_visible(|s| s.border_color(move || tokens::focus_border()))
-        .child(
-            text("×")
-                .text_size(px(tokens::TEXT_LG))
-                .text_color(move || tokens::secondary()),
-        )
+        .child(super::icon::indicator(super::icon::IconName::X, 16.0))
 }
 
 /// The dimming behind modal overlays. A private token: the window

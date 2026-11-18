@@ -103,11 +103,10 @@ pub fn menu_trigger(label: impl IntoReactive<SharedString>) -> View {
         .focus_visible(|s| s.border_color(move || tokens::focus_border()))
         .expanded(|s| s.bg(move || tokens::selected_fill()))
         .child(text(label).text_size(px(tokens::TEXT_MD)))
-        .child(
-            text("▾")
-                .text_size(px(tokens::TEXT_XS))
-                .text_color(move || tokens::secondary()),
-        )
+        .child(super::icon::indicator(
+            super::icon::IconName::ChevronDown,
+            14.0,
+        ))
 }
 
 /// The look every row shares.
@@ -152,7 +151,7 @@ pub fn menu_check_row(
     row_look(menu_item())
         .checked(move || Some(checked()))
         .close_on_select(false)
-        .indicator(text("✓").text_size(px(tokens::TEXT_SM)))
+        .indicator(super::icon::icon(super::icon::IconName::Check).size(px(12.0)))
         .indicator_style(|s| {
             s.w(px(12.0))
                 .items_center()
@@ -163,10 +162,12 @@ pub fn menu_check_row(
         .child(text(label).flex_1().number_of_lines(1))
 }
 
-/// A row's keyboard shortcut (`"Ctrl N"`): monospaced, secondary, at the
+/// A row's keyboard shortcut, written as the platform writes it
+/// ([`super::shortcut_label`]: `"mod-n"` reads `cmd-n` on macOS, `ctrl-n`
+/// elsewhere): monospaced, secondary, at the
 /// row's right edge.
-pub fn menu_shortcut(keys: impl IntoReactive<SharedString>) -> Text {
-    text(keys)
+pub fn menu_shortcut(keys: impl Into<SharedString>) -> Text {
+    text(super::shortcut_label(&keys.into()))
         .ml(auto())
         .pl(px(tokens::SPACE_4))
         .font_family(tokens::font_mono())

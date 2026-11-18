@@ -8,7 +8,7 @@
 //! icon-only controls, a tooltip only adds to it.
 //!
 //! ```ignore
-//! button().accessibility_label("Save").tooltip(tooltip("Save  ⌘S"))
+//! button().accessibility_label("Save").tooltip(tooltip("Save  ctrl-s"))
 //! ```
 
 use nsh_core::prelude::*;

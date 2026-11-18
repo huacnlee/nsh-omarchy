@@ -60,8 +60,8 @@ export function Display() {
         </Row>
         <Separator />
         <Row>
-          <Keycap label="Esc" />
-          <Shortcut keys={["Super", "Shift", "Enter"]} />
+          <Keycap label="esc" />
+          <Shortcut keys={["super", "shift", "enter"]} />
           <Separator orientation="vertical" class="h-5" />
           <Caption>Open a terminal</Caption>
         </Row>
@@ -76,7 +76,7 @@ export function Display() {
       <Section title="EmptyState">
         <EmptyState
           title="No windows"
-          description="Open an app with Super+Space."
+          description="Open an app with super-space."
           action={<Button label="Open launcher" variant="primary" />}
         />
       </Section>

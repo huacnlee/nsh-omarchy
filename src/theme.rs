@@ -67,7 +67,8 @@ impl Theme {
             surface: c(0x24283b),
             inset: c(0x13141c),
             foreground: c(0xa9b1d6),
-            secondary: c(0xa9b1d6),
+            // The background mixed 75% toward the foreground, as a system theme derives it.
+            secondary: c(0x858baa),
             bright: c(0xc0caf5),
             accent: c(0x7aa2f7),
             on_accent: c(0x13141c),
@@ -233,6 +234,12 @@ impl Theme {
 
     /// Applies the palette without changing whether the system theme is followed.
     pub(crate) fn apply_palette(self) {
+        // The window takes the palette's appearance, so what adapts to it
+        // (native controls, scroll bars, highlighted code) matches.
+        nsh_core::prelude::set_color_scheme(match self.appearance {
+            Appearance::Dark => nsh_core::platform::Appearance::Dark,
+            Appearance::Light => nsh_core::platform::Appearance::Light,
+        });
         set_tokens(self.to_tokens());
         crate::tsx::omarchy::theme_applied(&self);
         global::<ActiveTheme>().set(ActiveTheme(Some(self)));

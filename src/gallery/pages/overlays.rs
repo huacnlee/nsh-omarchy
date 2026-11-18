@@ -240,13 +240,13 @@ pub fn tooltip() -> AnyElement {
             row()
                 .child(c::with_tooltip(
                     c::overlay_action_button("Save", OverlayTone::Neutral, || {}),
-                    "Save  Ctrl+S",
+                    format!("Save  {}", c::shortcut_label("mod-s")),
                 ))
                 .child(c::with_tooltip(
                     c::overlay_action_button("Lock", OverlayTone::Neutral, || {}),
-                    "Lock the screen  Super+Ctrl+L",
+                    "Lock the screen  super-ctrl-l",
                 ))
-                .child(keycap_trigger("?", "Keyboard shortcuts  Super+K")),
+                .child(keycap_trigger("?", "Keyboard shortcuts  super-k")),
         )
         .into_element()
 }

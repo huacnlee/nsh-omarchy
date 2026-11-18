@@ -142,14 +142,13 @@ pub fn badge(label: impl Into<SharedString>, variant: BadgeVariant) -> View {
         .child(
             text(label.into())
                 .text_size(px(tokens::TEXT_XS))
-                .font_weight(FontWeight::MEDIUM)
                 .text_color(move || variant.color()),
         )
 }
 
 // ---- Keycaps --------------------------------------------------------------
 
-/// One key as printed on a keyboard (`ctrl`, `⌘K`, `esc`): regular-weight
+/// One key as printed on a keyboard (`ctrl`, `tab`, `esc`): regular-weight
 /// monospace on an inset square with a border. Screen readers read it as a key.
 pub fn keycap(key: impl Into<SharedString>) -> View {
     view()

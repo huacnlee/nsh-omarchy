@@ -1,6 +1,8 @@
 // Real interactions with every family of the library, through the gallery.
 import { describe, expect, open, test } from "nsh/test";
 import type { App } from "nsh/test";
+/** The menu's group label: shown while the menu is open. */
+const NEW_KEY = "text:Document";
 
 /** Opens the gallery on the page `page` (its sidebar label). */
 async function gallery(page: string) {
@@ -213,17 +215,17 @@ describe("navigation", () => {
   test("a dropdown menu opens, chooses, toggles, closes", async () => {
     const app = await gallery("Navigation");
     await app.press("role:button[File]");
-    await app.waitFor("text:Ctrl+N");
+    await app.waitFor(NEW_KEY);
     await app.press("text:Word wrap");
     await app.waitFor("text:Chose: nothing · wrap off");
-    expect(app.shows("text:Ctrl+N")).toBe(true);
+    expect(app.shows(NEW_KEY)).toBe(true);
     await app.press("text:Open…");
     await app.waitFor("text:Chose: Open · wrap off");
-    await app.waitFor("text:Ctrl+N", { state: "gone" });
+    await app.waitFor(NEW_KEY, { state: "gone" });
     await app.press("role:button[File]");
-    await app.waitFor("text:Ctrl+N");
+    await app.waitFor(NEW_KEY);
     await app.keyboard.press("escape");
-    await app.waitFor("text:Ctrl+N", { state: "gone" });
+    await app.waitFor(NEW_KEY, { state: "gone" });
   });
 
   test("a context menu opens on a right click", async () => {
@@ -348,7 +350,7 @@ describe("overlays", () => {
 describe("display", () => {
   test("shows every piece", async () => {
     const app = await gallery("Display");
-    for (const text of ["Heading", "Updates", "Inset panel", "ONLINE", "Esc", "Super", "No windows", "Open launcher"]) {
+    for (const text of ["Heading", "Updates", "Inset panel", "ONLINE", "esc", "super", "No windows", "Open launcher"]) {
       expect(app.shows(`text:${text}`)).toBe(true);
     }
     expect(app.shows("text:GH")).toBe(true);

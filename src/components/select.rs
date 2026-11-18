@@ -24,8 +24,6 @@ use crate::tokens;
 
 /// The tallest the list grows before it scrolls.
 const LIST_MAX_HEIGHT: f32 = 224.0;
-/// What the chevron of a closed list shows.
-const CHEVRON: &str = "\u{25be}";
 
 /// The popup the list is in.
 fn popup_style(s: StyleRefinement) -> StyleRefinement {
@@ -72,10 +70,8 @@ fn empty_note(words: &'static str) -> impl IntoElement {
         .text_color(move || tokens::secondary())
 }
 
-fn chevron() -> Text {
-    text(CHEVRON)
-        .text_size(px(tokens::TEXT_MD))
-        .text_color(move || tokens::secondary())
+fn chevron() -> Svg {
+    super::icon::indicator(super::icon::IconName::ChevronDown, 14.0)
 }
 
 /// One value chosen from `items`, shown on a trigger that reads `value`

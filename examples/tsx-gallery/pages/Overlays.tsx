@@ -89,7 +89,7 @@ export function Overlays() {
           <Popover trigger={<Button label="Details" />} title="Battery">
             <Body>82%, about 5 hours left.</Body>
           </Popover>
-          <Button label="Hover me" variant="ghost" tooltip={<Tooltip label="Lock screen" shortcut="Super+Esc" />} />
+          <Button label="Hover me" variant="ghost" tooltip={<Tooltip label="Lock screen" shortcut="super-esc" />} />
           <HoverCard trigger={<Button label="@dhh" variant="ghost" />}>
             <View class="flex-row gap-3">
               <Avatar name="David Heinemeier Hansson" />

@@ -62,10 +62,10 @@ fn a_number_field_steps_by_keys_and_stops_at_its_bounds() -> Result<(), String> 
 fn a_number_field_steps_by_its_buttons() -> Result<(), String> {
     let mut app = open("Number input");
     app.wait_for("text:value: 4")?;
-    app.press("text:+ >> nth=0")?;
+    app.press("label:Increase >> nth=0")?;
     app.wait_for("text:value: 5")?;
-    app.press("text:\u{2212} >> nth=0")?;
-    app.press("text:\u{2212} >> nth=0")?;
+    app.press("label:Decrease >> nth=0")?;
+    app.press("label:Decrease >> nth=0")?;
     app.wait_for("text:value: 3")?;
     Ok(())
 }

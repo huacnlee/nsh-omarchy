@@ -94,8 +94,7 @@ pub(crate) fn calendar_item(entry: &CalendarEntry) -> View {
         CalendarItemKind::Weekday => WEEKDAYS[entry.value.rem_euclid(7) as usize].into(),
         CalendarItemKind::MonthToggle => month_name(entry.value).into(),
         CalendarItemKind::Month => month_name(entry.value)[..3].to_owned().into(),
-        CalendarItemKind::Previous => "\u{2039}".into(),
-        CalendarItemKind::Next => "\u{203A}".into(),
+        CalendarItemKind::Previous | CalendarItemKind::Next => SharedString::default(),
         _ => entry.value.to_string().into(),
     };
     let kind = entry.kind;
@@ -119,30 +118,48 @@ pub(crate) fn calendar_item(entry: &CalendarEntry) -> View {
             v.group_hover(|s| s.bg(move || tokens::hover_fill()))
                 .group_focus_visible(|s| s.border_color(move || tokens::focus_border()))
         })
-        .child(
-            text(label)
-                .text_size(px(match kind {
-                    CalendarItemKind::Weekday => tokens::TEXT_SM,
-                    CalendarItemKind::Previous | CalendarItemKind::Next => tokens::TEXT_LG,
-                    _ => tokens::TEXT_MD,
-                }))
-                .font_weight(if today || toggle {
-                    FontWeight::SEMIBOLD
-                } else {
-                    FontWeight::NORMAL
-                })
-                .when(kind == CalendarItemKind::Day, |t| t.tabular_nums())
-                .text_color(move || {
-                    if today {
-                        tokens::accent()
-                    } else if outside || kind == CalendarItemKind::Weekday {
-                        tokens::secondary()
-                    } else if toggle {
-                        tokens::bright()
+        .when(
+            matches!(kind, CalendarItemKind::Previous | CalendarItemKind::Next),
+            |v| {
+                v.child(
+                    super::icon::icon(if kind == CalendarItemKind::Previous {
+                        super::icon::IconName::ChevronLeft
                     } else {
-                        tokens::foreground()
-                    }
-                }),
+                        super::icon::IconName::ChevronRight
+                    })
+                    .size(px(16.0))
+                    .text_color(move || tokens::foreground()),
+                )
+            },
+        )
+        .when(
+            !matches!(kind, CalendarItemKind::Previous | CalendarItemKind::Next),
+            |v| {
+                v.child(
+                    text(label)
+                        .text_size(px(match kind {
+                            CalendarItemKind::Weekday => tokens::TEXT_SM,
+                            _ => tokens::TEXT_MD,
+                        }))
+                        .font_weight(if today || toggle {
+                            FontWeight::SEMIBOLD
+                        } else {
+                            FontWeight::NORMAL
+                        })
+                        .when(kind == CalendarItemKind::Day, |t| t.tabular_nums())
+                        .text_color(move || {
+                            if today {
+                                tokens::accent()
+                            } else if outside || kind == CalendarItemKind::Weekday {
+                                tokens::secondary()
+                            } else if toggle {
+                                tokens::bright()
+                            } else {
+                                tokens::foreground()
+                            }
+                        }),
+                )
+            },
         )
         .when(today, |v| {
             v.child(

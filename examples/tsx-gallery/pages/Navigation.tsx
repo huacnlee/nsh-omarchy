@@ -53,8 +53,8 @@ export function Navigation() {
         <Row>
           <DropdownMenu trigger={<Button label="File"><Glyph name="chevron-down" /></Button>}>
             <MenuLabel label="Document" />
-            <MenuItem label="New" shortcut="Ctrl+N" onSelect={() => last.set("New")} />
-            <MenuItem label="Open…" shortcut="Ctrl+O" onSelect={() => last.set("Open")} />
+            <MenuItem label="New" shortcut="mod-n" onSelect={() => last.set("New")} />
+            <MenuItem label="Open…" shortcut="mod-o" onSelect={() => last.set("Open")} />
             <MenuItem label="Word wrap" checked={wrap()} closeOnSelect={false} onSelect={() => wrap.update((v) => !v)} />
             <MenuItem label="Print" disabled />
             <MenuSeparator />
@@ -64,8 +64,8 @@ export function Navigation() {
             class="h-16 w-64 items-center justify-center border border-dashed border-foreground/40"
             menu={
               <>
-                <MenuItem label="Copy" shortcut="Ctrl+C" onSelect={() => last.set("Copy")} />
-                <MenuItem label="Paste" shortcut="Ctrl+V" onSelect={() => last.set("Paste")} />
+                <MenuItem label="Copy" shortcut="mod-c" onSelect={() => last.set("Copy")} />
+                <MenuItem label="Paste" shortcut="mod-v" onSelect={() => last.set("Paste")} />
               </>
             }
           >

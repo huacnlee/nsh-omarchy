@@ -82,10 +82,8 @@ pub fn accordion_section(
         )
 }
 
-fn chevron() -> Text {
-    text("›")
-        .text_size(px(tokens::TEXT_LG))
-        .text_color(move || tokens::secondary())
+fn chevron() -> Svg {
+    super::icon::indicator(super::icon::IconName::ChevronRight, 14.0)
         .app_class(SharedString::from(CHEVRON_CLASS))
 }
 
@@ -151,10 +149,10 @@ pub fn collapsible_section(
                         .outline_color(move || tokens::focus_border())
                 })
                 .child(
-                    text(move || if open() { "▾" } else { "▸" })
-                        .w(px(10.0))
-                        .text_size(px(tokens::TEXT_SM))
-                        .text_color(move || tokens::secondary()),
+                    super::icon::indicator(super::icon::IconName::ChevronRight, 14.0)
+                        .rotate(move || deg(if open() { 90.0 } else { 0.0 }))
+                        .transition_transform()
+                        .duration(tokens::DURATION_BASE),
                 )
                 .child(
                     text(title)

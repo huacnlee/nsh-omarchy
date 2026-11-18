@@ -79,9 +79,8 @@ fn trigger(label: impl IntoReactive<SharedString>) -> View {
                 .number_of_lines(1)
                 .text_size(px(tokens::TEXT_MD)),
         )
-        .child(
-            text("\u{25BE}")
-                .text_size(px(tokens::TEXT_SM))
-                .text_color(move || tokens::secondary()),
-        )
+        .child(super::icon::indicator(
+            super::icon::IconName::ChevronDown,
+            14.0,
+        ))
 }

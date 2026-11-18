@@ -70,7 +70,7 @@ fn keycap_page() -> Result<(), String> {
     open(&mut app, "Keycap")?;
     expect_texts(
         &mut app,
-        &["esc", "⌘K", "super", "space", "Open the launcher"],
+        &["esc", "tab", "super", "space", "Open the launcher"],
     )?;
     assert!(app.screen().count("role:keyboardkey")? >= 5);
     Ok(())

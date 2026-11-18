@@ -95,10 +95,10 @@ pub fn textarea() -> Input {
 }
 
 /// A stepper button's glyph.
-fn stepper_glyph(glyph: &'static str) -> impl IntoElement {
-    text(glyph)
-        .text_size(px(tokens::TEXT_LG))
-        .text_color(move || tokens::secondary())
+fn stepper_glyph(name: super::icon::IconName, label: &'static str) -> impl IntoElement {
+    view()
+        .label(label)
+        .child(super::icon::indicator(name, 14.0))
 }
 
 /// A number field: − before the value, + after it, `CONTROL_MD` tall.
@@ -156,14 +156,14 @@ pub fn number_field() -> NumberInputElement {
                 .border_r_1()
                 .border_color(move || tokens::divider())
         })
-        .decrement_button(stepper_glyph("\u{2212}"))
+        .decrement_button(stepper_glyph(super::icon::IconName::Minus, "Decrease"))
         .increment_button_class(button_class)
         .increment_button_style(move |s: StyleRefinement| {
             button_style(s)
                 .border_l_1()
                 .border_color(move || tokens::divider())
         })
-        .increment_button(stepper_glyph("+"))
+        .increment_button(stepper_glyph(super::icon::IconName::Plus, "Increase"))
 }
 
 #[cfg(test)]

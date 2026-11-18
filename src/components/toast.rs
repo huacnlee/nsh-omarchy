@@ -42,7 +42,7 @@ const TOAST_WIDTH: f32 = 340.0;
 /// How often the lifecycle advances while notices are mounted.
 const TOAST_TICK: Duration = Duration::from_millis(50);
 
-/// What a notice reports; its marker bar takes the matching color.
+/// What a notice reports; its icon takes the matching icon and color.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ToastKind {
     #[default]
@@ -60,6 +60,16 @@ impl ToastKind {
             ToastKind::Success => tokens::success(),
             ToastKind::Warning => tokens::warning(),
             ToastKind::Error => tokens::danger(),
+        }
+    }
+
+    fn icon(self) -> super::icon::IconName {
+        use super::icon::IconName;
+        match self {
+            ToastKind::Info => IconName::Info,
+            ToastKind::Success => IconName::CircleCheck,
+            ToastKind::Warning => IconName::TriangleAlert,
+            ToastKind::Error => IconName::CircleAlert,
         }
     }
 }
@@ -343,15 +353,24 @@ fn notice_view(toaster: Toaster, item: ReadSignal<Shown>) -> impl IntoElement {
         .starting_class("opacity-0 translate-y-2")
         .ending_class("opacity-0 translate-x-4")
         .swiping_class("transition-none")
-        // The marker: a 2px bar in the kind's color.
-        .child(view().w(px(2.0)).bg(move || kind.color()))
+        // The kind: its icon in its color, level with the title.
+        .child(
+            view()
+                .pl(px(tokens::SPACE_3))
+                .pt(px(tokens::SPACE_3 + 2.0))
+                .child(
+                    super::icon::icon(kind.icon())
+                        .size(px(16.0))
+                        .text_color(move || kind.color()),
+                ),
+        )
         .child(
             view()
                 .flex_1()
                 .min_w(px(0.0))
                 .gap(px(tokens::SPACE_1))
                 .py(px(tokens::SPACE_3))
-                .pl(px(tokens::SPACE_3))
+                .pl(px(tokens::SPACE_2))
                 .child(
                     text(title)
                         .text_size(px(tokens::TEXT_MD))

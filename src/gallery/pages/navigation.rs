@@ -95,17 +95,17 @@ pub fn menu() -> AnyElement {
         .child(
             menu_row("New file")
                 .on_select(choose("New file"))
-                .child(menu_shortcut("Ctrl N")),
+                .child(menu_shortcut("mod-n")),
         )
         .child(
             menu_row("Open…")
                 .on_select(choose("Open"))
-                .child(menu_shortcut("Ctrl O")),
+                .child(menu_shortcut("mod-o")),
         )
         .child(
             menu_row("Save")
                 .disabled(true)
-                .child(menu_shortcut("Ctrl S")),
+                .child(menu_shortcut("mod-s")),
         )
         .child(menu_divider())
         .child(menu_heading("View"))
@@ -121,7 +121,7 @@ pub fn menu() -> AnyElement {
         .child(
             menu_row("Quit")
                 .on_select(choose("Quit"))
-                .child(menu_shortcut("Ctrl Q")),
+                .child(menu_shortcut("mod-q")),
         );
     page(vec![
         section(
@@ -158,29 +158,29 @@ pub fn context_menu() -> AnyElement {
                 .bg(move || tokens::normal_fill())
                 .focus_visible(|s| s.border_color(move || tokens::focus_border()))
                 .child(
-                    text("Right-click here (or Shift+F10)").text_color(move || tokens::secondary()),
+                    text("Right-click here (or shift-f10)").text_color(move || tokens::secondary()),
                 ),
         )
         .child(
             menu_row("Copy")
                 .on_select(choose("Copy"))
-                .child(menu_shortcut("Ctrl C")),
+                .child(menu_shortcut("mod-c")),
         )
         .child(
             menu_row("Paste")
                 .on_select(choose("Paste"))
-                .child(menu_shortcut("Ctrl V")),
+                .child(menu_shortcut("mod-v")),
         )
         .child(menu_divider())
         .child(
             menu_row("Rename")
                 .on_select(choose("Rename"))
-                .child(menu_shortcut("F2")),
+                .child(menu_shortcut("f2")),
         )
         .child(
             menu_row("Delete")
                 .disabled(true)
-                .child(menu_shortcut("Del")),
+                .child(menu_shortcut("del")),
         );
     page(vec![
         section(

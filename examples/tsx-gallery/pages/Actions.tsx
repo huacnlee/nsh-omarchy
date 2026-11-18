@@ -32,7 +32,7 @@ export function Actions() {
       </Section>
       <Section title="IconButton" description="A square glyph button; its label is for screen readers, its tooltip for the pointer.">
         <Row>
-          <IconButton accessibilityLabel="Add" tooltip={<Tooltip label="Add" shortcut="Ctrl+N" />}>
+          <IconButton accessibilityLabel="Add" tooltip={<Tooltip label="Add" shortcut="mod-n" />}>
             <Glyph name="plus" />
           </IconButton>
           <IconButton accessibilityLabel="Menu" variant="default">

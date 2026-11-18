@@ -156,7 +156,7 @@ pub fn keycap() -> AnyElement {
                 .gap(px(tokens::SPACE_2))
                 .child(cap("esc"))
                 .child(cap("enter"))
-                .child(cap("⌘K"))
+                .child(cap("tab"))
                 .child(cap("j"))
                 .child(cap("k")),
         ))

@@ -62,7 +62,7 @@ pub fn code_text(content: impl IntoReactive<SharedString>) -> Text {
         .font_family(move || tokens::font_mono())
         .text_size(px(tokens::TEXT_SM))
         .px(px(tokens::SPACE_1))
-        .bg(move || tokens::inset())
+        .bg(move || tokens::hover_fill())
         .text_color(move || tokens::foreground())
 }
 
@@ -70,6 +70,8 @@ pub fn code_text(content: impl IntoReactive<SharedString>) -> Text {
 
 /// The line height of body text in a text view, a multiple of its size.
 const PROSE_LINE: f32 = 1.6;
+/// A task list's checkbox: smaller than a control's, to sit in a line of text.
+const TASK_BOX: f32 = 14.0;
 
 /// Omarchy's styles for the parts of `nsh_base`'s text views: give them to
 /// the text views of a component with `provide_context(prose_parts())`
@@ -101,18 +103,18 @@ pub fn prose_parts() -> TextViewParts {
         .part(Part::Code, |s| {
             s.font_family(move || tokens::font_mono())
                 .text_size(px(tokens::TEXT_SM))
-                .bg(move || tokens::inset())
+                .bg(move || tokens::hover_fill())
         })
         .part(Part::Keyboard, |s| {
             s.font_family(move || tokens::font_mono())
                 .text_size(px(tokens::TEXT_XS))
-                .bg(move || tokens::inset())
+                .bg(move || tokens::hover_fill())
         })
         .part(Part::CodeBlock, |s| {
             s.rounded(px(tokens::RADIUS))
                 .border_1()
                 .border_color(move || tokens::divider())
-                .bg(move || tokens::inset())
+                .bg(move || tokens::hover_fill())
         })
         .part(Part::CodeBlockCode, |s| {
             s.font_family(move || tokens::font_mono())
@@ -128,16 +130,27 @@ pub fn prose_parts() -> TextViewParts {
         .part(Part::ListMarker, |s| {
             s.text_color(move || tokens::secondary())
         })
+        // The checkbox's box: square, 1px, centred on the first line.
         .part(Part::TaskMarker, |s| {
-            s.rounded(px(tokens::RADIUS))
+            s.size(px(TASK_BOX))
+                .mt(px((tokens::TEXT_MD * PROSE_LINE - TASK_BOX) / 2.0))
+                .rounded(px(tokens::RADIUS))
+                .border(px(tokens::BORDER))
                 .border_color(move || tokens::control_border())
+                .bg(move || tokens::normal_fill())
         })
+        // Checked as the library's checkbox: the selected fill, no border,
+        // the check in the accent.
         .part(Part::TaskMarkerChecked, |s| {
-            s.bg(move || tokens::accent())
-                .border_color(move || tokens::accent())
-                .text_color(move || tokens::on_accent())
+            s.bg(move || tokens::selected_fill())
+                .border_color(move || AdaptiveColor::TRANSPARENT)
+                .text_color(move || tokens::accent())
         })
-        .part(Part::Table, |s| s.rounded(px(tokens::RADIUS)))
+        .part(Part::Table, |s| {
+            s.rounded(px(tokens::RADIUS))
+                .border_color(move || tokens::border())
+        })
+        .part(Part::TableHead, |s| s.bg(move || tokens::hover_fill()))
         .part(Part::TableRow, |s| {
             s.border_color(move || tokens::divider())
         })

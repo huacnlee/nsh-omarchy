@@ -31,13 +31,18 @@ pub fn table(accessibility_label: impl Into<SharedString>) -> TableElement {
         .text_color(move || tokens::foreground())
 }
 
-/// The header group: its row of [`table_head`] titles on a raised strip.
+/// The header group: its row of [`table_head`] titles on a raised strip,
+/// with the table's border under it.
 pub fn table_header() -> TableHeaderElement {
     nsh_base::table_header()
         .bg(move || tokens::surface())
         .border_b_1()
-        .border_color(move || tokens::divider())
+        .border_color(move || tokens::border())
 }
+
+/// A cell's column line: a divider at its trailing edge, but the last
+/// column's (the table's border closes it).
+const COLUMN_LINE: &str = "last:border-r-0";
 
 /// The header's row of column titles.
 pub fn table_header_row() -> TableRowElement {
@@ -50,8 +55,12 @@ pub fn table_header_row() -> TableRowElement {
 /// width; `None` lets it share the row.
 pub fn table_head(title: impl Into<SharedString>, width: Option<f32>) -> TableHeadElement {
     sized(nsh_base::table_head(), width)
+        .self_stretch()
         .px(px(tokens::SPACE_2))
         .justify_center()
+        .border_r_1()
+        .border_color(move || tokens::divider())
+        .app_class(SharedString::from(COLUMN_LINE))
         .child(
             text(title.into())
                 .number_of_lines(1)
@@ -72,7 +81,8 @@ pub fn table_body() -> TableBodyElement {
 }
 
 /// A body row: pressable and focusable (role `row`, Tab reaches it, Space
-/// and Return press it) with a divider above it, a hover wash and, while
+/// and Return press it) with a divider above it (but the first, under the
+/// header's border), a hover wash and, while
 /// `selected`, the selected fill and bright text. Give it
 /// `.on_press(..)` to select it and `.accessibility_label(..)` to name it.
 pub fn table_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
@@ -84,10 +94,11 @@ pub fn table_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
                 .text_color(move || tokens::bright())
         })
         .flex_row()
-        .items_center()
+        .items_stretch()
         .min_h(px(tokens::CONTROL_MD))
         .border_t_1()
         .border_t_color(move || tokens::divider())
+        .app_class(SharedString::from("first:border-t-0"))
         .transition_colors()
         .duration(tokens::DURATION_FAST)
         .hover(|s| s.bg(move || tokens::hover_fill()))
@@ -97,7 +108,7 @@ pub fn table_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
 
 /// A text cell. `width` fixes the column's width; `None` shares the row.
 pub fn table_cell(content: impl Into<SharedString>, width: Option<f32>) -> TableCellElement {
-    sized(nsh_base::table_cell(), width)
+    column_line(sized(nsh_base::table_cell(), width))
         .px(px(tokens::SPACE_2))
         .py(px(tokens::SPACE_1))
         .justify_center()
@@ -109,7 +120,7 @@ pub fn table_cell_numeric(
     content: impl Into<SharedString>,
     width: Option<f32>,
 ) -> TableCellElement {
-    sized(nsh_base::table_cell(), width)
+    column_line(sized(nsh_base::table_cell(), width))
         .px(px(tokens::SPACE_2))
         .py(px(tokens::SPACE_1))
         .justify_center()
@@ -120,6 +131,13 @@ pub fn table_cell_numeric(
                 .font_family(move || tokens::font_mono())
                 .tabular_nums(),
         )
+}
+
+/// The divider at a cell's trailing edge, the row's full height.
+fn column_line(cell: TableCellElement) -> TableCellElement {
+    cell.border_r_1()
+        .border_color(move || tokens::divider())
+        .app_class(SharedString::from(COLUMN_LINE))
 }
 
 fn sized<S: Styled>(element: S, width: Option<f32>) -> S {
@@ -158,8 +176,8 @@ pub fn data_column_numeric(
 }
 
 /// A virtualized table of any number of rows: secondary titles on a raised
-/// strip, divider rows, a hover wash, the selected row's fill and bright
-/// text, the sorted column's title bright with its chevron in the accent.
+/// strip under the table's border, divider rows and column lines, a
+/// hover wash, the selected row's fill and bright text, the sorted column's title bright with its chevron in the accent.
 /// Rows select by a press and by the arrow keys, Home, End, Page Up and
 /// Down while the table has the keyboard. Sortable columns report the next
 /// sort with `on_sort_change`: the owner sorts its rows and sets `.sort(..)`.
@@ -181,9 +199,20 @@ pub fn data_table(accessibility_label: impl Into<SharedString>) -> DataTableElem
 }
 
 fn data_table_classes() -> DataTableClasses {
+    // The lines and fills as theme classes, which follow a theme change:
+    // the header under the table's border, a divider under every row and
+    // at every column's trailing edge (the last too: the columns may end
+    // before the table does), through the titles as through the rows.
+    const COLUMN: &str = "border-r border-foreground/12";
     let mut classes = DataTableClasses::default();
-    classes.header_cell = Some("px-2".into());
-    classes.cell = Some("px-2".into());
+    classes.header = Some("bg-surface border-b border-border".into());
+    classes.header_cell =
+        Some(format!("px-2 {COLUMN} text-[11px] font-semibold text-text-secondary").into());
+    classes.header_cell_sorted = Some("text-bright".into());
+    classes.row = Some("border-b border-foreground/12".into());
+    classes.row_hover = Some("bg-foreground/8".into());
+    classes.row_selected = Some("bg-foreground/18 text-bright".into());
+    classes.cell = Some(format!("px-2 {COLUMN}").into());
     classes
 }
 
@@ -194,33 +223,11 @@ fn part(f: impl FnOnce(StyleRefinement) -> StyleRefinement) -> Option<PartStyle>
 
 fn data_table_styles() -> DataTableStyles {
     let mut styles = DataTableStyles::default();
-    styles.header = part(|s| {
-        s.bg(move || tokens::surface())
-            .border_b_1()
-            .border_color(move || tokens::divider())
-    });
-    styles.header_cell = part(|s| {
-        s.text_size(px(tokens::TEXT_SM))
-            .font_weight(FontWeight::SEMIBOLD)
-            .text_color(move || tokens::secondary())
-    });
-    styles.header_cell_sorted = part(|s| s.text_color(move || tokens::bright()));
     styles.sort_indicator = part(|s| s.text_color(move || tokens::secondary()));
     styles.sort_ascending = part(|s| s.selected(|s| s.text_color(move || tokens::accent())));
     styles.sort_descending = part(|s| s.selected(|s| s.text_color(move || tokens::accent())));
     styles.resize_handle = part(|s| s.bg(move || tokens::divider()));
-    styles.row = part(|s| {
-        s.border_b_1()
-            .border_b_color(move || tokens::divider())
-            .transition_colors()
-            .duration(tokens::DURATION_FAST)
-    });
-    styles.row_odd = part(|s| s.bg(move || tokens::normal_fill()));
-    styles.row_hover = part(|s| s.bg(move || tokens::hover_fill()));
-    styles.row_selected = part(|s| {
-        s.bg(move || tokens::selected_fill())
-            .text_color(move || tokens::bright())
-    });
+    styles.row = part(|s| s.transition_colors().duration(tokens::DURATION_FAST));
     styles.row_active = part(|s| s.bg(move || tokens::hover_fill()));
     styles.cell_selected = part(|s| s.border_1().border_color(move || tokens::focus_border()));
     styles.fixed_edge = part(|s| s.bg(move || tokens::divider()));

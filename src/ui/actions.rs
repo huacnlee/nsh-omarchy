@@ -1,102 +1,155 @@
-//! The toggles and the groups of actions: `Toggle`, `ToggleGroup`,
-//! `ButtonGroup`, drawn with [`crate::components`] and the Omarchy tokens.
+//! The toggles, the groups of actions and the link: [`Toggle`],
+//! [`ToggleGroup`], [`ButtonGroup`] and [`Link`], drawn with
+//! [`crate::components`] and the Omarchy tokens.
 
-use nsh_base::{toggle as base_toggle, toggle_group as base_toggle_group};
+use std::rc::Rc;
+
+use nsh_base::{
+    LinkOpenWith, toggle as base_toggle, toggle_group as base_toggle_group,
+};
 use nsh_core::{Checked, prelude::*};
 
-use crate::components::button::{ControlSize, actions_duration};
+use super::button::ButtonGroupContext;
+use crate::components::button::ControlSize;
+use crate::components::icon::{IconName, icon};
+use crate::components::link::link_style;
 use crate::components::toggle::toggle_look;
 use crate::tokens;
+
+// ---- Toggle -------------------------------------------------------------------
+
+/// What a [`ToggleGroup`] gives its [`Toggle`]s, through context.
+#[derive(Clone)]
+struct Toggles {
+    /// The values that are on.
+    value: Memo<Vec<SharedString>>,
+    size: Prop<ControlSize>,
+    disabled: Prop<bool>,
+    /// Asks to turn the toggle of a value on or off.
+    request: Rc<dyn Fn(SharedString, bool)>,
+}
 
 /// The props of [`Toggle`].
 #[derive(Debug, Clone, PartialEq, Props)]
 pub struct ToggleProps {
-    /// On or off (controlled): write `onChange`'s value back to it.
-    #[prop(default)]
-    pub pressed: Prop<bool>,
-    /// The visible label.
-    pub label: Prop<Option<SharedString>>,
-    /// A glyph before the label (`<Icon name="bold" />`).
-    pub icon: Prop<Option<Slot>>,
-    /// Content after the label, or the whole content without `label`.
-    pub children: Prop<Children>,
-    /// 24, 28 (default) or 32 points tall.
+    /// The visible label, which screen readers say.
+    pub label: Prop<SharedString>,
+    /// On or off. Set, the app owns it: write back what `onChange` asks
+    /// for. Left out, the toggle keeps its own (off at first).
+    pub checked: Prop<Option<bool>>,
+    /// A glyph before the label, by its Lucide name (`"bold"`).
+    pub icon: Prop<Option<IconName>>,
+    /// `small` (24 points tall), `medium` (28, the default) or `large` (32).
+    /// Inside a `ToggleGroup`, the group's size.
     #[prop(default)]
     pub size: Prop<ControlSize>,
     /// No presses, no hover, focus or press feedback; dimmed text.
     #[prop(default)]
     pub disabled: Prop<bool>,
-    /// What screen readers say when the visible content does not (an icon).
-    pub accessibility_label: Prop<Option<SharedString>>,
+    /// Its id inside a `ToggleGroup`: on while the group's `value` holds
+    /// it. The group then owns whether it is on.
+    pub value: Prop<Option<SharedString>>,
 }
 
 /// The events of a [`Toggle`].
 #[derive(Debug, Clone, PartialEq, Event)]
 pub enum ToggleEvent {
-    /// It was pressed: the value asked for, the opposite of `pressed`.
-    #[args(pressed)]
+    /// It was pressed (a click, a tap, Space or Return): the value asked
+    /// for, the opposite of `checked`.
+    #[args(checked)]
     Change(bool),
 }
 
 /// A button that is on or off:
-/// `<Toggle label="Bold" pressed={bold()} onChange={({ pressed }) => bold.set(pressed)} />`.
+/// `<Toggle label="Bold" checked={bold()} onChange={({ checked }) => bold.set(checked)} />`.
+/// In a `ToggleGroup` it is one of the group's, named by its `value`.
 #[component]
 pub fn Toggle(props: ToggleProps, cx: Scope<ToggleEvent>) -> impl IntoElement {
-    let pressed = props.pressed;
-    let label = props.label;
-    let size = props.size;
-    toggle_look!(view(), move || size.get())
-        .role(AccessibilityRole::Button)
-        .disabled(move || props.disabled.get())
-        .optional_label(move || props.accessibility_label.get())
-        .accessibility_state(move || AccessibilityState {
-            pressed: Some(if pressed.get() { Checked::True } else { Checked::False }),
-            ..AccessibilityState::default()
-        })
-        .on_press(move || cx.emit(ToggleEvent::Change(!pressed.get_untracked())))
-        .slot(props.icon.get(), |s| s)
-        .child(dynamic(move || label.get().map(|label| text(label).into_element())))
-        .child(props.children)
+    let ToggleProps {
+        label,
+        checked,
+        icon: glyph,
+        size,
+        disabled,
+        value,
+    } = props;
+    let group = use_context::<Toggles>();
+    let own = signal(false);
+    let in_group = group.clone();
+    let on = computed(move || match (&in_group, value.get()) {
+        (Some(g), Some(v)) => g.value.with(|values| values.contains(&v)),
+        _ => checked.get().unwrap_or_else(|| own.get()),
+    });
+    let (group_size, group_disabled) = match &group {
+        Some(g) => (Some(g.size), Some(g.disabled)),
+        None => (None, None),
+    };
+    let size = move || group_size.map_or_else(|| size.get(), |s| s.get());
+    let off = move || disabled.get() || group_disabled.is_some_and(|d| d.get());
+    let roving = group.is_some();
+    let request = move |next: bool| {
+        match (&group, value.get_untracked()) {
+            (Some(g), Some(v)) => (g.request)(v, next),
+            _ if checked.get_untracked().is_none() => own.set(next),
+            _ => {}
+        }
+        cx.emit(ToggleEvent::Change(next));
+    };
+    let glyph = move || dynamic(move || glyph.get().map(|name| icon(name).into_element()));
+    if roving {
+        // In a group: `nsh_base`'s toggle, which joins the group's arrow
+        // keys and its one stop of Tab.
+        toggle_look!(base_toggle(), size)
+            .pressed(move || on.get())
+            .disabled(off)
+            .accessibility_label(move || Some(label.get()))
+            .on_change(move |next: &bool| request(*next))
+            .child(glyph())
+            .child(text(move || label.get()))
+            .into_element()
+    } else {
+        // Alone: a plain view, so it works in a trigger slot.
+        toggle_look!(view(), size)
+            .role(AccessibilityRole::Button)
+            .disabled(off)
+            .label(move || label.get())
+            .accessibility_state(move || AccessibilityState {
+                pressed: Some(if on.get() { Checked::True } else { Checked::False }),
+                ..AccessibilityState::default()
+            })
+            .on_press(move || request(!on.get_untracked()))
+            .child(glyph())
+            .child(text(move || label.get()))
+            .into_element()
+    }
 }
 
-// ---- ToggleGroup and ButtonGroup ------------------------------------------
-
-/// One option of a [`ToggleGroup`] or a [`ButtonGroup`].
-#[derive(Debug, Clone, PartialEq, JsObject)]
-pub struct GroupItem {
-    /// The app's id of the option, never its label.
-    pub value: SharedString,
-    /// What the option shows and screen readers say.
-    pub label: SharedString,
-    /// Not choosable, and skipped by the arrow keys.
-    #[prop(default)]
-    pub disabled: bool,
-}
+// ---- ToggleGroup ----------------------------------------------------------------
 
 /// The props of [`ToggleGroup`].
 #[derive(Debug, Clone, PartialEq, Props)]
 pub struct ToggleGroupProps {
-    /// The options, one toggle each.
-    pub items: Prop<Vec<GroupItem>>,
-    /// The values that are on (controlled).
+    /// The `value`s of the toggles that are on. Set, the app owns it:
+    /// write back what `onChange` asks for. Left out, the group keeps its
+    /// own (none on at first).
+    pub value: Prop<Option<Vec<SharedString>>>,
+    /// At most one toggle on: turning one on turns the others off.
     #[prop(default)]
-    pub value: Prop<Vec<SharedString>>,
-    /// Several on at once (default); `false`: at most one.
-    #[prop(default = true)]
-    pub multiple: Prop<bool>,
+    pub single: Prop<bool>,
+    /// `small`, `medium` (the default) or `large`: every toggle's size.
+    #[prop(default)]
+    pub size: Prop<ControlSize>,
     /// Every toggle disabled.
     #[prop(default)]
     pub disabled: Prop<bool>,
-    /// 24, 28 (default) or 32 points tall.
-    #[prop(default)]
-    pub size: Prop<ControlSize>,
+    /// The `Toggle`s, each with a `value`.
+    pub children: Prop<Children>,
 }
 
 /// The events of a [`ToggleGroup`].
 #[derive(Debug, Clone, PartialEq, Event)]
 pub enum ToggleGroupEvent {
-    /// A toggle was pressed: the values as they would be. Write them back
-    /// to `value`.
+    /// A toggle was pressed: the values that would be on.
     #[args(value)]
     Change(Vec<SharedString>),
 }
@@ -105,160 +158,145 @@ pub enum ToggleGroupEvent {
 /// and Return turn the focused one on or off.
 #[component]
 pub fn ToggleGroup(props: ToggleGroupProps, cx: Scope<ToggleGroupEvent>) -> impl IntoElement {
-    let value = props.value;
-    let multiple = props.multiple;
-    let size = props.size;
-    let rows = each(
-        move || props.items.get(),
-        |item: &GroupItem| item.value.clone(),
-        move |item, _index| {
-            let id = move || item.get().value;
-            base_toggle()
-                .pressed(move || value.get().contains(&id()))
-                .disabled(move || item.get().disabled)
-                .on_change(move |on: &bool| {
-                    let id = id();
-                    let mut next: Vec<SharedString> = value
-                        .get_untracked()
-                        .into_iter()
-                        .filter(|v| *v != id)
-                        .collect();
-                    if *on {
-                        if !multiple.get_untracked() {
-                            next.clear();
-                        }
-                        next.push(id);
-                    }
-                    cx.emit(ToggleGroupEvent::Change(next));
-                })
-                .map(|t| toggle_look!(t, move || size.get()))
-                .child(text(move || item.get().label))
-        },
-    );
+    let ToggleGroupProps {
+        value,
+        single,
+        size,
+        disabled,
+        children,
+    } = props;
+    let own = signal(Vec::<SharedString>::new());
+    let current = computed(move || value.get().unwrap_or_else(|| own.get()));
+    provide_context(Toggles {
+        value: current,
+        size,
+        disabled,
+        request: Rc::new(move |id, on| {
+            let mut next: Vec<SharedString> = if on && single.get_untracked() {
+                Vec::new()
+            } else {
+                current.get_untracked().into_iter().filter(|v| *v != id).collect()
+            };
+            if on {
+                next.push(id);
+            }
+            if value.get_untracked().is_none() {
+                own.set(next.clone());
+            }
+            cx.emit(ToggleGroupEvent::Change(next));
+        }),
+    });
     view().self_start().child(
         base_toggle_group()
-            .disabled(move || props.disabled.get())
+            .disabled(move || disabled.get())
             .flex_row()
+            .flex_wrap()
             .self_start()
+            .items_center()
             .gap(px(tokens::SPACE_1))
-            .child(rows),
+            .child(children),
     )
 }
+
+// ---- ButtonGroup ----------------------------------------------------------------
 
 /// The props of [`ButtonGroup`].
 #[derive(Debug, Clone, PartialEq, Props)]
 pub struct ButtonGroupProps {
-    /// The options, one segment each.
-    pub items: Prop<Vec<GroupItem>>,
-    /// The chosen option's value (controlled).
-    pub value: Prop<Option<SharedString>>,
-    /// Every segment disabled.
-    #[prop(default)]
-    pub disabled: Prop<bool>,
-    /// 24, 28 (default) or 32 points tall.
+    /// `small`, `medium` (the default) or `large`: every button's size.
     #[prop(default)]
     pub size: Prop<ControlSize>,
+    /// Every button disabled.
+    #[prop(default)]
+    pub disabled: Prop<bool>,
+    /// The `Button`s and `IconButton`s, joined edge to edge.
+    pub children: Prop<Children>,
 }
 
-/// The events of a [`ButtonGroup`].
-#[derive(Debug, Clone, PartialEq, Event)]
-pub enum ButtonGroupEvent {
-    /// A segment other than the chosen one was chosen: its value. Write it
-    /// back to `value`.
-    #[args(value)]
-    Change(SharedString),
-}
-
-/// The horizontal padding of a segment of `size`.
-fn segment_padding(size: ControlSize) -> f32 {
-    match size {
-        ControlSize::Small => tokens::SPACE_3,
-        ControlSize::Medium => tokens::SPACE_4,
-        ControlSize::Large => tokens::SPACE_4 + tokens::SPACE_1,
-    }
-}
-
-/// A setting with one value: equal segments in one square frame, one stop
-/// of Tab. The arrows move the focus between segments without choosing;
-/// Space and Return choose. The chosen segment keeps the selected fill and
-/// bright text.
+/// Buttons joined edge to edge into one control:
+/// `<ButtonGroup><Button label="Copy" /><Button label="Paste" /></ButtonGroup>`.
+/// Each button is its own stop of Tab and reports its own presses.
 #[component]
-pub fn ButtonGroup(props: ButtonGroupProps, cx: Scope<ButtonGroupEvent>) -> impl IntoElement {
-    let value = props.value;
-    let size = props.size;
-    let rows = each(
-        move || props.items.get(),
-        |item: &GroupItem| item.value.clone(),
-        move |item, index| {
-            let id = move || item.get().value;
-            base_toggle()
-                .pressed(move || value.get().as_ref() == Some(&id()))
-                .disabled(move || item.get().disabled)
-                .on_change(move |on: &bool| {
-                    // A press on the chosen segment asks to turn it off: a
-                    // single choice keeps it.
-                    if *on {
-                        cx.emit(ButtonGroupEvent::Change(id()));
-                    }
-                })
-                .min_w(px(64.0))
-                .flex_shrink_0()
-                .flex_row()
-                .items_center()
-                .justify_center()
-                .h(move || px(size.get().height()))
-                .px(move || px(segment_padding(size.get())))
-                .text_size(move || px(size.get().text_size()))
-                .rounded(px(tokens::RADIUS))
-                .border(px(tokens::BORDER))
-                .border_color(AdaptiveColor::TRANSPARENT)
-                .border_l_color(move || {
-                    if index.get() > 0 {
-                        tokens::divider()
-                    } else {
-                        AdaptiveColor::TRANSPARENT
-                    }
-                })
-                .bg(AdaptiveColor::TRANSPARENT)
-                .text_color(move || tokens::foreground())
-                .cursor_pointer()
-                .transition_colors()
-                .duration(move || actions_duration(tokens::DURATION_FAST))
-                .hover(|s| s.bg(move || tokens::hover_fill()))
-                .focus_visible(|s| {
-                    s.bg(move || tokens::hover_fill())
-                        .border_color(move || tokens::focus_border())
-                })
-                .active(|s| s.bg(move || tokens::pressed_fill()))
-                .aria_pressed(|s| {
-                    s.bg(move || tokens::selected_fill())
-                        .text_color(move || tokens::bright())
-                })
-                .disabled_style(|s| {
-                    s.bg(AdaptiveColor::TRANSPARENT)
-                        .text_color(move || tokens::disabled())
-                        .cursor(Cursor::Default)
-                })
-                .child(text(move || item.get().label))
-        },
-    );
-    view().self_start().child(
-        base_toggle_group()
-            .disabled(move || props.disabled.get())
-            .flex_row()
-            .self_start()
-            .border(px(tokens::BORDER))
-            .border_color(move || tokens::border())
-            .child(rows),
-    )
+pub fn ButtonGroup(props: ButtonGroupProps, _cx: Scope<NoEvent>) -> impl IntoElement {
+    provide_context(ButtonGroupContext {
+        size: props.size,
+        disabled: props.disabled,
+    });
+    view()
+        .role(AccessibilityRole::Group)
+        .flex_row()
+        .self_start()
+        .items_center()
+        // The first button's edge, which its `-1` start margin overlaps.
+        .pl(px(tokens::BORDER))
+        .child(props.children)
 }
+
+// ---- Link -------------------------------------------------------------------------
+
+/// Who opens a [`Link`]'s `href` when it is pressed.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PropEnum)]
+#[non_exhaustive]
+pub enum LinkTarget {
+    /// The system: a URL of another app or site (`https:`, `mailto:`)
+    /// opens in the system browser or the app for it. The default.
+    #[default]
+    System,
+    /// The app: nothing opens; the app's `onPress` goes there (a route of
+    /// its own).
+    App,
+}
+
+/// The props of [`Link`].
+#[derive(Debug, Clone, PartialEq, Props)]
+pub struct LinkProps {
+    /// The underlined text, which screen readers say.
+    pub label: Prop<SharedString>,
+    /// Where it goes: a URL, or a path of the app's. Shown while the
+    /// pointer rests on the link.
+    pub href: Prop<SharedString>,
+    /// `system` (the default) opens a URL outside the app; `app` leaves
+    /// it to `onPress`.
+    #[prop(default)]
+    pub open_with: Prop<LinkTarget>,
+}
+
+/// The events of a [`Link`].
+#[derive(Debug, Clone, PartialEq, Event)]
+pub enum LinkEvent {
+    /// It was pressed (a click, a tap, Return or Space), after the system
+    /// was asked to open `href` (with `openWith="system"`).
+    Press,
+}
+
+/// Underlined accent text that goes somewhere:
+/// `<Link label="Manual" href="https://omarchy.org/manual" />`.
+#[component]
+pub fn Link(props: LinkProps, cx: Scope<LinkEvent>) -> impl IntoElement {
+    let LinkProps {
+        label,
+        href,
+        open_with,
+    } = props;
+    link_style()
+        .href(move || Some(href.get()))
+        .open_with(move || match open_with.get() {
+            LinkTarget::App => LinkOpenWith::App,
+            _ => LinkOpenWith::System,
+        })
+        .on_press(move || cx.emit(LinkEvent::Press))
+        .child(text(move || label.get()))
+}
+
+crate::sizable!(ToggleElement, ToggleGroupElement, ButtonGroupElement);
 
 /// Registers this area's components for TSX.
 pub(crate) fn register(registry: &mut Registry) {
     registry
         .register::<super::button::Button>()
         .register::<super::button::IconButton>()
+        .register::<ButtonGroup>()
         .register::<Toggle>()
         .register::<ToggleGroup>()
-        .register::<ButtonGroup>();
+        .register::<Link>();
 }

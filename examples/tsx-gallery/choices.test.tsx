@@ -14,6 +14,15 @@ describe("choices", () => {
     expect(app.enabled("role:checkbox[Managed by policy]")).toBe(false);
   });
 
+  test("an uncontrolled checkbox keeps its value", async () => {
+    const app = await gallery("Choices");
+    await app.press("role:checkbox[Keeps its own value]");
+    await app.waitFor("text:Kept: on");
+    // It drew its own value: the next press asks for the opposite.
+    await app.press("role:checkbox[Keeps its own value]");
+    await app.waitFor("text:Kept: off");
+  });
+
   test("switches switch", async () => {
     const app = await gallery("Choices");
     await app.press("role:switch[Bluetooth]");
@@ -45,9 +54,9 @@ describe("choices", () => {
   test("progress shows its value", async () => {
     const app = await gallery("Choices");
     expect(app.shows("text:64%")).toBe(true);
+    expect(app.shows("text:92%")).toBe(true);
     await tabTo(app, "label:Download progress");
     await app.keyboard.press("end");
-    await app.waitFor("text:100%");
     await app.waitFor("text:100%");
   });
 });

@@ -4,7 +4,7 @@ import { NEW_KEY, gallery, tabTo, tabUntil } from "./testing";
 
 describe("navigation", () => {
   test("tabs select by press and arrows", async () => {
-    const app = await gallery("Navigation");
+    const app = await gallery("tabs");
     await app.press("role:tab[Keybindings]");
     await app.waitFor("text:Panel: keys");
     await tabTo(app, "role:tab[Keybindings]");
@@ -16,7 +16,7 @@ describe("navigation", () => {
   });
 
   test("the sidebar selects by press and arrows", async () => {
-    const app = await gallery("Navigation");
+    const app = await gallery("sidebar");
     await app.press("role:tab[Starred]");
     await app.waitFor("text:Mailbox: starred");
     // Tab to the sidebar (one stop, at the current item), Down there.
@@ -26,7 +26,7 @@ describe("navigation", () => {
   });
 
   test("a menu opens, chooses, toggles, closes", async () => {
-    const app = await gallery("Navigation");
+    const app = await gallery("menu");
     await app.press("role:button[File]");
     await app.waitFor(NEW_KEY);
     await app.press("text:Word wrap");
@@ -45,15 +45,15 @@ describe("navigation", () => {
   });
 
   test("a context menu opens on a right click", async () => {
-    const app = await gallery("Navigation");
+    const app = await gallery("context-menu");
     await app.rightClick("text:Right-click here");
     await app.waitFor("text:Paste");
     await app.press("text:Paste");
-    await app.waitFor("text:Chose: Paste · wrap on");
+    await app.waitFor("text:Chose: Paste");
   });
 
   test("an accordion opens and closes items", async () => {
-    const app = await gallery("Navigation");
+    const app = await gallery("accordion");
     expect(app.shows("text:An opinionated Arch and Hyprland setup.")).toBe(true);
     await app.press("text:Can I change the theme?");
     await app.waitFor("text:Open: what, themes");
@@ -63,7 +63,7 @@ describe("navigation", () => {
   });
 
   test("collapsibles open, controlled or not", async () => {
-    const app = await gallery("Navigation");
+    const app = await gallery("collapsible");
     expect(app.shows("text:Compression: zstd, level 3")).toBe(false);
     await app.press("label:Advanced options");
     await app.waitFor("text:Advanced: open");
@@ -73,7 +73,7 @@ describe("navigation", () => {
   });
 
   test("pagination moves between pages", async () => {
-    const app = await gallery("Navigation");
+    const app = await gallery("pagination");
     expect(app.enabled("label:Previous page")).toBe(false);
     await app.press("label:Next page");
     await app.waitFor("text:Page 2 of 12");

@@ -4,7 +4,7 @@ import { gallery, tabUntil, tabTo } from "./testing";
 
 describe("choices", () => {
   test("checkboxes check, an indeterminate one becomes checked", async () => {
-    const app = await gallery("Choices");
+    const app = await gallery("checkbox");
     await app.press("role:checkbox[Sync on metered networks]");
     await app.waitFor("text:Notifications on · sync on");
     await app.press("role:checkbox[Send notifications]");
@@ -15,7 +15,7 @@ describe("choices", () => {
   });
 
   test("an uncontrolled checkbox keeps its value", async () => {
-    const app = await gallery("Choices");
+    const app = await gallery("checkbox");
     await app.press("role:checkbox[Keeps its own value]");
     await app.waitFor("text:Kept: on");
     // It drew its own value: the next press asks for the opposite.
@@ -24,7 +24,7 @@ describe("choices", () => {
   });
 
   test("switches switch", async () => {
-    const app = await gallery("Choices");
+    const app = await gallery("switch");
     await app.press("role:switch[Bluetooth]");
     await app.waitFor("text:Wi-Fi on · Bluetooth on");
     await app.press("role:switch[Wi-Fi]");
@@ -33,7 +33,7 @@ describe("choices", () => {
   });
 
   test("radios check by press and by arrows", async () => {
-    const app = await gallery("Choices");
+    const app = await gallery("radio-group");
     await app.press("role:radio[Team]");
     await app.waitFor("text:Plan: team");
     await tabUntil(app, "up", () => app.shows("text:Plan: pro"));
@@ -41,7 +41,7 @@ describe("choices", () => {
   });
 
   test("a slider steps with the keys", async () => {
-    const app = await gallery("Choices");
+    const app = await gallery("slider");
     await tabTo(app, "label:Volume");
     await app.keyboard.press("right");
     await app.waitFor("text:41");
@@ -52,7 +52,7 @@ describe("choices", () => {
   });
 
   test("progress shows its value", async () => {
-    const app = await gallery("Choices");
+    const app = await gallery("progress");
     expect(app.shows("text:64%")).toBe(true);
     expect(app.shows("text:92%")).toBe(true);
     await tabTo(app, "label:Download progress");

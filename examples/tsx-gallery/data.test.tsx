@@ -4,7 +4,7 @@ import { gallery } from "./testing";
 
 describe("data", () => {
   test("a table row selects by press", async () => {
-    const app = await gallery("Data");
+    const app = await gallery("table");
     await app.waitFor("text:Selected pid 1207");
     await app.press("label:alacritty 1214");
     await app.waitFor("text:Selected pid 1214");
@@ -15,7 +15,7 @@ describe("data", () => {
   });
 
   test("a data table sorts and selects rows by id", async () => {
-    const app = await gallery("Data");
+    const app = await gallery("data-table");
     await app.waitFor("text:Sort none · selected none");
     await app.press("text:1228");
     await app.waitFor("text:Sort none · selected 1228");
@@ -28,8 +28,7 @@ describe("data", () => {
   });
 
   test("a virtual list selects by id; a disabled item takes no press", async () => {
-    const app = await gallery("Data");
-    await app.scroll("id:page", 700);
+    const app = await gallery("list");
     await app.press("label:Item 3");
     await app.waitFor("text:Selected item 3");
     expect(app.enabled("label:Item 2")).toBe(false);
@@ -40,8 +39,7 @@ describe("data", () => {
   });
 
   test("a tree folds and selects", async () => {
-    const app = await gallery("Data");
-    await app.scroll("id:page", 1100);
+    const app = await gallery("tree");
     await app.waitFor("role:treeitem[hypr]");
     await app.press("role:treeitem[themes]");
     await app.waitFor("text:Selected themes · expanded config themes");
@@ -51,8 +49,7 @@ describe("data", () => {
   });
 
   test("resizable panels report their sizes", async () => {
-    const app = await gallery("Data");
-    await app.scroll("id:page", 1500);
+    const app = await gallery("resizable");
     await app.waitFor("text:Sizes as laid out");
     await app.drag("label:Resize panels horizontally", { x: 40, y: 0 });
     await app.waitFor("text:/Sizes 240 /");

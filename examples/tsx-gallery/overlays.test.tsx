@@ -4,7 +4,7 @@ import { gallery } from "./testing";
 
 describe("overlays", () => {
   test("a dialog opens, edits, saves, and Escape closes it", async () => {
-    const app = await gallery("Overlays");
+    const app = await gallery("dialog");
     await app.press("role:button[Rename workspace]");
     await app.waitFor("label:Workspace name");
     await app.type("label:Workspace name", " main");
@@ -20,7 +20,7 @@ describe("overlays", () => {
   });
 
   test("an alert dialog confirms", async () => {
-    const app = await gallery("Overlays");
+    const app = await gallery("alert-dialog");
     await app.press("role:button[Delete workspace]");
     await app.waitFor("text:Delete workspace?");
     await app.press("role:button[Cancel]");
@@ -32,7 +32,7 @@ describe("overlays", () => {
   });
 
   test("the native confirm answers", async () => {
-    const app = await gallery("Overlays");
+    const app = await gallery("alert-dialog");
     app.onDialog(() => "Restart");
     await app.press("role:button[Native confirm]");
     await app.waitFor("text:Last: Restarted");
@@ -40,7 +40,7 @@ describe("overlays", () => {
   });
 
   test("a danger confirm is answered by its cancel", async () => {
-    const app = await gallery("Overlays");
+    const app = await gallery("alert-dialog");
     app.onDialog(() => "Cancel");
     await app.press("role:button[Danger confirm]");
     await app.waitFor("text:Last: Files kept");
@@ -48,7 +48,7 @@ describe("overlays", () => {
   });
 
   test("a sheet opens and its close button closes it", async () => {
-    const app = await gallery("Overlays");
+    const app = await gallery("sheet");
     await app.press("role:button[Open settings]");
     await app.waitFor("text:Quick settings");
     await app.press("role:switch[Do not disturb]");
@@ -61,23 +61,27 @@ describe("overlays", () => {
   });
 
   test("a popover opens and Escape closes it", async () => {
-    const app = await gallery("Overlays");
+    const app = await gallery("popover");
     await app.press("role:button[Details]");
     await app.waitFor("text:82%, about 5 hours left.");
     await app.keyboard.press("escape");
     await app.waitFor("text:82%, about 5 hours left.", { state: "gone" });
   });
 
-  test("a tooltip and a hover card show on hover", async () => {
-    const app = await gallery("Overlays");
+  test("a tooltip shows on hover", async () => {
+    const app = await gallery("tooltip");
     await app.hover("role:button[Hover me]");
     await app.waitFor("text:Lock screen");
+  });
+
+  test("a hover card shows on hover", async () => {
+    const app = await gallery("hover-card");
     await app.hover("role:button[@dhh]");
     await app.waitFor("text:Creator of Omarchy.");
   });
 
   test("toasts show, run their action, time out, and errors stay", async () => {
-    const app = await gallery("Overlays");
+    const app = await gallery("toast");
     await app.press("role:button[With action]");
     await app.waitFor("text:Window closed");
     await app.press("role:button[Undo]");
@@ -94,7 +98,7 @@ describe("overlays", () => {
   }, 20000);
 
   test("dismissToast removes a toast by its id, and an id replaces its toast", async () => {
-    const app = await gallery("Overlays");
+    const app = await gallery("toast");
     await app.press("role:button[With action]");
     await app.waitFor("text:Window closed");
     await app.press("role:button[Dismiss last]");

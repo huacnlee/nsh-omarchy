@@ -58,10 +58,12 @@ test('the homepage runs the TSX gallery', async ({ page }) => {
   await page.goto('./');
   await page.locator(`iframe[title="${galleryTitle}"]`).scrollIntoViewIfNeeded();
   const gallery = page.frameLocator(`iframe[title="${galleryTitle}"]`);
-  await expect(gallery.getByRole('button', { name: 'Choices' })).toBeVisible({ timeout: 90_000 });
-  await gallery.getByRole('button', { name: 'Choices' }).click();
-  await expect(gallery.getByText('Choices', { exact: true }).first()).toBeVisible();
+  // A page per component, grouped by family in the sidebar.
+  await expect(gallery.getByRole('tab', { name: 'Switch' })).toBeVisible({ timeout: 90_000 });
+  await expect(gallery.getByText('Choices', { exact: true })).toBeVisible();
+  await gallery.getByRole('tab', { name: 'Switch' }).click();
   await expect(gallery.getByRole('switch').first()).toBeVisible();
+  await expect(gallery.getByRole('checkbox')).toHaveCount(0);
 });
 
 test('the gallery follows the site theme at startup and as it changes', async ({ page }) => {

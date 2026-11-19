@@ -18,20 +18,14 @@ import {
   Tab,
   Tabs,
 } from "nsh-omarchy";
-import { Row, Section, Status } from "./Section";
+import { Demos, type Family, Row, Section, Status } from "./Section";
 
-export function Navigation() {
+function TabsPage() {
   const tab = signal("general");
   const view = signal("list");
-  const mailbox = signal("inbox");
-  const last = signal("nothing");
-  const wrap = signal(true);
-  const open = signal<string[]>(["what"]);
-  const advanced = signal(false);
-  const page = signal(1);
   return (
-    <View class="gap-6">
-      <Section title="Tabs" description="Underline and segmented; the arrows move and select, the selected fill slides.">
+    <Demos>
+      <Section title="Underline" description="The arrows move and select; the indicator slides.">
         <Tabs accessibilityLabel="Settings" value={tab()} onChange={({ value }) => tab.set(value)}>
           <Tab value="general" label="General" />
           <Tab value="keys" label="Keybindings" icon="terminal" />
@@ -39,6 +33,8 @@ export function Navigation() {
           <Tab value="beta" label="Beta" disabled />
         </Tabs>
         <Body>{`Panel: ${tab()}`}</Body>
+      </Section>
+      <Section title="Segmented" description="A compact switch between views; the selected fill slides.">
         <Tabs variant="segmented" size="small" accessibilityLabel="View" value={view()} onChange={({ value }) => view.set(value)}>
           <Tab value="list" label="List" />
           <Tab value="grid" label="Grid" />
@@ -46,6 +42,14 @@ export function Navigation() {
         </Tabs>
         <Status text={`View: ${view()}`} />
       </Section>
+    </Demos>
+  );
+}
+
+function SidebarPage() {
+  const mailbox = signal("inbox");
+  return (
+    <Demos>
       <Section title="Sidebar" description="Sections of items; the current one has the selected fill. Up and Down move.">
         <Row>
           <Sidebar
@@ -68,7 +72,16 @@ export function Navigation() {
           <Status text={`Mailbox: ${mailbox()}`} />
         </Row>
       </Section>
-      <Section title="Menu and ContextMenu" description="Rows with shortcuts in monospace, checkable rows, a destructive row.">
+    </Demos>
+  );
+}
+
+function MenuPage() {
+  const last = signal("nothing");
+  const wrap = signal(true);
+  return (
+    <Demos>
+      <Section title="Menu" description="Rows with shortcuts in monospace, a checkable row, a destructive row.">
         <Row>
           <Menu trigger={<Button label="File" icon="file" />}>
             <MenuLabel label="Document" />
@@ -79,21 +92,40 @@ export function Navigation() {
             <MenuSeparator />
             <MenuItem label="Delete" icon="trash" danger onSelect={() => last.set("Delete")} />
           </Menu>
-          <ContextMenu
-            menu={
-              <>
-                <MenuItem label="Copy" icon="copy" shortcut="mod-c" onSelect={() => last.set("Copy")} />
-                <MenuItem label="Paste" shortcut="mod-v" onSelect={() => last.set("Paste")} />
-              </>
-            }
-          >
-            <View class="h-16 w-64 items-center justify-center border border-dashed border-foreground/40">
-              <Text class="text-xs text-text-secondary">Right-click here</Text>
-            </View>
-          </ContextMenu>
         </Row>
         <Status text={`Chose: ${last()} · wrap ${wrap() ? "on" : "off"}`} />
       </Section>
+    </Demos>
+  );
+}
+
+function ContextMenuPage() {
+  const last = signal("nothing");
+  return (
+    <Demos>
+      <Section title="ContextMenu" description="The same rows, opened by a right click at the pointer.">
+        <ContextMenu
+          menu={
+            <>
+              <MenuItem label="Copy" icon="copy" shortcut="mod-c" onSelect={() => last.set("Copy")} />
+              <MenuItem label="Paste" shortcut="mod-v" onSelect={() => last.set("Paste")} />
+            </>
+          }
+        >
+          <View class="h-16 w-64 items-center justify-center border border-dashed border-foreground/40">
+            <Text class="text-xs text-text-secondary">Right-click here</Text>
+          </View>
+        </ContextMenu>
+        <Status text={`Chose: ${last()}`} />
+      </Section>
+    </Demos>
+  );
+}
+
+function AccordionPage() {
+  const open = signal<string[]>(["what"]);
+  return (
+    <Demos>
       <Section title="Accordion" description="Items open under their headings; the chevron turns.">
         <Accordion value={open()} multiple onChange={({ value }) => open.set(value)} class="w-96">
           <AccordionItem value="what" title="What is Omarchy?">
@@ -108,7 +140,15 @@ export function Navigation() {
         </Accordion>
         <Status text={`Open: ${open().join(", ") || "none"}`} />
       </Section>
-      <Section title="Collapsible" description="One region under a trigger row.">
+    </Demos>
+  );
+}
+
+function CollapsiblePage() {
+  const advanced = signal(false);
+  return (
+    <Demos>
+      <Section title="Collapsible" description="One region under a trigger row, controlled or not.">
         <Collapsible class="w-96" title="Advanced options" open={advanced()} onOpenChange={({ open }) => advanced.set(open)}>
           <Body>Compression: zstd, level 3</Body>
         </Collapsible>
@@ -117,10 +157,31 @@ export function Navigation() {
         </Collapsible>
         <Status text={`Advanced: ${advanced() ? "open" : "closed"}`} />
       </Section>
+    </Demos>
+  );
+}
+
+function PaginationPage() {
+  const page = signal(1);
+  return (
+    <Demos>
       <Section title="Pagination" description="Square cells; the current page carries the selected fill.">
         <Pagination accessibilityLabel="Results" page={page()} totalPages={12} onChange={({ page: p }) => page.set(p)} />
         <Status text={`Page ${page()} of 12`} />
       </Section>
-    </View>
+    </Demos>
   );
 }
+
+export const navigation: Family = {
+  title: "Navigation",
+  pages: [
+    { value: "tabs", title: "Tabs", page: TabsPage },
+    { value: "sidebar", title: "Sidebar", page: SidebarPage },
+    { value: "menu", title: "Menu", page: MenuPage },
+    { value: "context-menu", title: "ContextMenu", page: ContextMenuPage },
+    { value: "accordion", title: "Accordion", page: AccordionPage },
+    { value: "collapsible", title: "Collapsible", page: CollapsiblePage },
+    { value: "pagination", title: "Pagination", page: PaginationPage },
+  ],
+};

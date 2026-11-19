@@ -9,6 +9,44 @@ use nsh_core::prelude::*;
 
 use crate::components::button::{ButtonVariant, ControlSize, button_look};
 use crate::components::icon::{IconName, icon};
+use crate::tokens;
+
+/// What a [`ButtonGroup`](super::actions::ButtonGroup) gives its buttons,
+/// through context: the size and the disabled state they share.
+#[derive(Clone, Copy)]
+pub(crate) struct ButtonGroupContext {
+    pub(crate) size: Prop<ControlSize>,
+    pub(crate) disabled: Prop<bool>,
+}
+
+/// A button's size and disabled state: its own, or its group's (the
+/// group's size wins, either one disables it).
+fn in_group(
+    size: Prop<ControlSize>,
+    disabled: Prop<bool>,
+) -> (
+    Option<ButtonGroupContext>,
+    impl Fn() -> ControlSize + Copy + 'static,
+    impl Fn() -> bool + Copy + 'static,
+) {
+    let group = use_context::<ButtonGroupContext>();
+    let size = move || group.map_or_else(|| size.get(), |g| g.size.get());
+    let disabled = move || disabled.get() || group.is_some_and(|g| g.disabled.get());
+    (group, size, disabled)
+}
+
+/// Joins a button of a group to the one before it: the shared edge is one
+/// line (the group pads its start by as much), and the hovered or focused
+/// button draws its outline above its neighbors.
+fn joined(view: View, group: Option<ButtonGroupContext>) -> View {
+    match group {
+        Some(_) => view
+            .ml(px(-tokens::BORDER))
+            .hover(|s| s.z_index(1))
+            .focus_visible(|s| s.z_index(2)),
+        None => view,
+    }
+}
 
 /// A view that presses as a button: role, disabled, selected and busy
 /// states.
@@ -86,9 +124,11 @@ pub enum ButtonEvent {
 #[component]
 pub fn Button(props: ButtonProps, cx: Scope<ButtonEvent>) -> impl IntoElement {
     let label = props.label;
-    let disabled = move || props.disabled.get() || props.loading.get();
+    let (group, size, off) = in_group(props.size, props.disabled);
+    let disabled = move || off() || props.loading.get();
     pressable(disabled, props.selected)
-        .map(|v| button_look!(v, move || props.variant.get(), move || props.size.get()))
+        .map(|v| button_look!(v, move || props.variant.get(), size))
+        .map(|v| joined(v, group))
         .label(move || props.accessibility_label.get().unwrap_or_else(|| label.get()))
         .on_press(move || cx.emit(ButtonEvent::Press))
         .map(|v| with_tooltip(v, props.tooltip.get()))
@@ -127,11 +167,12 @@ pub struct IconButtonProps {
 /// A square, icon-only action: `<IconButton icon="plus" label="Add" />`.
 #[component]
 pub fn IconButton(props: IconButtonProps, cx: Scope<ButtonEvent>) -> impl IntoElement {
-    let size = move || props.size.get();
-    let disabled = move || props.disabled.get() || props.loading.get();
+    let (group, size, off) = in_group(props.size, props.disabled);
+    let disabled = move || off() || props.loading.get();
     let glyph = props.icon;
     pressable(disabled, props.selected)
         .map(|v| button_look!(v, move || props.variant.get(), size))
+        .map(|v| joined(v, group))
         .w(move || px(size().height()))
         .px(px(0.0))
         .label(move || props.label.get())

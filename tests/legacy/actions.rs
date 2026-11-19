@@ -4,7 +4,7 @@
 use nsh_core::prelude::*;
 use nsh_engine::{EngineConfig, Environment, Idiom, Os, Points, Root, Size};
 use nsh_omarchy::components::{
-    ButtonGroupItem, ButtonSize, ButtonVariant, button, button_group, button_primary, icon_button,
+    ButtonGroupItem, ControlSize, ButtonVariant, button, button_group, button_primary, icon_button,
     icon_toggle, link, tab_list, toggle, toggle_group,
 };
 use nsh_testing::Headless;
@@ -35,7 +35,7 @@ fn Buttons() -> impl IntoElement {
         .child(button_primary("Apply").on_press(add(1)))
         .child(button("Unavailable").disabled(true).on_press(add(100)))
         .child(
-            icon_button(text("+"), "Add panel", ButtonVariant::Ghost, ButtonSize::Sm)
+            icon_button(text("+"), "Add panel", ButtonVariant::Ghost, ControlSize::Small)
                 .on_press(add(10)),
         )
         .child(text(move || format!("count={}", count.get())))
@@ -105,7 +105,7 @@ fn Toggles() -> impl IntoElement {
         )
         .child(toggle_group(
             "Formatting",
-            [icon_toggle(text("B"), "Bold", ButtonSize::Md)
+            [icon_toggle(text("B"), "Bold", ControlSize::Medium)
                 .pressed(bold)
                 .on_change(move |on: &bool| bold.set(*on))],
         ))

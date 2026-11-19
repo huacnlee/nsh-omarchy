@@ -3,7 +3,7 @@
 use nsh_base::LinkOpenWith;
 use nsh_core::prelude::*;
 
-use crate::components::{self as c, ButtonGroupItem, ButtonSize, ButtonVariant};
+use crate::components::{self as c, ButtonGroupItem, ControlSize, ButtonVariant};
 use crate::tokens;
 
 // ---- Page parts -------------------------------------------------------------
@@ -65,8 +65,8 @@ pub fn button() -> AnyElement {
         appearance = appearance.child(
             row()
                 .child(view().w(px(72.0)).child(caption(name)))
-                .child(c::button_variant("Apply", variant, ButtonSize::Md).on_press(add))
-                .child(c::button_variant("Unavailable", variant, ButtonSize::Md).disabled(true)),
+                .child(c::button_variant("Apply", variant, ControlSize::Medium).on_press(add))
+                .child(c::button_variant("Unavailable", variant, ControlSize::Medium).disabled(true)),
         );
     }
 
@@ -77,15 +77,15 @@ pub fn button() -> AnyElement {
             section("Sizes").child(
                 row()
                     .child(
-                        c::button_variant("Small", ButtonVariant::Primary, ButtonSize::Sm)
+                        c::button_variant("Small", ButtonVariant::Primary, ControlSize::Small)
                             .on_press(add),
                     )
                     .child(
-                        c::button_variant("Medium", ButtonVariant::Primary, ButtonSize::Md)
+                        c::button_variant("Medium", ButtonVariant::Primary, ControlSize::Medium)
                             .on_press(add),
                     )
                     .child(
-                        c::button_variant("Large", ButtonVariant::Primary, ButtonSize::Lg)
+                        c::button_variant("Large", ButtonVariant::Primary, ControlSize::Large)
                             .on_press(add),
                     ),
             ),
@@ -98,7 +98,7 @@ pub fn button() -> AnyElement {
                             glyph("+"),
                             "Add workspace",
                             ButtonVariant::Default,
-                            ButtonSize::Md,
+                            ControlSize::Medium,
                         )
                         .on_press(add),
                     )
@@ -107,7 +107,7 @@ pub fn button() -> AnyElement {
                             glyph("+"),
                             "Add panel",
                             ButtonVariant::Default,
-                            ButtonSize::Md,
+                            ControlSize::Medium,
                         )
                         .on_press(add),
                     )
@@ -116,7 +116,7 @@ pub fn button() -> AnyElement {
                             glyph("+"),
                             "Add panel (small)",
                             ButtonVariant::Ghost,
-                            ButtonSize::Sm,
+                            ControlSize::Small,
                         )
                         .on_press(add),
                     )
@@ -125,7 +125,7 @@ pub fn button() -> AnyElement {
                             glyph("+"),
                             "Add panel unavailable",
                             ButtonVariant::Default,
-                            ButtonSize::Md,
+                            ControlSize::Medium,
                         )
                         .disabled(true),
                     ),
@@ -169,7 +169,7 @@ pub fn toggle() -> AnyElement {
             section("Toggle").child(
                 row()
                     .child(
-                        c::toggle_with_icon(glyph("*"), "Favorite panel", ButtonSize::Md)
+                        c::toggle_with_icon(glyph("*"), "Favorite panel", ControlSize::Medium)
                             .pressed(favorite)
                             .on_change(move |on: &bool| favorite.set(*on)),
                     )
@@ -182,7 +182,7 @@ pub fn toggle() -> AnyElement {
             section("Sizes").child(
                 row()
                     .child(
-                        c::toggle_sized("Wrap lines", ButtonSize::Sm)
+                        c::toggle_sized("Wrap lines", ControlSize::Small)
                             .pressed(wrap)
                             .on_change(move |on: &bool| wrap.set(*on)),
                     )
@@ -192,7 +192,7 @@ pub fn toggle() -> AnyElement {
                             .on_change(move |on: &bool| compact.set(*on)),
                     )
                     .child(
-                        c::icon_toggle(glyph("B"), "Bold", ButtonSize::Lg)
+                        c::icon_toggle(glyph("B"), "Bold", ControlSize::Large)
                             .pressed(bold)
                             .on_change(move |on: &bool| bold.set(*on)),
                     ),
@@ -245,7 +245,7 @@ pub fn toggle_group() -> AnyElement {
         .into_iter()
         .enumerate()
         .map(|(index, (symbol, label))| {
-            c::icon_toggle(glyph(symbol), label, ButtonSize::Md)
+            c::icon_toggle(glyph(symbol), label, ControlSize::Medium)
                 .pressed(move || formats.get()[index])
                 .on_change(move |on: &bool| formats.update(|f| f[index] = *on))
         });

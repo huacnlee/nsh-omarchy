@@ -430,3 +430,14 @@ pub fn Progress(props: ProgressProps, _cx: Scope<NoEvent>) -> impl IntoElement {
                 }),
         )
 }
+
+/// Registers this area's components for TSX.
+pub(crate) fn register(registry: &mut Registry) {
+    registry
+        .register::<Checkbox>()
+        .register::<Switch>()
+        .register::<RadioGroup>()
+        .register::<Radio>()
+        .register::<Slider>()
+        .register::<Progress>();
+}

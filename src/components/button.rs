@@ -20,6 +20,7 @@ use crate::tokens;
 
 /// How a button presents its action.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PropEnum)]
+#[non_exhaustive]
 pub enum ButtonVariant {
     /// A control-colored outline with body text: most actions.
     #[default]
@@ -34,49 +35,50 @@ pub enum ButtonVariant {
 
 /// A control height: 24, 28 or 32 points.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PropEnum)]
-pub enum ButtonSize {
+#[non_exhaustive]
+pub enum ControlSize {
     /// 24 points tall.
-    Sm,
+    Small,
     /// 28 points tall.
     #[default]
-    Md,
+    Medium,
     /// 32 points tall.
-    Lg,
+    Large,
 }
 
-impl ButtonSize {
+impl ControlSize {
     /// The control's height in points.
-    pub fn height(self) -> f32 {
+    pub(crate) fn height(self) -> f32 {
         match self {
-            ButtonSize::Sm => tokens::CONTROL_SM,
-            ButtonSize::Md => tokens::CONTROL_MD,
-            ButtonSize::Lg => tokens::CONTROL_LG,
+            ControlSize::Small => tokens::CONTROL_SM,
+            ControlSize::Medium => tokens::CONTROL_MD,
+            ControlSize::Large => tokens::CONTROL_LG,
         }
     }
 
     /// The horizontal padding of a labelled control.
-    pub fn padding(self) -> f32 {
+    pub(crate) fn padding(self) -> f32 {
         match self {
-            ButtonSize::Sm => tokens::SPACE_2,
-            ButtonSize::Md => tokens::SPACE_3,
-            ButtonSize::Lg => tokens::SPACE_4,
+            ControlSize::Small => tokens::SPACE_2,
+            ControlSize::Medium => tokens::SPACE_3,
+            ControlSize::Large => tokens::SPACE_4,
         }
     }
 
     /// The label's text size.
-    pub fn text_size(self) -> f32 {
+    pub(crate) fn text_size(self) -> f32 {
         match self {
-            ButtonSize::Sm => tokens::TEXT_SM,
-            ButtonSize::Md => tokens::TEXT_MD,
-            ButtonSize::Lg => tokens::TEXT_LG,
+            ControlSize::Small => tokens::TEXT_SM,
+            ControlSize::Medium => tokens::TEXT_MD,
+            ControlSize::Large => tokens::TEXT_LG,
         }
     }
 
     /// The gap between an icon and a label.
-    pub fn gap(self) -> f32 {
+    pub(crate) fn gap(self) -> f32 {
         match self {
-            ButtonSize::Sm => tokens::SPACE_1,
-            ButtonSize::Md | ButtonSize::Lg => tokens::SPACE_2,
+            ControlSize::Small => tokens::SPACE_1,
+            ControlSize::Medium | ControlSize::Large => tokens::SPACE_2,
         }
     }
 }
@@ -120,7 +122,7 @@ pub(crate) fn label_color(variant: ButtonVariant) -> AdaptiveColor {
 
 /// A styled button with no content: add the label, an icon or both with
 /// `.child(..)`. Give an icon-only button an `.accessibility_label(..)`.
-pub fn button_style(variant: ButtonVariant, size: ButtonSize) -> ButtonElement {
+pub fn button_style(variant: ButtonVariant, size: ControlSize) -> ButtonElement {
     button_style_with(move || variant, move || size)
 }
 
@@ -180,7 +182,7 @@ pub(crate) use button_look;
 
 pub(crate) fn button_style_with(
     variant: impl Fn() -> ButtonVariant + Copy + 'static,
-    size: impl Fn() -> ButtonSize + Copy + 'static,
+    size: impl Fn() -> ControlSize + Copy + 'static,
 ) -> ButtonElement {
     button_look!(base_button(), variant, size)
 }
@@ -189,29 +191,29 @@ pub(crate) fn button_style_with(
 pub fn button_variant(
     label: impl IntoReactive<SharedString>,
     variant: ButtonVariant,
-    size: ButtonSize,
+    size: ControlSize,
 ) -> ButtonElement {
     button_style(variant, size).child(text(label))
 }
 
 /// A labelled default button, medium size: `button("Save").on_press(..)`.
 pub fn button(label: impl IntoReactive<SharedString>) -> ButtonElement {
-    button_variant(label, ButtonVariant::Default, ButtonSize::Md)
+    button_variant(label, ButtonVariant::Default, ControlSize::Medium)
 }
 
 /// A labelled primary button (accent outline, accent text).
 pub fn button_primary(label: impl IntoReactive<SharedString>) -> ButtonElement {
-    button_variant(label, ButtonVariant::Primary, ButtonSize::Md)
+    button_variant(label, ButtonVariant::Primary, ControlSize::Medium)
 }
 
 /// A labelled ghost button (no outline at rest).
 pub fn button_ghost(label: impl IntoReactive<SharedString>) -> ButtonElement {
-    button_variant(label, ButtonVariant::Ghost, ButtonSize::Md)
+    button_variant(label, ButtonVariant::Ghost, ControlSize::Medium)
 }
 
 /// A labelled destructive button.
 pub fn button_danger(label: impl IntoReactive<SharedString>) -> ButtonElement {
-    button_variant(label, ButtonVariant::Danger, ButtonSize::Md)
+    button_variant(label, ButtonVariant::Danger, ControlSize::Medium)
 }
 
 /// A button with an icon before its label.
@@ -219,7 +221,7 @@ pub fn button_with_icon(
     icon: impl IntoElement,
     label: impl IntoReactive<SharedString>,
     variant: ButtonVariant,
-    size: ButtonSize,
+    size: ControlSize,
 ) -> ButtonElement {
     button_style(variant, size).child(icon).child(text(label))
 }
@@ -230,7 +232,7 @@ pub fn icon_button(
     icon: impl IntoElement,
     label: impl IntoReactive<SharedString>,
     variant: ButtonVariant,
-    size: ButtonSize,
+    size: ControlSize,
 ) -> ButtonElement {
     let label: Prop<SharedString> = label.into_reactive().into();
     button_style(variant, size)

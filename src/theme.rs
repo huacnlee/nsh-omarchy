@@ -241,7 +241,7 @@ impl Theme {
             Appearance::Light => nsh_core::platform::Appearance::Light,
         });
         set_tokens(self.to_tokens());
-        crate::tsx::omarchy::theme_applied(&self);
+        crate::ui::omarchy::theme_applied(&self);
         global::<ActiveTheme>().set(ActiveTheme(Some(self)));
     }
 }

@@ -1,55 +1,49 @@
-// The Omarchy TSX gallery: every component of `../../tsx`, one page per
-// family, navigated from a sidebar, with a light / dark switch.
-import { colorScheme, mount, Scroll, setColorScheme, signal, View } from "nsh";
-import { Caption, Heading, Sidebar, Switch, Title, Toaster } from "../../tsx";
+// The Omarchy TSX gallery: every component of nsh-omarchy (installed with
+// `nsh add nsh-omarchy`), one page per family.
+import { mount, Scroll, signal, Text, View } from "nsh";
+import { Button, Omarchy, Toaster } from "nsh-omarchy";
 import { Actions } from "./pages/Actions";
 import { Choices } from "./pages/Choices";
+import { Data } from "./pages/Data";
 import { Display } from "./pages/Display";
 import { Fields } from "./pages/Fields";
 import { Navigation } from "./pages/Navigation";
 import { Overlays } from "./pages/Overlays";
 
 const pages = [
-  { value: "actions", label: "Actions", title: "Actions", page: Actions },
-  { value: "choices", label: "Choices", title: "Choices", page: Choices },
-  { value: "fields", label: "Fields", title: "Fields", page: Fields },
-  { value: "navigation", label: "Navigation", title: "Navigation", page: Navigation },
-  { value: "overlays", label: "Overlays", title: "Overlays", page: Overlays },
-  { value: "display", label: "Display", title: "Display", page: Display },
+  { value: "actions", title: "Actions", page: Actions },
+  { value: "choices", title: "Choices", page: Choices },
+  { value: "fields", title: "Fields", page: Fields },
+  { value: "navigation", title: "Navigation", page: Navigation },
+  { value: "overlays", title: "Overlays", page: Overlays },
+  { value: "data", title: "Data", page: Data },
+  { value: "display", title: "Display", page: Display },
 ];
 
 export function App() {
+  Omarchy.applyTheme("tokyo-night");
   const current = signal("actions");
-  const shown = () => pages.find((p) => p.value === current()) ?? pages[0];
   return (
     <View class="flex-1 flex-row bg-background">
-      <Sidebar
-        accessibilityLabel="Components"
-        value={current()}
-        onChange={({ value }) => current.set(value)}
-        sections={[{ title: "Components", items: pages.map((p) => ({ value: p.value, label: p.label })) }]}
-        header={
-          <View class="gap-0.5 px-3 pb-2">
-            <Title>Omarchy</Title>
-            <Caption>nsh-omarchy · TSX</Caption>
-          </View>
-        }
-        footer={
-          <View class="border-t border-foreground/12 px-2 pt-2">
-            <Switch
-              label="Dark"
-              checked={colorScheme() === "dark"}
-              onChange={({ checked }) => setColorScheme(checked ? "dark" : "light")}
+      <View class="w-[200px] gap-1 border-r border-foreground/12 p-2">
+        <Each of={pages} key={(p) => p.value}>
+          {(p) => (
+            <Button
+              testID={`page-${p().title}`}
+              label={p().title}
+              variant="ghost"
+              selected={current() === p().value}
+              onPress={() => current.set(p().value)}
             />
-          </View>
-        }
-      />
+          )}
+        </Each>
+      </View>
       <Scroll class="flex-1" testID="page">
         <View class="gap-6 p-6">
-          <Heading>{shown().title}</Heading>
           <Each of={pages} key={(p) => p.value}>
             {(p) => (
               <If when={current() === p().value}>
+                <Text class="text-2xl font-semibold text-bright">{p().title}</Text>
                 {(() => {
                   const Page = p().page;
                   return <Page />;

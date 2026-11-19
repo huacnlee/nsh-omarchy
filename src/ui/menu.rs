@@ -174,3 +174,13 @@ pub struct MenuLabelProps {
 pub fn MenuLabel(props: MenuLabelProps) -> impl IntoElement {
     menu_heading(props.label)
 }
+
+/// Registers the menus for TSX.
+pub(crate) fn register(registry: &mut Registry) {
+    registry
+        .register::<DropdownMenu>()
+        .register::<ContextMenu>()
+        .register::<MenuItem>()
+        .register::<MenuSeparator>()
+        .register::<MenuLabel>();
+}

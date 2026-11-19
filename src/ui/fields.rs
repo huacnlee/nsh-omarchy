@@ -9,7 +9,7 @@
 
 use nsh_core::prelude::*;
 
-use crate::components::button::ButtonSize;
+use crate::components::button::ControlSize;
 use crate::components::input::{number_field, text_input, textarea as textarea_field};
 use crate::components::select::{combobox_field, select_popup, select_trigger};
 use crate::tokens;
@@ -76,7 +76,7 @@ pub struct InputProps {
     pub masked: Prop<bool>,
     /// 24, 28 (default) or 32 points tall.
     #[prop(default)]
-    pub size: Prop<ButtonSize>,
+    pub size: Prop<ControlSize>,
     /// Takes the keyboard focus when it appears.
     #[prop(default)]
     pub auto_focus: Prop<bool>,
@@ -244,7 +244,7 @@ pub struct SelectProps {
     pub invalid: Prop<bool>,
     /// 24, 28 (default) or 32 points tall.
     #[prop(default)]
-    pub size: Prop<ButtonSize>,
+    pub size: Prop<ControlSize>,
 }
 
 /// The events of a [`Select`].
@@ -380,4 +380,15 @@ pub fn Field(props: FieldProps) -> impl IntoElement {
                     .into_element()
             })
         }))
+}
+
+/// Registers this area's components for TSX.
+pub(crate) fn register(registry: &mut Registry) {
+    registry
+        .register::<Input>()
+        .register::<Textarea>()
+        .register::<NumberInput>()
+        .register::<Select>()
+        .register::<Combobox>()
+        .register::<Field>();
 }

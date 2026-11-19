@@ -1,7 +1,7 @@
 // A gallery section: a title, a line on what it shows, and the demo on a card.
 import type { JSX } from "nsh";
 import { Text, View } from "nsh";
-import { Caption, Title } from "../../../tsx";
+import { Caption, Title } from "nsh-omarchy";
 
 export function Section(props: { title: string; description?: string; children: JSX.Element }) {
   return (

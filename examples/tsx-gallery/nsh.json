@@ -1,5 +1,10 @@
 {
   "name": "Omarchy TSX Gallery",
   "id": "dev.omarchy.nsh.tsx-gallery",
-  "theme": "../../themes/omarchy.json"
+  "theme": "../../themes/omarchy.json",
+  "modules": [
+    {
+      "path": "../.."
+    }
+  ]
 }

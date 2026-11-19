@@ -74,7 +74,7 @@ fn every_export_is_documented() {
 #[test]
 fn every_icon_has_a_ts_name() {
     use nsh_core::element::PropEnum;
-    for icon in nsh_omarchy::components::IconName::ALL {
+    for icon in nsh_omarchy::IconName::ALL {
         assert_eq!(icon.js_name(), icon.name());
     }
 }

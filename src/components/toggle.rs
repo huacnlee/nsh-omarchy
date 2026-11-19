@@ -13,7 +13,7 @@
 use nsh_base::{ToggleElement, toggle as base_toggle, toggle_group as base_toggle_group};
 use nsh_core::prelude::*;
 
-use super::button::ButtonSize;
+use super::button::ControlSize;
 use super::button_group::labelled_group;
 use crate::tokens;
 
@@ -73,18 +73,18 @@ pub(crate) use toggle_look;
 
 /// A styled toggle with no content: add a label, an icon or both with
 /// `.child(..)`. Give an icon-only toggle an `.accessibility_label(..)`.
-pub fn toggle_style(size: ButtonSize) -> ToggleElement {
+pub fn toggle_style(size: ControlSize) -> ToggleElement {
     toggle_look!(base_toggle(), move || size)
 }
 
 /// A labelled toggle, medium size:
 /// `toggle("Bold").pressed(bold).on_change(move |on: &bool| bold.set(*on))`.
 pub fn toggle(label: impl IntoReactive<SharedString>) -> ToggleElement {
-    toggle_style(ButtonSize::Md).child(text(label))
+    toggle_style(ControlSize::Medium).child(text(label))
 }
 
 /// A labelled toggle of `size`.
-pub fn toggle_sized(label: impl IntoReactive<SharedString>, size: ButtonSize) -> ToggleElement {
+pub fn toggle_sized(label: impl IntoReactive<SharedString>, size: ControlSize) -> ToggleElement {
     toggle_style(size).child(text(label))
 }
 
@@ -92,7 +92,7 @@ pub fn toggle_sized(label: impl IntoReactive<SharedString>, size: ButtonSize) ->
 pub fn toggle_with_icon(
     icon: impl IntoElement,
     label: impl IntoReactive<SharedString>,
-    size: ButtonSize,
+    size: ControlSize,
 ) -> ToggleElement {
     toggle_style(size).child(icon).child(text(label))
 }
@@ -102,7 +102,7 @@ pub fn toggle_with_icon(
 pub fn icon_toggle(
     icon: impl IntoElement,
     label: impl IntoReactive<SharedString>,
-    size: ButtonSize,
+    size: ControlSize,
 ) -> ToggleElement {
     let label: Prop<SharedString> = label.into_reactive().into();
     toggle_style(size)

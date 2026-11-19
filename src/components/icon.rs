@@ -19,6 +19,7 @@ macro_rules! icons {
         /// The name of an icon of the built-in set; in TSX its Lucide name
         /// (`"chevron-down"`).
         #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PropEnum)]
+        #[non_exhaustive]
         pub enum IconName {
             $(
                 #[doc = concat!("`", $name, "`")]

@@ -625,3 +625,16 @@ pub struct ConfirmOptions {
     #[prop(default)]
     pub destructive: bool,
 }
+
+/// Registers this area's components and the `Toasts` module for TSX.
+pub(crate) fn register(registry: &mut Registry) {
+    registry
+        .module::<Toasts>()
+        .register::<Dialog>()
+        .register::<AlertDialog>()
+        .register::<Sheet>()
+        .register::<Popover>()
+        .register::<Tooltip>()
+        .register::<HoverCard>()
+        .register::<Toaster>();
+}

@@ -1,5 +1,5 @@
 //! The styled Omarchy components. Each module owns one family.
-#![allow(unused_imports)]
+#![allow(unused_imports, dead_code)]
 
 pub mod accordion;
 pub mod avatar;

@@ -110,7 +110,7 @@ pub fn menu_trigger(label: impl IntoReactive<SharedString>) -> View {
 }
 
 /// The look every row shares.
-fn row_look(item: MenuItemElement) -> MenuItemElement {
+pub(crate) fn row_look(item: MenuItemElement) -> MenuItemElement {
     item.flex_row()
         .items_center()
         .gap(px(tokens::SPACE_2))
@@ -148,8 +148,16 @@ pub fn menu_check_row(
     label: impl IntoReactive<SharedString>,
     checked: impl Fn() -> bool + 'static,
 ) -> MenuItemElement {
-    row_look(menu_item())
-        .checked(move || Some(checked()))
+    checkable(row_look(menu_item()), checked).child(text(label).flex_1().number_of_lines(1))
+}
+
+/// Makes `item` checkable: an accent check at its start while `checked`
+/// holds, and it stays open when chosen.
+pub(crate) fn checkable(
+    item: MenuItemElement,
+    checked: impl Fn() -> bool + 'static,
+) -> MenuItemElement {
+    item.checked(move || Some(checked()))
         .close_on_select(false)
         .indicator(super::icon::icon(super::icon::IconName::Check).size(px(12.0)))
         .indicator_style(|s| {
@@ -159,7 +167,6 @@ pub fn menu_check_row(
                 .text_color(move || tokens::accent())
                 .checked(|s| s.opacity(1.0))
         })
-        .child(text(label).flex_1().number_of_lines(1))
 }
 
 /// A row's keyboard shortcut, written as the platform writes it

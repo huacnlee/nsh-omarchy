@@ -37,14 +37,23 @@ pub fn accordion_section(
     body: impl IntoElement,
 ) -> AccordionItemElement {
     let title: SharedString = title.into();
+    accordion_section_with(Prop::new(value.into()), Prop::new(title), body)
+}
+
+/// [`accordion_section`] with a live `value` and `title`.
+pub(crate) fn accordion_section_with(
+    value: Prop<SharedString>,
+    title: Prop<SharedString>,
+    body: impl IntoElement,
+) -> AccordionItemElement {
     accordion_item()
-        .value(value.into())
+        .value(value)
         .border_b_1()
         .border_color(move || tokens::border())
         .child(
             accordion_header().child(
                 accordion_trigger()
-                    .accessibility_label(title.clone())
+                    .accessibility_label(move || Some(title.get()))
                     .group()
                     .flex_row()
                     .items_center()
@@ -67,7 +76,7 @@ pub fn accordion_section(
                             .bg(move || AdaptiveColor::TRANSPARENT)
                     })
                     .child(
-                        text(title.clone())
+                        text(move || title.get())
                             .text_size(px(tokens::TEXT_MD))
                             .font_weight(FontWeight::SEMIBOLD),
                     )
@@ -77,7 +86,7 @@ pub fn accordion_section(
         .child(
             accordion_panel()
                 .reveal(true)
-                .accessibility_label(title)
+                .accessibility_label(move || Some(title.get()))
                 .child(panel_body(body)),
         )
 }
@@ -107,6 +116,18 @@ pub fn collapsible_section(
     content: impl IntoElement,
 ) -> CollapsibleElement {
     let title: SharedString = title.into();
+    collapsible_section_with(open, Prop::new(title), || false, on_toggle, content)
+}
+
+/// [`collapsible_section`] with a live `title` and a `disabled` trigger
+/// (no presses, disabled text).
+pub(crate) fn collapsible_section_with(
+    open: impl Fn() -> bool + Copy + 'static,
+    title: Prop<SharedString>,
+    disabled: impl Fn() -> bool + Copy + 'static,
+    on_toggle: impl Fn() + 'static,
+    content: impl IntoElement,
+) -> CollapsibleElement {
     collapsible()
         .open(open)
         .reveal(true)
@@ -121,11 +142,13 @@ pub fn collapsible_section(
         .child(
             view()
                 .role(AccessibilityRole::Button)
-                .focusable(true)
+                .focusable(move || !disabled())
+                .disabled(disabled)
                 .on_press(on_toggle)
-                .label(title.clone())
+                .label(move || title.get())
                 .accessibility_state(move || AccessibilityState {
                     expanded: Some(open()),
+                    disabled: disabled(),
                     ..AccessibilityState::default()
                 })
                 .flex_row()
@@ -134,7 +157,9 @@ pub fn collapsible_section(
                 .h(px(tokens::CONTROL_MD))
                 .px(px(tokens::SPACE_2))
                 .text_color(move || {
-                    if open() {
+                    if disabled() {
+                        tokens::disabled()
+                    } else if open() {
                         tokens::bright()
                     } else {
                         tokens::foreground()
@@ -148,6 +173,7 @@ pub fn collapsible_section(
                     s.outline(px(tokens::FOCUS_BORDER))
                         .outline_color(move || tokens::focus_border())
                 })
+                .disabled_style(|s| s.bg(move || AdaptiveColor::TRANSPARENT))
                 .child(
                     super::icon::indicator(super::icon::IconName::ChevronRight, 14.0)
                         .rotate(move || deg(if open() { 90.0 } else { 0.0 }))
@@ -155,7 +181,7 @@ pub fn collapsible_section(
                         .duration(tokens::DURATION_BASE),
                 )
                 .child(
-                    text(title)
+                    text(move || title.get())
                         .text_size(px(tokens::TEXT_MD))
                         .font_weight(FontWeight::SEMIBOLD),
                 ),

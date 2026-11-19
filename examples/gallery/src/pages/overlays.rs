@@ -301,8 +301,6 @@ pub fn toast() -> AnyElement {
                 .text_size(px(tokens::TEXT_SM))
                 .text_color(move || tokens::secondary()),
         )
-        // The gallery's root has no toaster: this page places its own.
-        .child(om::toaster())
         .into_element()
 }
 

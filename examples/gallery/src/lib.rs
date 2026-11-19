@@ -40,6 +40,7 @@ pub fn Gallery() -> impl IntoElement {
                 .child(sidebar(current, &pages))
                 .child(content(current, pages)),
         )
+        .child(om::toaster())
 }
 
 fn sidebar(current: Signal<usize>, pages: &[&'static registry::Page]) -> impl IntoElement {

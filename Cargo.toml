@@ -20,6 +20,11 @@ nsh-core = "0.6.0"
 nsh-base = "0.6.0"
 log = "0.4"
 toml = "0.8"
+# Calendar days (`Date`); the version nsh-base uses.
+chrono = { version = "0.4.45", default-features = false, features = ["std"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+chrono = { version = "0.4.45", default-features = false, features = ["std", "clock"] }
 
 [dev-dependencies]
 # The exports tests read the set's TypeScript declarations.

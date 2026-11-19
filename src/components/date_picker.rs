@@ -24,11 +24,16 @@ use crate::tokens;
 const TRIGGER_WIDTH: f32 = 240.0;
 
 /// A date picker whose trigger shows `label`: the owner's formatted value,
-/// or a placeholder. Wire `.value(..)` and `.on_change(..)` (a
-/// [`PickedDate`]) to the owner's state, or leave them out for its own;
-/// `.range(true)` picks a range. Name it with `.accessibility_label(..)`
-/// (default "Choose a date").
-pub fn date_picker(label: impl IntoReactive<SharedString>) -> DatePickerElement {
+/// or a placeholder (in secondary text while `empty`); the trigger is
+/// `height` points tall. Wire `.value(..)`
+/// and `.on_change(..)` (a [`PickedDate`]) to the owner's state, or leave
+/// them out for its own; `.range(true)` picks a range. Name it with
+/// `.accessibility_label(..)` (default "Choose a date").
+pub fn date_picker(
+    label: impl IntoReactive<SharedString>,
+    empty: impl Fn() -> bool + 'static,
+    height: impl Fn() -> f32 + 'static,
+) -> DatePickerElement {
     nsh_base::date_picker()
         .accessibility_label("Choose a date")
         .previous_accessibility_label("Previous month")
@@ -50,18 +55,22 @@ pub fn date_picker(label: impl IntoReactive<SharedString>) -> DatePickerElement 
         .item_class("group")
         .item_style(calendar_item_style)
         .render_item(calendar_item)
-        .trigger(trigger(label))
+        .trigger(trigger(label, empty, height))
         .self_start()
 }
 
 /// The closed control: the label and a chevron in an outline box.
-fn trigger(label: impl IntoReactive<SharedString>) -> View {
+fn trigger(
+    label: impl IntoReactive<SharedString>,
+    empty: impl Fn() -> bool + 'static,
+    height: impl Fn() -> f32 + 'static,
+) -> View {
     view()
         .flex_row()
         .items_center()
         .gap(px(tokens::SPACE_2))
         .w(px(TRIGGER_WIDTH))
-        .h(px(tokens::CONTROL_MD))
+        .h(move || px(height()))
         .px(px(tokens::SPACE_2))
         .border_1()
         .border_color(move || tokens::control_border())
@@ -77,7 +86,14 @@ fn trigger(label: impl IntoReactive<SharedString>) -> View {
                 .flex_1()
                 .min_w(px(0.0))
                 .number_of_lines(1)
-                .text_size(px(tokens::TEXT_MD)),
+                .text_size(px(tokens::TEXT_MD))
+                .text_color(move || {
+                    if empty() {
+                        tokens::secondary()
+                    } else {
+                        tokens::foreground()
+                    }
+                }),
         )
         .child(super::icon::indicator(
             super::icon::IconName::ChevronDown,

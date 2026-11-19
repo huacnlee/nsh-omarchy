@@ -44,6 +44,10 @@ pub enum OverlayTone {
     Primary,
     /// Destroys or deletes something: danger edge and label.
     Danger,
+    /// Confirms something healthy: success edge and label.
+    Success,
+    /// Needs attention: warning edge and label.
+    Warning,
 }
 
 impl OverlayTone {
@@ -52,6 +56,8 @@ impl OverlayTone {
             OverlayTone::Neutral => tokens::foreground(),
             OverlayTone::Primary => tokens::accent(),
             OverlayTone::Danger => tokens::danger(),
+            OverlayTone::Success => tokens::success(),
+            OverlayTone::Warning => tokens::warning(),
         }
     }
 
@@ -60,6 +66,8 @@ impl OverlayTone {
             OverlayTone::Neutral => tokens::control_border(),
             OverlayTone::Primary => tokens::accent(),
             OverlayTone::Danger => tokens::danger(),
+            OverlayTone::Success => tokens::success(),
+            OverlayTone::Warning => tokens::warning(),
         }
     }
 }
@@ -413,6 +421,7 @@ impl IntoElement for Dialog {
             let mut modal = nsh_base::dialog()
                 .animation(ModalAnimation::None)
                 .label(title.clone())
+                .close_on_escape(escape_dismisses)
                 .on_cancel(move || {
                     if escape_dismisses {
                         dismiss()

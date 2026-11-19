@@ -39,6 +39,14 @@ describe("overlays", () => {
     expect(app.dialogs()[0]?.title).toBe("Restart Hyprland?");
   });
 
+  test("a danger confirm is answered by its cancel", async () => {
+    const app = await gallery("Overlays");
+    app.onDialog(() => "Cancel");
+    await app.press("role:button[Danger confirm]");
+    await app.waitFor("text:Last: Files kept");
+    expect(app.dialogs()[0]?.title).toBe("Delete 3 files?");
+  });
+
   test("a sheet opens and its close button closes it", async () => {
     const app = await gallery("Overlays");
     await app.press("role:button[Open settings]");
@@ -81,7 +89,20 @@ describe("overlays", () => {
     await app.wait(6500);
     await app.waitFor("text:Screenshot saved", { state: "gone" });
     expect(app.shows("text:Update failed")).toBe(true);
-    await app.press("label:Dismiss");
+    await app.press("label:Dismiss notification");
     await app.waitFor("text:Update failed", { state: "gone" });
+  }, 20000);
+
+  test("dismissToast removes a toast by its id, and an id replaces its toast", async () => {
+    const app = await gallery("Overlays");
+    await app.press("role:button[With action]");
+    await app.waitFor("text:Window closed");
+    await app.press("role:button[Dismiss last]");
+    await app.waitFor("text:Window closed", { state: "gone" });
+    await app.press("role:button[Progress]");
+    await app.waitFor("text:Step 2 of 2");
+    await app.waitFor("text:Step 1 of 2", { state: "gone" });
+    await app.wait(2500);
+    await app.waitFor("text:Step 2 of 2", { state: "gone" });
   }, 20000);
 });

@@ -11,6 +11,8 @@ live when it changes. Without Omarchy, it draws Tokyo Night (dark) or Flexoki Li
 It is an [nshm](https://nsh.dev/docs/nshm.md): one Rust crate that a Rust app calls and a TSX app imports, with the
 same components on both sides.
 
+**If this helps you, please [sponsor me](https://github.com/sponsors/huacnlee).**
+
 ```sh
 nsh add nsh-omarchy
 ```

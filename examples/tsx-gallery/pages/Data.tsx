@@ -17,21 +17,7 @@ import {
   Tree,
 } from "nsh-omarchy";
 import type { TableSort, TreeItem } from "nsh-omarchy";
-
-/** A gallery section: a title and the demo on a card. */
-function Section(props: { title: string; children: JSX.Element }) {
-  return (
-    <View class="gap-2">
-      <Text class="text-[13px] font-semibold text-bright">{props.title}</Text>
-      <View class="gap-3 border border-border bg-surface p-4">{props.children}</View>
-    </View>
-  );
-}
-
-/** What the last action did, for the reader (and the tests). */
-function Status(props: { text: string }) {
-  return <Text class="text-[11px] text-text-secondary">{props.text}</Text>;
-}
+import { Demos, type Family, Section, Status } from "./Section";
 
 const NAMES = ["hyprland", "waybar", "alacritty", "nvim", "firefox", "mako", "pipewire", "walker"];
 
@@ -240,24 +226,36 @@ function Panels() {
   );
 }
 
-export function Data() {
-  return (
-    <View class="gap-6">
-      <Section title="Table">
-        <StaticTable />
+/** A page of one demo under one section. */
+function page(title: string, description: string, Demo: () => JSX.Element) {
+  return () => (
+    <Demos>
+      <Section title={title} description={description}>
+        <Demo />
       </Section>
-      <Section title="Data table: 300 rows, sortable">
-        <BigTable />
-      </Section>
-      <Section title="Virtual list: 2000 rows, with a scrollbar">
-        <VirtualList />
-      </Section>
-      <Section title="Tree">
-        <FileTree />
-      </Section>
-      <Section title="Resizable panels">
-        <Panels />
-      </Section>
-    </View>
+    </Demos>
   );
 }
+
+export const data: Family = {
+  title: "Data",
+  pages: [
+    { value: "table", title: "Table", page: page("Table", "Rows of cells; a press selects a row.", StaticTable) },
+    {
+      value: "data-table",
+      title: "DataTable",
+      page: page("300 rows, sortable", "Virtualized rows from columns and data; the headers sort.", BigTable),
+    },
+    {
+      value: "list",
+      title: "ListItem",
+      page: page("2000 rows, with a Scrollbar", "ListItem rows in a virtual List; a Scrollbar beside it.", VirtualList),
+    },
+    { value: "tree", title: "Tree", page: page("Tree", "Folders fold with Left and Right; Up and Down move.", FileTree) },
+    {
+      value: "resizable",
+      title: "ResizablePanelGroup",
+      page: page("Resizable panels", "Drag a divider, or focus it and use the arrows.", Panels),
+    },
+  ],
+};

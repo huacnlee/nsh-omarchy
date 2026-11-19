@@ -34,8 +34,18 @@ test('the homepage shows the README examples and copies the install command', as
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('./');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('NSH / OMARCHY');
-  await expect(page.locator('#start')).toContainText('om::button("Save").primary()');
-  await expect(page.locator('#start')).toContainText('<Button label="Save" variant="primary"');
+  // TSX is the default tab; Rust is one press or one arrow key away.
+  const tsx = page.getByRole('tab', { name: 'TSX' });
+  const rust = page.getByRole('tab', { name: 'Rust' });
+  await expect(tsx).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toContainText('<Button label="Save" variant="primary"');
+  await expect(page.getByText('om::button("Save").primary()')).toBeHidden();
+  await rust.click();
+  await expect(rust).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toContainText('om::button("Save").primary()');
+  await rust.press('ArrowLeft');
+  await expect(tsx).toBeFocused();
+  await expect(tsx).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('heading', { name: 'Overlays' })).toBeVisible();
   await page.getByRole('button', { name: 'Copy to clipboard' }).click();
   await expect(page.getByRole('button', { name: 'Copy to clipboard' })).toHaveText('Copied');
@@ -48,10 +58,12 @@ test('the homepage runs the TSX gallery', async ({ page }) => {
   await page.goto('./');
   await page.locator(`iframe[title="${galleryTitle}"]`).scrollIntoViewIfNeeded();
   const gallery = page.frameLocator(`iframe[title="${galleryTitle}"]`);
-  await expect(gallery.getByRole('button', { name: 'Choices' })).toBeVisible({ timeout: 90_000 });
-  await gallery.getByRole('button', { name: 'Choices' }).click();
-  await expect(gallery.getByText('Choices', { exact: true }).first()).toBeVisible();
+  // A page per component, grouped by family in the sidebar.
+  await expect(gallery.getByRole('tab', { name: 'Switch' })).toBeVisible({ timeout: 90_000 });
+  await expect(gallery.getByText('Choices', { exact: true })).toBeVisible();
+  await gallery.getByRole('tab', { name: 'Switch' }).click();
   await expect(gallery.getByRole('switch').first()).toBeVisible();
+  await expect(gallery.getByRole('checkbox')).toHaveCount(0);
 });
 
 test('the gallery follows the site theme at startup and as it changes', async ({ page }) => {

@@ -53,19 +53,47 @@ const themes = { light: 'github-light', dark: 'tokyo-night' } as const;
     <section id="start" class="section">
       <div class="section-head"><div><h2>Add it to your app.</h2><p>In an NSH app's directory, add the nshm. It lists the module in <code>nsh.json</code>, and a Rust app also gets the crate in <code>Cargo.toml</code>.</p></div></div>
       <div class="code-frame install"><div class="code-bar"><span>Terminal</span><CopyButton client:load text={install} /></div><Code code={install} lang="sh" themes={themes} defaultColor="dark" /></div>
-      <div class="start-grid">
-        <div>
-          <h3>In a TSX app</h3>
+      <div class="lang-tabs" data-lang-tabs>
+        <div class="lang-tablist" role="tablist" aria-label="App language">
+          <button type="button" role="tab" id="tab-tsx" aria-controls="panel-tsx" aria-selected="true">TSX</button>
+          <button type="button" role="tab" id="tab-rust" aria-controls="panel-rust" aria-selected="false" tabindex="-1">Rust</button>
+        </div>
+        <div role="tabpanel" id="panel-tsx" aria-labelledby="tab-tsx" class="lang-panel">
           <p>Import the components from <code>"nsh-omarchy"</code>. Props and events are the Rust names in camelCase.</p>
           <div class="code-frame"><div class="code-bar"><span>App.tsx</span><span>TSX</span></div><Code code={tsxApp} lang="tsx" themes={themes} defaultColor="dark" /></div>
         </div>
-        <div>
-          <h3>In a Rust app</h3>
-          <p>Or declare the crate yourself: <code>{dependency.split('\n')[1]}</code>. A constructor takes the required content; the rest are builders.</p>
+        <div role="tabpanel" id="panel-rust" aria-labelledby="tab-rust" class="lang-panel" hidden>
+          <p><code>nsh add</code> puts the crate in <code>Cargo.toml</code>, or declare it yourself: <code>{dependency.split('\n')[1]}</code>. A constructor takes the required content; the rest are builders.</p>
           <div class="code-frame"><div class="code-bar"><span>src/lib.rs</span><span>Rust</span></div><Code code={rustApp} lang="rust" themes={themes} defaultColor="dark" /></div>
         </div>
       </div>
       <p class="text-sm mt-6"><a class="text-link" href={asset('api/')}>Read the API reference</a> · <a class="text-link" href={`${repo}#readme`}>Read the README</a> · <a class="text-link" href="https://crates.io/crates/nsh-omarchy">crates.io</a></p>
+      <p class="sponsor-note">nsh-omarchy is free and MIT licensed. If it helps you, please <a class="text-link" href="https://github.com/sponsors/huacnlee">sponsor its development</a>.</p>
     </section>
   </main>
+  <script>
+    // The language tabs of "Add it to your app": TSX first; arrows, Home and End move between them.
+    for (const root of document.querySelectorAll<HTMLElement>('[data-lang-tabs]')) {
+      const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+      const select = (tab: HTMLButtonElement, focus = false) => {
+        for (const other of tabs) {
+          const selected = other === tab;
+          other.setAttribute('aria-selected', String(selected));
+          other.tabIndex = selected ? 0 : -1;
+          document.getElementById(other.getAttribute('aria-controls')!)!.hidden = !selected;
+        }
+        if (focus) tab.focus();
+      };
+      for (const tab of tabs) {
+        tab.addEventListener('click', () => select(tab));
+        tab.addEventListener('keydown', (event) => {
+          const index = tabs.indexOf(tab);
+          const next = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: tabs.length - 1 }[event.key];
+          if (next === undefined) return;
+          event.preventDefault();
+          select(tabs[(next + tabs.length) % tabs.length], true);
+        });
+      }
+    }
+  </script>
 </Page>

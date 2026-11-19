@@ -1,5 +1,5 @@
 // Text fields, number fields, codes, selects, comboboxes, days and colors.
-import { signal, Text, View } from "nsh";
+import { signal, View } from "nsh";
 import {
   Calendar,
   ColorPicker,
@@ -14,7 +14,7 @@ import {
   type SelectItem,
   Textarea,
 } from "nsh-omarchy";
-import { Section, Status } from "./Section";
+import { Demos, type Family, Section, Status } from "./Section";
 
 const themes: SelectItem[] = [
   { value: "tokyo-night", label: "Tokyo Night", group: "Dark" },
@@ -36,23 +36,13 @@ const apps: SelectItem[] = [
 
 const swatches = ["#f7768e", "#ff9e64", "#e0af68", "#9ece6a", "#7dcfff", "#7aa2f7", "#bb9af7"];
 
-export function Fields() {
+function InputPage() {
   const name = signal("");
   const submitted = signal("");
   const password = signal("hunter2");
-  const notes = signal("");
-  const gaps = signal<number | null>(10);
-  const code = signal("");
-  const verified = signal("");
-  const theme = signal<string | null>("tokyo-night");
-  const pinned = signal<string[]>(["neovim"]);
-  const day = signal<string | null>(null);
-  const trip = signal<DateRange | null>(null);
-  const due = signal<string | null>("2026-11-19");
-  const accent = signal("#7aa2f7");
   const short = () => password().length < 8;
   return (
-    <View class="gap-6">
+    <Demos>
       <Section title="Input" description="A well with the control border; the accent border while editing.">
         <View class="w-80 gap-3">
           <Field label="Hostname" description="Return submits.">
@@ -63,12 +53,24 @@ export function Fields() {
               onSubmit={({ value }) => submitted.set(value)}
             />
           </Field>
+        </View>
+        <Status text={`Submitted: ${submitted() || "nothing"}`} />
+      </Section>
+      <Section title="Field" description="A label, a description, and an error in its place.">
+        <View class="w-80 gap-3">
           <Field label="Password" required description="At least 8 characters." error={short() ? "Too short." : null}>
             <Input masked invalid={short()} value={password()} onChange={({ value }) => password.set(value)} />
           </Field>
         </View>
-        <Status text={`Submitted: ${submitted() || "nothing"}`} />
       </Section>
+    </Demos>
+  );
+}
+
+function TextareaPage() {
+  const notes = signal("");
+  return (
+    <Demos>
       <Section title="Textarea" description="Several lines; Return types a new line.">
         <View class="w-96">
           <Field label="Notes">
@@ -76,12 +78,29 @@ export function Fields() {
           </Field>
         </View>
       </Section>
+    </Demos>
+  );
+}
+
+function NumberInputPage() {
+  const gaps = signal<number | null>(10);
+  return (
+    <Demos>
       <Section title="NumberInput" description="Steppers, Up / Down, Page Up / Page Down.">
         <Field label="Window gaps">
           <NumberInput value={gaps()} min={0} max={40} suffix="px" onChange={({ value }) => gaps.set(value)} />
         </Field>
         <Status text={`Gaps: ${gaps() ?? "empty"}`} />
       </Section>
+    </Demos>
+  );
+}
+
+function OtpInputPage() {
+  const code = signal("");
+  const verified = signal("");
+  return (
+    <Demos>
       <Section title="OtpInput" description="Digits only; paste or autofill fills every cell.">
         <Field label="Verification code">
           <OtpInput
@@ -94,15 +113,33 @@ export function Fields() {
         </Field>
         <Status text={`Verified: ${verified() || "nothing"}`} />
       </Section>
+    </Demos>
+  );
+}
+
+function SelectPage() {
+  const theme = signal<string | null>("tokyo-night");
+  return (
+    <Demos>
       <Section title="Select" description="Typeahead, groups, a chosen row with the selected fill.">
         <Field label="Theme">
           <Select items={themes} value={theme()} onChange={({ value }) => theme.set(value)} />
         </Field>
+        <Status text={`Theme: ${theme() ?? "none"}`} />
+      </Section>
+      <Section title="Small and disabled">
         <Field label="Font">
           <Select items={themes} value={null} placeholder="Choose a font" size="small" disabled />
         </Field>
-        <Status text={`Theme: ${theme() ?? "none"}`} />
       </Section>
+    </Demos>
+  );
+}
+
+function ComboboxPage() {
+  const pinned = signal<string[]>(["neovim"]);
+  return (
+    <Demos>
       <Section title="Combobox" description="Typing filters; several values stay chosen.">
         <Field label="Pinned apps">
           <Combobox
@@ -115,27 +152,51 @@ export function Fields() {
         </Field>
         <Status text={`Pinned: ${pinned().join(", ") || "none"}`} />
       </Section>
-      <Section title="Calendar" description="Arrows move a day or a week, Page Up / Page Down a month.">
-        <View class="flex-row flex-wrap gap-6">
-          <View class="gap-2">
-            <Calendar value={day()} onChange={({ value }) => day.set(value)} />
-            <Status text={`Day: ${day() ?? "none"}`} />
-          </View>
-          <View class="gap-2">
-            <Calendar range rangeValue={trip()} onRangeChange={({ value }) => trip.set(value)} />
-            <Status text={`Trip: ${trip() ? `${trip()!.start} to ${trip()!.end}` : "none"}`} />
-          </View>
-        </View>
+    </Demos>
+  );
+}
+
+function CalendarPage() {
+  const day = signal<string | null>(null);
+  const trip = signal<DateRange | null>(null);
+  return (
+    <Demos>
+      <Section title="Day" description="Arrows move a day or a week, Page Up / Page Down a month.">
+        <Calendar value={day()} onChange={({ value }) => day.set(value)} />
+        <Status text={`Day: ${day() ?? "none"}`} />
       </Section>
+      <Section title="Range" description="The first press starts the range, the second ends it.">
+        <Calendar range rangeValue={trip()} onRangeChange={({ value }) => trip.set(value)} />
+        <Status text={`Trip: ${trip() ? `${trip()!.start} to ${trip()!.end}` : "none"}`} />
+      </Section>
+    </Demos>
+  );
+}
+
+function DatePickerPage() {
+  const due = signal<string | null>("2026-11-19");
+  const trip = signal<DateRange | null>(null);
+  return (
+    <Demos>
       <Section title="DatePicker" description="A trigger that opens a calendar; a pick or Escape closes it.">
         <Field label="Due date">
           <DatePicker value={due()} onChange={({ value }) => due.set(value)} />
         </Field>
+        <Status text={`Due: ${due() ?? "none"}`} />
+      </Section>
+      <Section title="Range">
         <Field label="Trip dates">
           <DatePicker range rangeValue={trip()} onRangeChange={({ value }) => trip.set(value)} />
         </Field>
-        <Status text={`Due: ${due() ?? "none"}`} />
       </Section>
+    </Demos>
+  );
+}
+
+function ColorPickerPage() {
+  const accent = signal("#7aa2f7");
+  return (
+    <Demos>
       <Section title="ColorPicker" description="Drag the area or the sliders, type a CSS color, or press a swatch.">
         <View class="flex-row items-start gap-4">
           <ColorPicker
@@ -147,8 +208,23 @@ export function Fields() {
           />
           <View class="h-8 w-8 border border-border" style={{ backgroundColor: accent() }} />
         </View>
-        <Text class="text-[11px] text-text-secondary">{`Accent: ${accent()}`}</Text>
+        <Status text={`Accent: ${accent()}`} />
       </Section>
-    </View>
+    </Demos>
   );
 }
+
+export const fields: Family = {
+  title: "Fields",
+  pages: [
+    { value: "input", title: "Input", page: InputPage },
+    { value: "textarea", title: "Textarea", page: TextareaPage },
+    { value: "number-input", title: "NumberInput", page: NumberInputPage },
+    { value: "otp-input", title: "OtpInput", page: OtpInputPage },
+    { value: "select", title: "Select", page: SelectPage },
+    { value: "combobox", title: "Combobox", page: ComboboxPage },
+    { value: "calendar", title: "Calendar", page: CalendarPage },
+    { value: "date-picker", title: "DatePicker", page: DatePickerPage },
+    { value: "color-picker", title: "ColorPicker", page: ColorPickerPage },
+  ],
+};

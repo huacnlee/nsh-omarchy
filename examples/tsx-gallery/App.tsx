@@ -1,24 +1,8 @@
 // The Omarchy TSX gallery: every component of nsh-omarchy (installed with
-// `nsh add nsh-omarchy`), one page per family.
+// `nsh add nsh-omarchy`), one page each, grouped by family in the sidebar.
 import { host, mount, Scroll, signal, Text, View } from "nsh";
-import { Button, Caption, Omarchy, Tab, Tabs, Toaster } from "nsh-omarchy";
-import { Actions } from "./pages/Actions";
-import { Choices } from "./pages/Choices";
-import { Data } from "./pages/Data";
-import { Display } from "./pages/Display";
-import { Fields } from "./pages/Fields";
-import { Navigation } from "./pages/Navigation";
-import { Overlays } from "./pages/Overlays";
-
-const pages = [
-  { value: "actions", title: "Actions", page: Actions },
-  { value: "choices", title: "Choices", page: Choices },
-  { value: "fields", title: "Fields", page: Fields },
-  { value: "navigation", title: "Navigation", page: Navigation },
-  { value: "overlays", title: "Overlays", page: Overlays },
-  { value: "data", title: "Data", page: Data },
-  { value: "display", title: "Display", page: Display },
-];
+import { Caption, Omarchy, Sidebar, SidebarItem, SidebarSection, Tab, Tabs, Toaster } from "nsh-omarchy";
+import { families, pages } from "./pages";
 
 /** Draws with the Omarchy system theme, or one of the built-in palettes. */
 function pickTheme(value: string) {
@@ -37,39 +21,43 @@ export function App() {
     theme.set(value);
     pickTheme(value);
   });
-  const current = signal("actions");
+  const current = signal(pages[0].value);
   return (
     <View class="flex-1 flex-row bg-background">
-      <View class="w-[200px] gap-1 border-r border-foreground/12 p-2">
-        <View class="gap-1 pb-2">
-          <Caption>Appearance</Caption>
-          <Tabs
-            value={theme()}
-            variant="segmented"
-            size="small"
-            accessibilityLabel="Appearance"
-            onChange={({ value }) => {
-              theme.set(value);
-              pickTheme(value);
-            }}
-          >
-            <Tab value="system" label="System" />
-            <Tab value="light" label="Light" />
-            <Tab value="dark" label="Dark" />
-          </Tabs>
-        </View>
-        <Each of={pages} key={(p) => p.value}>
-          {(p) => (
-            <Button
-              testID={`page-${p().title}`}
-              label={p().title}
-              variant="ghost"
-              selected={current() === p().value}
-              onPress={() => current.set(p().value)}
-            />
+      <Sidebar
+        accessibilityLabel="Components"
+        value={current()}
+        onChange={({ value }) => current.set(value)}
+        header={
+          <View class="gap-1 px-2 pt-2 pb-1">
+            <Caption>Appearance</Caption>
+            <Tabs
+              value={theme()}
+              variant="segmented"
+              size="small"
+              accessibilityLabel="Appearance"
+              onChange={({ value }) => {
+                theme.set(value);
+                pickTheme(value);
+              }}
+            >
+              <Tab value="system" label="System" />
+              <Tab value="light" label="Light" />
+              <Tab value="dark" label="Dark" />
+            </Tabs>
+          </View>
+        }
+      >
+        <Each of={families} key={(f) => f.title}>
+          {(family) => (
+            <SidebarSection title={family().title}>
+              <Each of={family().pages} key={(p) => p.value}>
+                {(p) => <SidebarItem testID={`page-${p().value}`} value={p().value} label={p().title} />}
+              </Each>
+            </SidebarSection>
           )}
         </Each>
-      </View>
+      </Sidebar>
       <Scroll class="flex-1" testID="page">
         <View class="gap-6 p-6">
           <Each of={pages} key={(p) => p.value}>

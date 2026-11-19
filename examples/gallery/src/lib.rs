@@ -45,7 +45,19 @@ pub fn Gallery() -> impl IntoElement {
 
 fn sidebar(current: Signal<usize>, pages: &[&'static registry::Page]) -> impl IntoElement {
     let mut rows: Vec<AnyElement> = Vec::new();
+    let mut group = "";
     for (index, page) in pages.iter().enumerate() {
+        if page.group != group {
+            group = page.group;
+            rows.push(
+                view()
+                    .px(px(tokens::SPACE_2))
+                    .pt(px(if index == 0 { 0.0 } else { tokens::SPACE_3 }))
+                    .pb(px(tokens::SPACE_1))
+                    .child(om::caption(group))
+                    .into_element(),
+            );
+        }
         rows.push(
             om::button(page.title)
                 .ghost()

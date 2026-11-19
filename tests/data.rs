@@ -396,15 +396,18 @@ fn the_data_components_are_declared_for_tsx() {
 
 #[test]
 fn selected_takes_a_str_an_option_or_a_closure() {
-    let _ = om::data_table(columns(), Vec::<om::DataRow>::new())
-        .selected("a")
-        .selected(None::<SharedString>)
-        .selected(Some(SharedString::from("b")))
-        .selected(move || Some(SharedString::from("c")));
-    let _ = om::tree(tree_items())
-        .selected("config")
-        .selected(None::<SharedString>)
-        .selected(Some(SharedString::from("hypr")))
-        .expanded(vec![SharedString::from("config")])
-        .expanded(None::<Vec<SharedString>>);
+    // Compiles only: building elements needs a running engine.
+    let _ = || {
+        let _ = om::data_table(columns(), Vec::<om::DataRow>::new())
+            .selected("a")
+            .selected(None::<SharedString>)
+            .selected(Some(SharedString::from("b")))
+            .selected(move || Some(SharedString::from("c")));
+        let _ = om::tree(tree_items())
+            .selected("config")
+            .selected(None::<SharedString>)
+            .selected(Some(SharedString::from("hypr")))
+            .expanded(vec![SharedString::from("config")])
+            .expanded(None::<Vec<SharedString>>);
+    };
 }

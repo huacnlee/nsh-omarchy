@@ -1,0 +1,103 @@
+name: Website
+
+# Builds the website with the live TSX gallery and deploys pushes to main to
+# GitHub Pages (https://huacnlee.github.io/nsh-omarchy/). The gallery is
+# published with the `nsh` CLI built from NSH's source at NSH_REV
+# (website/scripts/install-nsh.sh): nshm support is not in a release yet.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "website/**"
+      - "src/**"
+      - "docs/**"
+      - "themes/**"
+      - "examples/tsx-gallery/**"
+      - "README.md"
+      - "Cargo.toml"
+      - ".github/workflows/website.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NSH_REV: 1b92fd78d851b640b3945b7f1cb18d6d0b8262b1
+  NSH_SOURCE: ${{ github.workspace }}/../nsh-source
+  CARGO_TARGET_DIR: ${{ github.workspace }}/../target
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: "0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang and LLVM
+        run: sudo apt-get update && sudo apt-get install -y clang llvm libclang-dev
+        working-directory: .
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ${{ env.NSH_SOURCE }}
+            ${{ env.CARGO_TARGET_DIR }}
+          key: website-${{ runner.os }}-nsh-${{ env.NSH_REV }}-${{ hashFiles('Cargo.toml', 'src/**') }}
+          restore-keys: website-${{ runner.os }}-nsh-${{ env.NSH_REV }}-
+      - name: Build nsh from source
+        run: bash scripts/install-nsh.sh
+      - name: Publish the gallery for the web
+        run: bun run gallery
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+        env:
+          SITE_URL: https://huacnlee.github.io
+          BASE_PATH: /nsh-omarchy
+      - name: Install the test browser
+        run: bun --bun x playwright install --with-deps chromium
+      - name: Test the production website
+        run: bun run test
+        env:
+          PLAYWRIGHT_PRODUCTION: "1"
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-test-results
+          path: website/test-results
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

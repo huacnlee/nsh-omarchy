@@ -4,11 +4,11 @@
 //! scale: compact desktop sizes from [`crate::tokens`], titles in the bright
 //! color, secondary text dimmed, code in the monospaced family.
 //!
-//! [`markdown`] shows a Markdown document through `nsh_base`'s `TextView`,
-//! restyled with [`prose_parts`] to the same scale (12pt body instead of the
+//! `Markdown` (in `crate::ui::display`) shows a Markdown document through
+//! `nsh_base`'s `TextView`, restyled with [`prose_parts`] to the same scale (12pt body instead of the
 //! 15pt reading size, square code blocks on the inset surface).
 
-use nsh_base::{TextViewLinkPressEvent, TextViewPart as Part, TextViewParts, text_view};
+use nsh_base::{TextViewPart as Part, TextViewParts};
 use nsh_core::element::StyleRefinement;
 use nsh_core::prelude::*;
 
@@ -75,7 +75,7 @@ const TASK_BOX: f32 = 14.0;
 
 /// Omarchy's styles for the parts of `nsh_base`'s text views: give them to
 /// the text views of a component with `provide_context(prose_parts())`
-/// (what [`markdown`] does) to restyle one built by hand.
+/// (what `Markdown` does) to restyle one built by hand.
 pub fn prose_parts() -> TextViewParts {
     let heading = |size: f32| {
         move |s: StyleRefinement| {
@@ -167,39 +167,5 @@ pub fn prose_parts() -> TextViewParts {
         .part(Part::Footnotes, |s| {
             s.text_size(px(tokens::TEXT_SM))
                 .text_color(move || tokens::secondary())
-        })
-}
-
-/// The props of [`Markdown`].
-#[derive(Clone, PartialEq, Props)]
-pub struct MarkdownProps {
-    /// The document, as CommonMark with GitHub's extensions.
-    pub source: Prop<SharedString>,
-    /// Whether its text can be selected and copied (default true).
-    #[prop(default = true)]
-    pub selectable: Prop<bool>,
-}
-
-/// The events of a [`Markdown`].
-#[derive(Debug, Clone, PartialEq, Event)]
-pub enum MarkdownEvent {
-    /// A link was pressed: its URL. Nothing opens it; the app decides.
-    LinkPress(SharedString),
-}
-
-/// A Markdown document in Omarchy's type. It does not scroll; put it in a
-/// scroll view for long documents.
-///
-/// # Rust
-///
-/// `markdown().source("# Notes ...")`, in a `scroll` for long documents.
-#[component]
-pub fn Markdown(props: MarkdownProps, cx: Scope<MarkdownEvent>) -> impl IntoElement {
-    provide_context(prose_parts());
-    text_view()
-        .markdown(move || Some(props.source.get()))
-        .selectable(props.selectable)
-        .on_link_press(move |event: &TextViewLinkPressEvent| {
-            cx.emit(MarkdownEvent::LinkPress(event.url.clone()))
         })
 }

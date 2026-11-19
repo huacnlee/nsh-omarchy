@@ -28,8 +28,30 @@ pub struct SeriesData {
     pub values: Vec<f64>,
 }
 
+impl ChartPoint {
+    /// A point: `ChartPoint::new("Jan", 186.0)`.
+    pub fn new(label: impl Into<SharedString>, value: f64) -> Self {
+        ChartPoint { label: label.into(), value }
+    }
+}
+
+/// `("Jan", 186.0).into()`.
+impl<S: Into<SharedString>> From<(S, f64)> for ChartPoint {
+    fn from((label, value): (S, f64)) -> Self {
+        ChartPoint::new(label, value)
+    }
+}
+
+impl SeriesData {
+    /// A series: `SeriesData::new("Mobile", vec![80.0, 200.0])`.
+    pub fn new(name: impl Into<SharedString>, values: impl Into<Vec<f64>>) -> Self {
+        SeriesData { name: name.into(), values: values.into() }
+    }
+}
+
 /// How a line or an area goes from point to point.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, PropEnum)]
+#[non_exhaustive]
 pub enum ChartCurve {
     /// Straight segments.
     #[default]

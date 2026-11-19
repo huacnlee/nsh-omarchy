@@ -7,28 +7,11 @@
 //! `token("surface")` follow every change with no mirror at all.
 
 use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 
 use nsh_core::prelude::*;
 
-use crate::theme::{Appearance, Theme};
-
-/// Whether a theme draws on a dark or a light background.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PropEnum)]
-pub enum ThemeAppearance {
-    /// Light text on a dark background.
-    Dark,
-    /// Dark text on a light background.
-    Light,
-}
-
-impl From<Appearance> for ThemeAppearance {
-    fn from(appearance: Appearance) -> Self {
-        match appearance {
-            Appearance::Dark => Self::Dark,
-            Appearance::Light => Self::Light,
-        }
-    }
-}
+use crate::theme::{Theme, ThemeMode};
 
 /// A palette built into nsh-omarchy.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PropEnum)]
@@ -58,14 +41,14 @@ pub struct ThemeInfo {
     /// palette's ("Tokyo Night").
     pub name: String,
     /// Whether it is dark or light.
-    pub appearance: ThemeAppearance,
+    pub mode: ThemeMode,
 }
 
 impl From<&Theme> for ThemeInfo {
     fn from(theme: &Theme) -> Self {
         Self {
-            name: theme.name.to_string(),
-            appearance: theme.appearance.into(),
+            name: theme.name().to_string(),
+            mode: theme.mode(),
         }
     }
 }
@@ -76,6 +59,27 @@ thread_local! {
     /// The listeners of [`Omarchy::on_change`], by id.
     static LISTENERS: RefCell<Vec<(u64, Callback<ThemeInfo>)>> = const { RefCell::new(Vec::new()) };
     static NEXT_ID: Cell<u64> = const { Cell::new(0) };
+    /// The listeners of [`on_theme_change`], by id.
+    static RUST_LISTENERS: RefCell<Vec<(u64, Rc<dyn Fn(&Theme)>)>> = const { RefCell::new(Vec::new()) };
+}
+
+fn next_id() -> u64 {
+    NEXT_ID.with(|next| {
+        let id = next.get();
+        next.set(id + 1);
+        id
+    })
+}
+
+/// Calls `listener` with the theme after each change of it: an applied
+/// palette, or the system theme changing while followed. Returns what stops
+/// listening; a listener added in a component stops with it.
+pub fn on_theme_change(listener: impl Fn(&Theme) + 'static) -> Stop {
+    let id = next_id();
+    RUST_LISTENERS.with_borrow_mut(|l| l.push((id, Rc::new(listener))));
+    Stop::new(move || {
+        let _ = RUST_LISTENERS.try_with(|l| l.borrow_mut().retain(|(i, _)| *i != id));
+    })
 }
 
 /// Records `theme` as the one drawn and tells the listeners, when it is
@@ -92,6 +96,10 @@ pub(crate) fn theme_applied(theme: &Theme) {
             LISTENERS.with_borrow(|l| l.iter().map(|(_, c)| c.clone()).collect());
         for listener in listeners {
             listener.post(info.clone());
+        }
+        let rust: Vec<_> = RUST_LISTENERS.with_borrow(|l| l.iter().map(|(_, f)| f.clone()).collect());
+        for listener in rust {
+            listener(theme);
         }
     }
 }
@@ -142,11 +150,7 @@ impl Omarchy {
     /// function that stops listening; a listener added in a component stops
     /// with it.
     pub fn on_change(#[args(theme)] listener: Callback<ThemeInfo>) -> Stop {
-        let id = NEXT_ID.with(|next| {
-            let id = next.get();
-            next.set(id + 1);
-            id
-        });
+        let id = next_id();
         LISTENERS.with_borrow_mut(|l| l.push((id, listener)));
         Stop::new(move || {
             // The thread may be ending (the engine stopping): then there
@@ -167,7 +171,7 @@ mod tests {
             Omarchy::current(),
             Some(ThemeInfo {
                 name: "Flexoki Light".into(),
-                appearance: ThemeAppearance::Light,
+                mode: ThemeMode::Light,
             })
         );
         theme_applied(&BuiltInTheme::TokyoNight.theme());

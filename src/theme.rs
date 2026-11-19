@@ -11,46 +11,56 @@ use nsh_core::element::{AdaptiveColor, SharedString, Tokens};
 use nsh_core::prelude::*;
 
 /// Whether a palette is drawn on a dark or a light background.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub enum Appearance {
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, PropEnum)]
+#[non_exhaustive]
+pub enum ThemeMode {
+    /// Light text on a dark background.
     #[default]
     Dark,
+    /// Dark text on a light background.
     Light,
 }
 
 /// An Omarchy palette: the semantic roles Omarchy's shell draws with.
+///
+/// Made by [`Theme::tokyo_night`], [`Theme::flexoki_light`],
+/// [`Theme::load_system`] or [`Theme::from_colors_toml`]; drawn with
+/// [`Theme::apply`]. Components read the colors through [`crate::tokens`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct Theme {
     /// Display name (`theme.name`, or the built-in palette's name).
-    pub name: SharedString,
-    pub appearance: Appearance,
+    pub(crate) name: SharedString,
+    pub(crate) mode: ThemeMode,
     /// The window background.
-    pub background: Hsla,
+    pub(crate) background: Hsla,
     /// Raised surfaces: panels, popups, cards.
-    pub surface: Hsla,
+    pub(crate) surface: Hsla,
     /// Recessed surfaces: wells, code blocks, tracks.
-    pub inset: Hsla,
+    pub(crate) inset: Hsla,
     /// Body text.
-    pub foreground: Hsla,
+    pub(crate) foreground: Hsla,
     /// Secondary text: captions, hints, placeholders.
-    pub secondary: Hsla,
+    pub(crate) secondary: Hsla,
     /// Emphasized text: titles, the selected row.
-    pub bright: Hsla,
+    pub(crate) bright: Hsla,
     /// The theme's accent: focus, primary actions, the current item.
-    pub accent: Hsla,
+    pub(crate) accent: Hsla,
     /// Text drawn on an accent fill.
-    pub on_accent: Hsla,
+    pub(crate) on_accent: Hsla,
     /// Persistent selection fill.
-    pub selection: Hsla,
+    pub(crate) selection: Hsla,
     /// Borders and dividers.
-    pub border: Hsla,
-    pub danger: Hsla,
-    pub warning: Hsla,
-    pub success: Hsla,
+    pub(crate) border: Hsla,
+    /// Destructive actions and errors.
+    pub(crate) danger: Hsla,
+    /// Warnings.
+    pub(crate) warning: Hsla,
+    /// Success.
+    pub(crate) success: Hsla,
     /// Series colors for charts.
-    pub chart: [Hsla; 5],
+    pub(crate) chart: [Hsla; 5],
     /// The 16 ANSI colors, when the theme provides them (terminal views).
-    pub ansi: Option<[Hsla; 16]>,
+    pub(crate) ansi: Option<[Hsla; 16]>,
 }
 
 fn c(hex: u32) -> Hsla {
@@ -58,11 +68,97 @@ fn c(hex: u32) -> Hsla {
 }
 
 impl Theme {
+    /// Its display name: the system theme's `theme.name`, or the built-in
+    /// palette's ("Tokyo Night").
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Dark or light.
+    pub fn mode(&self) -> ThemeMode {
+        self.mode
+    }
+
+    /// The window background.
+    pub fn background(&self) -> Hsla {
+        self.background
+    }
+
+    /// Raised surfaces: panels, popups, cards.
+    pub fn surface(&self) -> Hsla {
+        self.surface
+    }
+
+    /// Recessed surfaces: wells, code blocks, tracks.
+    pub fn inset(&self) -> Hsla {
+        self.inset
+    }
+
+    /// Body text.
+    pub fn foreground(&self) -> Hsla {
+        self.foreground
+    }
+
+    /// Secondary text: captions, hints, placeholders.
+    pub fn secondary(&self) -> Hsla {
+        self.secondary
+    }
+
+    /// Emphasized text: titles, the selected row.
+    pub fn bright(&self) -> Hsla {
+        self.bright
+    }
+
+    /// The accent: focus, primary actions, the current item.
+    pub fn accent(&self) -> Hsla {
+        self.accent
+    }
+
+    /// Text drawn on an accent fill.
+    pub fn on_accent(&self) -> Hsla {
+        self.on_accent
+    }
+
+    /// The persistent selection fill.
+    pub fn selection(&self) -> Hsla {
+        self.selection
+    }
+
+    /// Borders and dividers.
+    pub fn border(&self) -> Hsla {
+        self.border
+    }
+
+    /// Destructive actions and errors.
+    pub fn danger(&self) -> Hsla {
+        self.danger
+    }
+
+    /// Warnings.
+    pub fn warning(&self) -> Hsla {
+        self.warning
+    }
+
+    /// Success.
+    pub fn success(&self) -> Hsla {
+        self.success
+    }
+
+    /// The five chart series colors.
+    pub fn chart(&self) -> [Hsla; 5] {
+        self.chart
+    }
+
+    /// The 16 ANSI colors, when the theme provides them.
+    pub fn ansi(&self) -> Option<[Hsla; 16]> {
+        self.ansi
+    }
+
     /// Omarchy's default palette, used whenever the system theme is missing or invalid.
     pub fn tokyo_night() -> Self {
         Self {
             name: "Tokyo Night".into(),
-            appearance: Appearance::Dark,
+            mode: ThemeMode::Dark,
             background: c(0x1a1b26),
             surface: c(0x24283b),
             inset: c(0x13141c),
@@ -109,7 +205,7 @@ impl Theme {
     pub fn flexoki_light() -> Self {
         Self {
             name: "Flexoki Light".into(),
-            appearance: Appearance::Light,
+            mode: ThemeMode::Light,
             background: c(0xfffcf0),
             surface: c(0xf2f0e5),
             inset: c(0xe6e4d9),
@@ -136,7 +232,7 @@ impl Theme {
 
     /// The design tokens of this palette: shadcn's roles for `nsh_base` and
     /// Tailwind classes, plus Omarchy's own (`surface`, `inset`, `bright`, ...).
-    pub fn to_tokens(&self) -> Tokens {
+    pub(crate) fn to_tokens(&self) -> Tokens {
         let same = |h: Hsla| AdaptiveColor::new(h, h);
         let mut t = BaseTheme::default();
         for (name, color) in self.roles() {
@@ -151,7 +247,7 @@ impl Theme {
     /// (for `nsh_base` and Tailwind's `bg-primary`, ...) and Omarchy's own
     /// (`surface`, `inset`, `bright`, `selection`, `text-secondary`,
     /// `omarchy-accent`, ...).
-    pub fn roles(&self) -> Vec<(String, Hsla)> {
+    pub(crate) fn roles(&self) -> Vec<(String, Hsla)> {
         let mut roles: Vec<(String, Hsla)> = [
             ("background", self.background),
             ("foreground", self.foreground),
@@ -206,7 +302,8 @@ impl Theme {
     /// A theme file (shadcn's `cssVars`, what `nsh.json` `"theme"` takes)
     /// drawing `light` in the light appearance and `dark` in the dark one.
     /// `themes/omarchy.json` is `theme_json(&flexoki_light(), &tokyo_night())`.
-    pub fn theme_json(light: &Theme, dark: &Theme) -> String {
+    #[cfg(test)]
+    pub(crate) fn theme_json(light: &Theme, dark: &Theme) -> String {
         let section = |theme: &Theme| {
             theme
                 .roles()
@@ -226,7 +323,7 @@ impl Theme {
 
     /// Draws the app with this palette and records it as the active theme.
     /// Call it from a component body, a listener or a task. Stops following
-    /// the system theme; [`crate::system_theme::follow_system`] resumes it.
+    /// the system theme; [`follow_system`](crate::follow_system) resumes it.
     pub fn apply(self) {
         crate::system_theme::stop_following();
         self.apply_palette();
@@ -236,9 +333,9 @@ impl Theme {
     pub(crate) fn apply_palette(self) {
         // The window takes the palette's appearance, so what adapts to it
         // (native controls, scroll bars, highlighted code) matches.
-        nsh_core::prelude::set_color_scheme(match self.appearance {
-            Appearance::Dark => nsh_core::platform::Appearance::Dark,
-            Appearance::Light => nsh_core::platform::Appearance::Light,
+        nsh_core::prelude::set_color_scheme(match self.mode {
+            ThemeMode::Dark => nsh_core::platform::Appearance::Dark,
+            ThemeMode::Light => nsh_core::platform::Appearance::Light,
         });
         set_tokens(self.to_tokens());
         crate::ui::omarchy::theme_applied(&self);
@@ -254,7 +351,7 @@ impl Default for Theme {
 
 /// The palette the app is drawn with (`None` before one is applied).
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct ActiveTheme(pub Option<Theme>);
+pub(crate) struct ActiveTheme(pub(crate) Option<Theme>);
 
 /// The active palette (Tokyo Night until another one is applied). Reading it
 /// in a binding subscribes to theme changes.

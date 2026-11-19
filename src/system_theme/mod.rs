@@ -49,13 +49,13 @@ pub(crate) fn current_dir(home: &Path) -> PathBuf {
 }
 
 /// Reads the system theme of `home` (see the module's docs for where).
-pub fn load_from_home(home: &Path) -> Result<Theme, ThemeLoadError> {
+pub(crate) fn load_from_home(home: &Path) -> Result<Theme, ThemeLoadError> {
     Theme::from_current_dir(current_dir(home))
 }
 
 /// Reads the system theme of `$HOME`. An error when `HOME` is unset or empty,
 /// or the theme is missing or invalid.
-pub fn load_system_theme() -> Result<Theme, ThemeLoadError> {
+pub(crate) fn load_system_theme() -> Result<Theme, ThemeLoadError> {
     let home = home().ok_or_else(|| ThemeLoadError("HOME is not set".into()))?;
     load_from_home(&home)
 }
@@ -67,14 +67,16 @@ fn home() -> Option<PathBuf> {
 }
 
 impl Theme {
-    /// The current system theme, or Tokyo Night when it cannot be read.
-    pub fn system_or_default() -> Self {
-        load_system_theme().unwrap_or_else(|_| Theme::tokyo_night())
+    /// Reads the Omarchy system theme (`~/.local/state/omarchy/current`). Fails
+    /// where there is none: another OS, the web, a missing or broken
+    /// `colors.toml`.
+    pub fn load_system() -> Result<Theme, ThemeLoadError> {
+        load_system_theme()
     }
 
     /// Reads an Omarchy `current` directory: `theme/colors.toml` and the
     /// optional `theme.name` ("Omarchy" when missing or empty).
-    pub fn from_current_dir(path: impl AsRef<Path>) -> Result<Theme, ThemeLoadError> {
+    pub(crate) fn from_current_dir(path: impl AsRef<Path>) -> Result<Theme, ThemeLoadError> {
         let path = path.as_ref();
         let file = path.join("theme/colors.toml");
         let text = fs::read_to_string(&file)
@@ -156,7 +158,7 @@ mod tests {
         let current = home.path().join(".local/state/omarchy/current");
         write_theme(&current, ANSI, Some("Custom Light\n"));
         let theme = load_from_home(home.path()).unwrap();
-        assert_eq!(theme.name.as_ref(), "Custom Light");
+        assert_eq!(theme.name(), "Custom Light");
         assert_eq!(theme.accent, nsh_core::color::rgb(0x205ea6).to_hsla());
     }
 
@@ -166,11 +168,11 @@ mod tests {
         let current = home.path().join(".local/state/omarchy/current");
         write_theme(&current, SEMANTIC_LIGHT, None);
         let theme = load_from_home(home.path()).unwrap();
-        assert_eq!(theme.name.as_ref(), "Omarchy");
-        assert_eq!(theme.appearance, crate::theme::Appearance::Light);
+        assert_eq!(theme.name(), "Omarchy");
+        assert_eq!(theme.mode, crate::theme::ThemeMode::Light);
         fs::write(current.join("theme.name"), "  \n").unwrap();
         assert_eq!(
-            load_from_home(home.path()).unwrap().name.as_ref(),
+            load_from_home(home.path()).unwrap().name(),
             "Omarchy"
         );
     }
@@ -203,17 +205,17 @@ mod tests {
         let home = tempfile::tempdir().unwrap();
         let legacy = home.path().join(".config/omarchy/current");
         write_theme(&legacy, ANSI, Some("Legacy"));
-        assert_eq!(load_from_home(home.path()).unwrap().name.as_ref(), "Legacy");
+        assert_eq!(load_from_home(home.path()).unwrap().name(), "Legacy");
         // A state directory takes precedence once it exists.
         let current = home.path().join(".local/state/omarchy/current");
         write_theme(&current, ANSI, Some("Current"));
         assert_eq!(
-            load_from_home(home.path()).unwrap().name.as_ref(),
+            load_from_home(home.path()).unwrap().name(),
             "Current"
         );
         // Removed again, the legacy theme is back.
         fs::remove_dir_all(&current).unwrap();
-        assert_eq!(load_from_home(home.path()).unwrap().name.as_ref(), "Legacy");
+        assert_eq!(load_from_home(home.path()).unwrap().name(), "Legacy");
     }
 
     #[test]
@@ -244,8 +246,8 @@ mod tests {
         fs::write(target.join("colors.toml"), ANSI).unwrap();
         std::os::unix::fs::symlink(&target, current.join("theme")).unwrap();
         assert_eq!(
-            load_from_home(home.path()).unwrap().appearance,
-            crate::theme::Appearance::Light
+            load_from_home(home.path()).unwrap().mode,
+            crate::theme::ThemeMode::Light
         );
     }
 }

@@ -9,7 +9,7 @@
 use nsh_core::color::{Hsla, Rgba, rgb};
 
 use super::ThemeLoadError;
-use crate::theme::{Appearance, Theme};
+use crate::theme::{ThemeMode, Theme};
 
 impl Theme {
     /// Reads the text of an Omarchy `colors.toml` as the palette `name`.
@@ -42,12 +42,12 @@ impl Theme {
         let background = required(&["background"])?;
         let foreground = required(&["foreground"])?;
         let accent = required(&["accent"])?;
-        let appearance = match values.get("mode") {
-            Some(toml::Value::String(mode)) if mode == "light" => Appearance::Light,
-            Some(toml::Value::String(mode)) if mode == "dark" => Appearance::Dark,
+        let mode = match values.get("mode") {
+            Some(toml::Value::String(mode)) if mode == "light" => ThemeMode::Light,
+            Some(toml::Value::String(mode)) if mode == "dark" => ThemeMode::Dark,
             Some(_) => return Err(ThemeLoadError("mode must be dark or light".into())),
-            None if background.luminance() > foreground.luminance() => Appearance::Light,
-            None => Appearance::Dark,
+            None if background.luminance() > foreground.luminance() => ThemeMode::Light,
+            None => ThemeMode::Dark,
         };
         // Neutral layers come from the user's colors, never from another theme.
         let surface =
@@ -95,7 +95,7 @@ impl Theme {
 
         Ok(Theme {
             name: name.to_owned().into(),
-            appearance,
+            mode,
             background,
             surface,
             inset,
@@ -213,8 +213,8 @@ muted = '#414868'
     #[test]
     fn ansi_palette_maps_terminal_colors_and_infers_light_mode() {
         let theme = Theme::from_colors_toml(ANSI, "Flexoki").unwrap();
-        assert_eq!(theme.name.as_ref(), "Flexoki");
-        assert_eq!(theme.appearance, Appearance::Light);
+        assert_eq!(theme.name(), "Flexoki");
+        assert_eq!(theme.mode, ThemeMode::Light);
         assert_eq!(theme.accent, c(0x205ea6));
         assert_eq!(theme.danger, c(0xaf3029));
         assert_eq!(theme.success, c(0x526600));
@@ -232,7 +232,7 @@ muted = '#414868'
     #[test]
     fn semantic_palette_preserves_explicit_roles() {
         let theme = Theme::from_colors_toml(SEMANTIC, "Custom").unwrap();
-        assert_eq!(theme.appearance, Appearance::Dark);
+        assert_eq!(theme.mode, ThemeMode::Dark);
         assert_eq!(theme.surface, c(0x24283b));
         assert_eq!(theme.inset, c(0x13141c));
         assert_eq!(theme.selection, c(0x292e42));
@@ -244,7 +244,7 @@ muted = '#414868'
     #[test]
     fn mode_overrides_luminance() {
         let theme = Theme::from_colors_toml(&format!("mode = 'dark'\n{ANSI}"), "T").unwrap();
-        assert_eq!(theme.appearance, Appearance::Dark);
+        assert_eq!(theme.mode, ThemeMode::Dark);
     }
 
     #[test]

@@ -28,7 +28,7 @@ mod navigation;
 mod overlays;
 mod types;
 
-pub mod theme;
+mod theme;
 pub mod tokens;
 
 pub use actions::*;
@@ -42,7 +42,8 @@ pub use types::*;
 pub use components::button::{ButtonVariant, ControlSize};
 pub use components::icon::IconName;
 pub use system_theme::{ThemeLoadError, follow_system, stop_following};
-pub use theme::{ActiveTheme, Appearance, Theme, active_theme};
+pub use theme::{Theme, ThemeMode, active_theme};
+pub use ui::omarchy::on_theme_change;
 
 use nsh_core::prelude::*;
 

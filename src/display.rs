@@ -154,7 +154,7 @@ pub fn code(content: impl IntoReactive<SharedString>) -> CodeElement {
 }
 
 /// A Markdown document in Omarchy's type: `markdown(notes)
-/// .on_link_press(move |url: &String| open(url))`.
+/// .on_link_press(move |url: &SharedString| open(url))`.
 pub fn markdown<M>(source: impl IntoProp<SharedString, M>) -> MarkdownElement {
     md::markdown().source(source)
 }

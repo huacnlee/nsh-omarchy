@@ -146,7 +146,7 @@ fn Notes() -> impl IntoElement {
     view()
         .child(
             om::markdown("# Release notes\n\nRead the [docs](https://omarchy.org).")
-                .on_link_press(move |url: &String| pressed.set(url.clone())),
+                .on_link_press(move |url: &SharedString| pressed.set(url.to_string())),
         )
         .child(text(move || format!("Link pressed: {}", pressed.get())))
 }

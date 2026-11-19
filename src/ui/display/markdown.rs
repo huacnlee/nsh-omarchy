@@ -20,7 +20,7 @@ pub struct MarkdownProps {
 #[derive(Debug, Clone, PartialEq, Event)]
 pub enum MarkdownEvent {
     /// A link was pressed: its URL. Nothing opens it; the app decides.
-    LinkPress(String),
+    LinkPress(SharedString),
 }
 
 /// A Markdown document in Omarchy's type: `<Markdown source={notes} />`. It
@@ -32,6 +32,6 @@ pub fn Markdown(props: MarkdownProps, cx: Scope<MarkdownEvent>) -> impl IntoElem
         .markdown(move || Some(props.source.get()))
         .selectable(props.selectable)
         .on_link_press(move |event: &TextViewLinkPressEvent| {
-            cx.emit(MarkdownEvent::LinkPress(event.url.to_string()))
+            cx.emit(MarkdownEvent::LinkPress(SharedString::from(event.url.to_string())))
         })
 }

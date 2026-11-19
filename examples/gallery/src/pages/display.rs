@@ -306,7 +306,7 @@ pub fn markdown() -> AnyElement {
         .max_w(px(640.0))
         .child(
             om::card().child(
-                om::markdown(SAMPLE).on_link_press(move |url: &String| pressed.set(url.clone())),
+                om::markdown(SAMPLE).on_link_press(move |url: &SharedString| pressed.set(url.to_string())),
             ),
         )
         .child(om::caption(move || {

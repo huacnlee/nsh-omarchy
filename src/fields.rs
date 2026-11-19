@@ -11,12 +11,12 @@
 //! )
 //! ```
 
-use std::rc::Rc;
 
 use chrono::{Datelike, NaiveDate};
-use nsh_core::element::{IntoProp, JsHost, JsIn, JsKind, JsOwned, JsValue, PropError, TsTypes};
+use nsh_core::element::{IntoProp, JsHost, JsIn, JsOwned, JsValue, PropError, TsTypes};
 use nsh_core::prelude::*;
 
+use crate::types::Controlled;
 use crate::ui::fields as ui;
 
 pub use crate::ui::fields::{
@@ -84,100 +84,7 @@ pub fn field<M>(label: impl IntoProp<SharedString, M>) -> FieldElement {
     ui::field().label(label)
 }
 
-// ---- Controlled values --------------------------------------------------
-
-/// A field's value prop: set by the app (it owns the value and writes back
-/// what `on_change` reports), or left out (the field keeps its own).
-///
-/// It is never written: the setters take the value itself
-/// (`.value("dwindle")`, `.value(Some(4.0))`), a signal of it or a closure
-/// returning it. In TSX it is the value, `undefined` when left out.
-#[derive(Clone, Debug, PartialEq)]
-#[non_exhaustive]
-pub enum Controlled<T> {
-    /// Left out: the field keeps its own value.
-    Uncontrolled,
-    /// The app's value.
-    Set(T),
-}
-
-impl<T> Default for Controlled<T> {
-    fn default() -> Self {
-        Self::Uncontrolled
-    }
-}
-
-impl<T: Clone> Controlled<T> {
-    /// The app's value, or `None` while it is left out.
-    pub fn get(&self) -> Option<T> {
-        match self {
-            Self::Uncontrolled => None,
-            Self::Set(value) => Some(value.clone()),
-        }
-    }
-
-    /// The app's value, else `own()`.
-    pub(crate) fn or_else(&self, own: impl FnOnce() -> T) -> T {
-        match self {
-            Self::Uncontrolled => own(),
-            Self::Set(value) => value.clone(),
-        }
-    }
-
-    /// Left out.
-    pub(crate) fn is_uncontrolled(&self) -> bool {
-        matches!(self, Self::Uncontrolled)
-    }
-}
-
-impl<T> From<T> for Controlled<T> {
-    fn from(value: T) -> Self {
-        Self::Set(value)
-    }
-}
-
-impl From<&str> for Controlled<String> {
-    fn from(value: &str) -> Self {
-        Self::Set(value.to_owned())
-    }
-}
-
-impl From<SharedString> for Controlled<String> {
-    fn from(value: SharedString) -> Self {
-        Self::Set(value.to_string())
-    }
-}
-
-impl From<&str> for Controlled<Option<String>> {
-    fn from(value: &str) -> Self {
-        Self::Set(Some(value.to_owned()))
-    }
-}
-
-impl From<String> for Controlled<Option<String>> {
-    fn from(value: String) -> Self {
-        Self::Set(Some(value))
-    }
-}
-
-impl From<Option<&str>> for Controlled<Option<String>> {
-    fn from(value: Option<&str>) -> Self {
-        Self::Set(value.map(str::to_owned))
-    }
-}
-
-impl From<Vec<&str>> for Controlled<Vec<String>> {
-    fn from(value: Vec<&str>) -> Self {
-        Self::Set(value.into_iter().map(str::to_owned).collect())
-    }
-}
-
-impl From<f64> for Controlled<Option<f64>> {
-    fn from(value: f64) -> Self {
-        Self::Set(Some(value))
-    }
-}
-
+// A day as a field's value: `.value(Date::new(2026, 11, 19))`.
 impl From<Date> for Controlled<Option<Date>> {
     fn from(value: Date) -> Self {
         Self::Set(Some(value))
@@ -190,44 +97,6 @@ impl From<DateRange> for Controlled<Option<DateRange>> {
     }
 }
 
-/// `T`'s TypeScript type: `undefined` (left out) is the field's own value.
-impl<T: JsValue> JsValue for Controlled<T> {
-    fn ts_type(types: &mut TsTypes) -> String {
-        T::ts_type(types)
-    }
-
-    fn from_js(value: JsIn<'_>) -> Result<Self, PropError> {
-        match value.kind() {
-            JsKind::Undefined => Ok(Self::Uncontrolled),
-            _ => T::from_js(value).map(Self::Set),
-        }
-    }
-
-    fn to_js<'a>(&self, host: &'a dyn JsHost) -> Result<JsOwned<'a>, PropError> {
-        match self {
-            Self::Uncontrolled => Ok(JsOwned::new(host, host.undefined())),
-            Self::Set(value) => value.to_js(host),
-        }
-    }
-}
-
-/// How a signal of a field's value is its value prop ([`IntoProp`]).
-#[doc(hidden)]
-pub struct ControlledHandle(());
-
-macro_rules! controlled_handles {
-    ($($handle:ident),*) => {$(
-        /// A signal of the value, as the app's value.
-        impl<T: Clone + PartialEq + 'static> IntoProp<Controlled<T>, ControlledHandle> for $handle<T> {
-            fn into_prop(self) -> Reactive<Controlled<T>> {
-                Reactive::Bound(Rc::new(move || Controlled::Set(self.get())))
-            }
-        }
-    )*};
-}
-
-controlled_handles!(Signal, ReadSignal, Memo);
-
 // ---- Select items -------------------------------------------------------
 
 /// An item of a [`Select`]'s or a [`Combobox`]'s list:
@@ -237,12 +106,12 @@ controlled_handles!(Signal, ReadSignal, Memo);
 #[non_exhaustive]
 pub struct SelectItem {
     /// What choosing it sets the value to: unique among the items.
-    pub value: String,
+    pub value: SharedString,
     /// What its row and the trigger show, and screen readers say.
-    pub label: String,
+    pub label: SharedString,
     /// Its section: adjacent items of one group show under this title.
     #[prop(skip_none)]
-    pub group: Option<String>,
+    pub group: Option<SharedString>,
     /// It cannot be chosen.
     #[prop(default)]
     pub disabled: bool,
@@ -250,7 +119,7 @@ pub struct SelectItem {
 
 impl SelectItem {
     /// An item of `value`, labelled `label`.
-    pub fn new(value: impl Into<String>, label: impl Into<String>) -> Self {
+    pub fn new(value: impl Into<SharedString>, label: impl Into<SharedString>) -> Self {
         Self {
             value: value.into(),
             label: label.into(),
@@ -260,7 +129,7 @@ impl SelectItem {
     }
 
     /// Its section: adjacent items of one group show under `name`.
-    pub fn group(mut self, name: impl Into<String>) -> Self {
+    pub fn group(mut self, name: impl Into<SharedString>) -> Self {
         self.group = Some(name.into());
         self
     }

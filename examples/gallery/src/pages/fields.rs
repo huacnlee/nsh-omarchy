@@ -39,9 +39,9 @@ fn demo(field: om::FieldElement, readout: impl IntoReactive<SharedString>) -> An
 }
 
 pub fn input() -> AnyElement {
-    let name = signal(String::new());
-    let submitted = signal(String::new());
-    let secret = signal(String::new());
+    let name = signal(SharedString::default());
+    let submitted = signal(SharedString::default());
+    let secret = signal(SharedString::default());
     page(
         "A single-line field: accent border while it edits, secondary placeholder.",
         vec![
@@ -50,8 +50,8 @@ pub fn input() -> AnyElement {
                     om::input()
                         .value(move || name.get())
                         .placeholder("Workspace name")
-                        .on_change(move |t: &String| name.set(t.clone()))
-                        .on_submit(move |t: &String| submitted.set(t.clone())),
+                        .on_change(move |t: &SharedString| name.set(t.clone()))
+                        .on_submit(move |t: &SharedString| submitted.set(t.clone())),
                 ),
                 move || {
                     SharedString::from(format!(
@@ -73,7 +73,7 @@ pub fn input() -> AnyElement {
                             .masked(true)
                             .invalid(move || secret.with(|s| !s.is_empty() && s.chars().count() < 8))
                             .placeholder("Passphrase")
-                            .on_change(move |t: &String| secret.set(t.clone())),
+                            .on_change(move |t: &SharedString| secret.set(t.clone())),
                     ),
                 move || SharedString::from(format!("{} characters", secret.with(|s| s.chars().count()))),
             ),
@@ -96,7 +96,7 @@ pub fn input() -> AnyElement {
 }
 
 pub fn textarea() -> AnyElement {
-    let notes = signal(String::new());
+    let notes = signal(SharedString::default());
     page(
         "Several lines; it grows with its text. Return adds a line.",
         vec![demo(
@@ -105,7 +105,7 @@ pub fn textarea() -> AnyElement {
                     .value(move || notes.get())
                     .rows(3)
                     .placeholder("Write a note")
-                    .on_change(move |t: &String| notes.set(t.clone())),
+                    .on_change(move |t: &SharedString| notes.set(t.clone())),
             ),
             move || {
                 notes.with(|n| {
@@ -161,9 +161,9 @@ pub fn number_input() -> AnyElement {
 }
 
 pub fn otp_input() -> AnyElement {
-    let code = signal(String::new());
-    let complete = signal(String::new());
-    let pin = signal(String::new());
+    let code = signal(SharedString::default());
+    let complete = signal(SharedString::default());
+    let pin = signal(SharedString::default());
     page(
         "Digits only; paste or autofill fills every cell. Backspace removes the last digit.",
         vec![
@@ -173,14 +173,14 @@ pub fn otp_input() -> AnyElement {
                         .groups(2)
                         .value(move || code.get())
                         .accessibility_label("Verification code, 6 digits")
-                        .on_change(move |v: &String| {
+                        .on_change(move |v: &SharedString| {
                             code.set(v.clone());
-                            complete.set(String::new());
+                            complete.set(SharedString::default());
                         })
-                        .on_complete(move |v: &String| complete.set(v.clone())),
+                        .on_complete(move |v: &SharedString| complete.set(v.clone())),
                 ),
                 move || {
-                    SharedString::from(if complete.with(String::is_empty) {
+                    SharedString::from(if complete.with(|c| c.is_empty()) {
                         format!("code: {:?}", code.get())
                     } else {
                         format!("complete: {}", complete.get())
@@ -196,9 +196,9 @@ pub fn otp_input() -> AnyElement {
                             .value(move || pin.get())
                             .invalid(move || pin.get() == "0000")
                             .accessibility_label("PIN, 4 digits")
-                            .on_change(move |v: &String| pin.set(v.clone())),
+                            .on_change(move |v: &SharedString| pin.set(v.clone())),
                     ),
-                move || SharedString::from(format!("{} of 4 digits", pin.with(String::len))),
+                move || SharedString::from(format!("{} of 4 digits", pin.with(|p| p.len()))),
             ),
         ],
     )
@@ -233,13 +233,13 @@ fn themes() -> Vec<SelectItem> {
     .collect()
 }
 
-fn chosen_text(value: Option<String>) -> SharedString {
+fn chosen_text(value: Option<SharedString>) -> SharedString {
     format!("value: {}", value.as_deref().unwrap_or("none")).into()
 }
 
 pub fn select() -> AnyElement {
-    let layout = signal(Some("dwindle".to_owned()));
-    let theme = signal(None::<String>);
+    let layout = signal(Some(SharedString::from("dwindle")));
+    let theme = signal(None::<SharedString>);
     page(
         "Return, Space or Down opens it; Up / Down / Home / End move, a letter jumps, Escape closes.",
         vec![
@@ -248,7 +248,7 @@ pub fn select() -> AnyElement {
                     om::select(layouts())
                         .value(move || layout.get())
                         .accessibility_label("Layout")
-                        .on_change(move |v: &String| layout.set(Some(v.clone()))),
+                        .on_change(move |v: &SharedString| layout.set(Some(v.clone()))),
                 ),
                 move || chosen_text(layout.get()),
             ),
@@ -259,7 +259,7 @@ pub fn select() -> AnyElement {
                         .placeholder("Choose a theme")
                         .searchable(true)
                         .accessibility_label("Theme")
-                        .on_change(move |v: &String| theme.set(Some(v.clone()))),
+                        .on_change(move |v: &SharedString| theme.set(Some(v.clone()))),
                 ),
                 move || chosen_text(theme.get()),
             ),
@@ -278,8 +278,8 @@ pub fn select() -> AnyElement {
 }
 
 pub fn combobox() -> AnyElement {
-    let theme = signal(Vec::<String>::new());
-    let pinned = signal(vec!["tokyo-night".to_owned()]);
+    let theme = signal(Vec::<SharedString>::new());
+    let pinned = signal(vec![SharedString::from("tokyo-night")]);
     page(
         "Type to filter; Up / Down move, Return chooses, Escape closes.",
         vec![
@@ -289,7 +289,7 @@ pub fn combobox() -> AnyElement {
                         .value(move || theme.get())
                         .placeholder("Search themes")
                         .accessibility_label("Theme")
-                        .on_change(move |v: &Vec<String>| theme.set(v.clone())),
+                        .on_change(move |v: &Vec<SharedString>| theme.set(v.clone())),
                 ),
                 move || {
                     SharedString::from(format!(
@@ -305,7 +305,7 @@ pub fn combobox() -> AnyElement {
                         .multiple(true)
                         .placeholder("Search themes")
                         .accessibility_label("Pinned themes")
-                        .on_change(move |v: &Vec<String>| pinned.set(v.clone())),
+                        .on_change(move |v: &Vec<SharedString>| pinned.set(v.clone())),
                 ),
                 move || SharedString::from(format!("pinned: {}", pinned.get().join(", "))),
             ),

@@ -8,7 +8,7 @@ use super::Value;
 use crate::components::color_picker::{
     color_area, color_field, color_picker as picker_look, color_preview, color_slider, color_swatch,
 };
-use crate::fields::Controlled;
+use crate::types::Controlled;
 use crate::tokens;
 
 /// Width of the editor.

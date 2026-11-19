@@ -7,7 +7,7 @@ use nsh_core::prelude::*;
 use super::Value;
 use crate::components::input::state_classes::{CONTROL_BORDER, DISABLED, FOCUS_BORDER};
 use crate::components::otp_input::otp_field;
-use crate::fields::Controlled;
+use crate::types::Controlled;
 
 /// The props of [`OtpInput`].
 #[derive(Debug, Clone, PartialEq, Props)]
@@ -17,7 +17,7 @@ pub struct OtpInputProps {
     /// The digits typed so far. Set, the app owns them and writes back
     /// what `onChange` reports; left out, the field keeps them.
     #[prop(default)]
-    pub value: Prop<Controlled<String>>,
+    pub value: Prop<Controlled<SharedString>>,
     /// How many equal groups the cells split into, apart (default 1: one
     /// run; `2` splits six cells 3 + 3).
     #[prop(default = 1)]
@@ -42,11 +42,11 @@ pub enum OtpInputEvent {
     /// The user changed the code (typed, deleted, pasted, autofilled): the
     /// digits asked for.
     #[args(value)]
-    Change(String),
+    Change(SharedString),
     /// The user's change filled the last cell, after its `onChange`: the
     /// code, to verify.
     #[args(value)]
-    Complete(String),
+    Complete(SharedString),
 }
 
 /// A numeric one-time code entered into square cells: `<OtpInput
@@ -55,7 +55,7 @@ pub enum OtpInputEvent {
 #[component]
 pub fn OtpInput(props: OtpInputProps, cx: Scope<OtpInputEvent>) -> impl IntoElement {
     let label = super::spoken(props.accessibility_label);
-    let value = Value::new(props.value, String::new());
+    let value = Value::new(props.value, SharedString::default());
     otp_field(props.length.get_untracked())
         .length(move || props.length.get())
         .groups(move || props.groups.get())
@@ -70,12 +70,12 @@ pub fn OtpInput(props: OtpInputProps, cx: Scope<OtpInputEvent>) -> impl IntoElem
             };
             SharedString::from(format!("{border} {FOCUS_BORDER} {DISABLED}"))
         })
-        .value(move || Some(SharedString::from(value.get())))
+        .value(move || Some(value.get()))
         .on_change(move |code: &SharedString| {
-            value.request(code.to_string());
-            cx.emit(OtpInputEvent::Change(code.to_string()));
+            value.request(code.clone());
+            cx.emit(OtpInputEvent::Change(code.clone()));
         })
         .on_complete(move |done: &OtpInputCompleteEvent| {
-            cx.emit(OtpInputEvent::Complete(done.value.to_string()))
+            cx.emit(OtpInputEvent::Complete(done.value.clone()))
         })
 }

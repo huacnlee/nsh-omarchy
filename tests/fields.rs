@@ -30,8 +30,8 @@ fn start(root: Root) -> Headless {
 
 #[component]
 fn InputHarness() -> impl IntoElement {
-    let name = signal(String::new());
-    let submitted = signal(String::new());
+    let name = signal(SharedString::default());
+    let submitted = signal(SharedString::default());
     view()
         .p(px(20.0))
         .gap(px(8.0))
@@ -41,8 +41,8 @@ fn InputHarness() -> impl IntoElement {
                     .value(move || name.get())
                     .placeholder("omarchy")
                     // Named by the field's label.
-                    .on_change(move |text: &String| name.set(text.clone()))
-                    .on_submit(move |text: &String| submitted.set(text.clone())),
+                    .on_change(move |text: &SharedString| name.set(text.clone()))
+                    .on_submit(move |text: &SharedString| submitted.set(text.clone())),
             ),
         )
         // Left out, the value is the field's own.
@@ -55,7 +55,7 @@ fn InputHarness() -> impl IntoElement {
             om::textarea()
                 .rows(3)
                 .accessibility_label("Notes")
-                .on_change(move |text: &String| name.set(format!("notes {}", text.lines().count()))),
+                .on_change(move |text: &SharedString| name.set(format!("notes {}", text.lines().count()).into())),
         )
         .child(text(move || format!("name: {:?}", name.get())))
         .child(text(move || format!("submitted: {:?}", submitted.get())))
@@ -130,8 +130,8 @@ fn a_number_input_steps_by_keys_and_buttons_within_its_bounds() -> Result<(), St
 
 #[component]
 fn OtpHarness() -> impl IntoElement {
-    let code = signal(String::new());
-    let done = signal(String::new());
+    let code = signal(SharedString::default());
+    let done = signal(SharedString::default());
     view()
         .p(px(20.0))
         .child(
@@ -139,8 +139,8 @@ fn OtpHarness() -> impl IntoElement {
                 .groups(2)
                 .value(move || code.get())
                 .accessibility_label("Verification code")
-                .on_change(move |v: &String| code.set(v.clone()))
-                .on_complete(move |v: &String| done.set(v.clone())),
+                .on_change(move |v: &SharedString| code.set(v.clone()))
+                .on_complete(move |v: &SharedString| done.set(v.clone())),
         )
         .child(om::otp_input(4).masked(true).invalid(true).accessibility_label("PIN"))
         .child(text(move || format!("code: {:?} done: {:?}", code.get(), done.get())))
@@ -169,7 +169,7 @@ fn layouts() -> Vec<SelectItem> {
 
 #[component]
 fn SelectHarness() -> impl IntoElement {
-    let layout = signal(Some("dwindle".to_owned()));
+    let layout = signal(Some(SharedString::from("dwindle")));
     view()
         .p(px(20.0))
         .gap(px(8.0))
@@ -177,7 +177,7 @@ fn SelectHarness() -> impl IntoElement {
             om::select(layouts())
                 .value(move || layout.get())
                 .accessibility_label("Layout")
-                .on_change(move |v: &String| layout.set(Some(v.clone()))),
+                .on_change(move |v: &SharedString| layout.set(Some(v.clone()))),
         )
         .child(
             om::select(layouts())
@@ -232,7 +232,7 @@ fn apps() -> Vec<SelectItem> {
 
 #[component]
 fn ComboboxHarness() -> impl IntoElement {
-    let pinned = signal(vec!["neovim".to_owned()]);
+    let pinned = signal(vec![SharedString::from("neovim")]);
     view()
         .p(px(20.0))
         .child(
@@ -241,7 +241,7 @@ fn ComboboxHarness() -> impl IntoElement {
                 .multiple(true)
                 .placeholder("Search apps")
                 .accessibility_label("Pinned apps")
-                .on_change(move |v: &Vec<String>| pinned.set(v.clone())),
+                .on_change(move |v: &Vec<SharedString>| pinned.set(v.clone())),
         )
         .child(text(move || format!("pinned: {}", pinned.get().join(", "))))
 }
@@ -396,7 +396,7 @@ fn FieldHarness() -> impl IntoElement {
                         .masked(true)
                         .invalid(move || short.get())
                         .accessibility_label("Password")
-                        .on_change(move |t: &String| short.set(t.chars().count() < 8)),
+                        .on_change(move |t: &SharedString| short.set(t.chars().count() < 8)),
                 ),
         )
 }
@@ -463,4 +463,33 @@ fn the_fields_are_declared_for_tsx() {
     ] {
         assert!(ts.contains(line), "missing {line:?} in\n{ts}");
     }
+}
+
+/// Value setters take a literal, a `String`, a closure or a signal.
+#[component]
+fn SetterHarness() -> impl IntoElement {
+    let owned = signal(String::from("from a signal"));
+    view()
+        .child(om::input().value("literal").accessibility_label("A"))
+        .child(om::input().value(String::from("owned")).accessibility_label("B"))
+        .child(om::input().value(move || owned.get()).accessibility_label("C"))
+        .child(om::input().value(owned).accessibility_label("D"))
+        .child(om::otp_input(4).value(String::from("12")).accessibility_label("E"))
+        .child(om::select(layouts()).value(move || Some(String::from("master"))).accessibility_label("F"))
+        .child(om::select(layouts()).value("monocle").accessibility_label("G"))
+        .child(om::combobox(apps()).value(vec!["neovim"]).accessibility_label("H"))
+        .child(om::combobox(apps()).value(move || vec![String::from("spotify")]).accessibility_label("I"))
+}
+
+#[test]
+fn value_setters_take_literals_strings_closures_and_signals() -> Result<(), String> {
+    let mut app = start(Root::of::<SetterHarness>());
+    app.wait_for("text:Master")?;
+    app.wait_for("text:Monocle")?;
+    let screen = app.screen();
+    assert_eq!(screen.input_text("label:A")?.as_deref(), Some("literal"));
+    assert_eq!(screen.input_text("label:B")?.as_deref(), Some("owned"));
+    assert_eq!(screen.input_text("label:C")?.as_deref(), Some("from a signal"));
+    assert_eq!(screen.input_text("label:D")?.as_deref(), Some("from a signal"));
+    Ok(())
 }

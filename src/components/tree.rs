@@ -26,13 +26,13 @@ const CHEVRON: f32 = 12.0;
 /// A tree of rows a control tall: a folder's chevron that turns as it
 /// expands, a label indented by its depth, a hover wash, the selected
 /// row's fill and bright text, the focus border on the keys' row while the
-/// keyboard has the tree, each across the full row. Give it a height, its `.items(..)`, and wire
+/// keyboard has the tree, each across the full row. Give it a height, its `.items(..)`, a `.render_item(..)` of
+/// [`tree_row`]s, and wire
 /// `.expanded(..)` / `.on_expanded_change(..)` and `.selected(..)` /
 /// `.on_selected_change(..)` to the owner's state (or leave them out for
 /// the tree's own).
-pub fn tree(accessibility_label: impl Into<SharedString>) -> TreeElement {
+pub fn tree() -> TreeElement {
     nsh_base::tree()
-        .accessibility_label(accessibility_label.into())
         .bg(move || tokens::background())
         .text_size(px(tokens::TEXT_MD))
         .text_color(move || tokens::foreground())
@@ -53,7 +53,6 @@ pub fn tree(accessibility_label: impl Into<SharedString>) -> TreeElement {
                         .text_color(move || tokens::bright())
                 })
         })
-        .render_item(tree_row)
 }
 
 /// The classes of an item's row: a group for its content, and its states.
@@ -61,8 +60,9 @@ fn item_class() -> String {
     format!("group {CLEAR_BORDER} {HOVER} {PRESSED} {FOCUS_FILL} {FOCUS_VISIBLE_BORDER}")
 }
 
-/// An item's row content: what the item is (its state is the row's).
-fn tree_row(entry: &TreeEntry) -> View {
+/// An item's row content: what the item is, with its `icon` before the
+/// label (its state is the row's).
+pub fn tree_row(entry: &TreeEntry, glyph: Option<super::icon::IconName>) -> View {
     let folder = entry.folder;
     let disabled = entry.disabled;
     view()
@@ -81,6 +81,7 @@ fn tree_row(entry: &TreeEntry) -> View {
                 .into_element(),
             false => view().w(px(CHEVRON)).into_element(),
         })
+        .child(glyph.map(|name| super::icon::icon(name)))
         .child(
             text(entry.label.clone())
                 .flex_1()

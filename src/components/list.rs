@@ -44,6 +44,7 @@ pub fn list<R: IntoElement>(
 /// Give it `.on_press(..)` and its content.
 pub fn list_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
     button()
+        .text_color(move || tokens::foreground())
         .selected(selected)
         .selected_style(|s: StyleRefinement| {
             s.bg(move || tokens::selected_fill())
@@ -69,9 +70,9 @@ pub fn list_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
 /// A scrollbar over the scroll view or list `target` names (its
 /// [`ElementRef`]): a square thumb in a slim, faintly filled track. Place it in a relative parent, over the
 /// target's trailing edge (`.absolute().top(..).bottom(..).right(..)`).
-pub fn scrollbar(target: impl Into<ScrollbarTarget>) -> ScrollbarElement {
+pub fn scrollbar<M>(target: impl IntoProp<ScrollbarTarget, M>) -> ScrollbarElement {
     nsh_base::scrollbar()
-        .scroll(target.into())
+        .scroll(target)
         .accessibility_label("Scroll")
         .w(px(SCROLLBAR_TRACK))
         .p(px(SCROLLBAR_INSET))

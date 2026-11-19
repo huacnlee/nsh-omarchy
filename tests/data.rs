@@ -394,20 +394,32 @@ fn the_data_components_are_declared_for_tsx() {
 
 // ---- Setter forms -------------------------------------------------------
 
+#[component]
+fn SetterForms() -> impl IntoElement {
+    view()
+        .child(
+            om::data_table(columns(), Vec::<om::DataRow>::new())
+                .selected("a")
+                .selected(None::<SharedString>)
+                .selected(Some(SharedString::from("b")))
+                .selected(move || Some(SharedString::from("c")))
+                .h(px(100.0)),
+        )
+        .child(
+            om::tree(tree_items())
+                .selected("config")
+                .selected(None::<SharedString>)
+                .selected(Some(SharedString::from("hypr")))
+                .expanded(None::<Vec<SharedString>>)
+                .expanded(vec![SharedString::from("config")])
+                .h(px(200.0)),
+        )
+}
+
 #[test]
-fn selected_takes_a_str_an_option_or_a_closure() {
-    // Compiles only: building elements needs a running engine.
-    let _ = || {
-        let _ = om::data_table(columns(), Vec::<om::DataRow>::new())
-            .selected("a")
-            .selected(None::<SharedString>)
-            .selected(Some(SharedString::from("b")))
-            .selected(move || Some(SharedString::from("c")));
-        let _ = om::tree(tree_items())
-            .selected("config")
-            .selected(None::<SharedString>)
-            .selected(Some(SharedString::from("hypr")))
-            .expanded(vec![SharedString::from("config")])
-            .expanded(None::<Vec<SharedString>>);
-    };
+fn selected_takes_a_str_an_option_or_a_closure() -> Result<(), String> {
+    let mut app = start(Root::of::<SetterForms>());
+    app.wait_for("role:treeitem[hypr]")?;
+    app.wait_until("hypr selected", WAIT, |s| s.selected("role:treeitem[hypr]") == Ok(true))?;
+    Ok(())
 }

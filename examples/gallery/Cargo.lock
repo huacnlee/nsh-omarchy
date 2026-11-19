@@ -2180,6 +2180,7 @@ dependencies = [
 name = "nsh-omarchy"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "log",
  "nsh-base",
  "nsh-core",

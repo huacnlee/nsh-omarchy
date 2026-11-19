@@ -34,8 +34,18 @@ test('the homepage shows the README examples and copies the install command', as
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('./');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('NSH / OMARCHY');
-  await expect(page.locator('#start')).toContainText('om::button("Save").primary()');
-  await expect(page.locator('#start')).toContainText('<Button label="Save" variant="primary"');
+  // TSX is the default tab; Rust is one press or one arrow key away.
+  const tsx = page.getByRole('tab', { name: 'TSX' });
+  const rust = page.getByRole('tab', { name: 'Rust' });
+  await expect(tsx).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toContainText('<Button label="Save" variant="primary"');
+  await expect(page.getByText('om::button("Save").primary()')).toBeHidden();
+  await rust.click();
+  await expect(rust).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toContainText('om::button("Save").primary()');
+  await rust.press('ArrowLeft');
+  await expect(tsx).toBeFocused();
+  await expect(tsx).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('heading', { name: 'Overlays' })).toBeVisible();
   await page.getByRole('button', { name: 'Copy to clipboard' }).click();
   await expect(page.getByRole('button', { name: 'Copy to clipboard' })).toHaveText('Copied');

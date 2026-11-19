@@ -58,7 +58,7 @@ pub struct Toast {
     /// `None`: the default ([`TOAST_TIMEOUT`](crate::TOAST_TIMEOUT); an
     /// error stays).
     timeout: Option<Option<Duration>>,
-    id: Option<String>,
+    id: Option<SharedString>,
 }
 
 impl fmt::Debug for Toast {
@@ -136,7 +136,7 @@ impl Toast {
 
     /// Names it: toasting an id that is shown replaces that toast (default:
     /// a new id).
-    pub fn id(mut self, id: impl Into<String>) -> Self {
+    pub fn id(mut self, id: impl Into<SharedString>) -> Self {
         self.id = Some(id.into());
         self
     }
@@ -220,7 +220,7 @@ impl JsValue for Toast {
                 toast = toast.timeout(Duration::from_secs_f64(ms.max(0.0) / 1000.0));
             }
         }
-        if let Some(id) = field::<String>(value, "id")? {
+        if let Some(id) = field::<SharedString>(value, "id")? {
             toast = toast.id(id);
         }
         Ok(toast)
@@ -237,14 +237,14 @@ thread_local! {
     /// The mounted `Toaster`'s store.
     static STORE: Cell<Option<Store>> = const { Cell::new(None) };
     /// The store's id of each toast, by the app's id.
-    static IDS: RefCell<HashMap<String, u64>> = RefCell::new(HashMap::new());
+    static IDS: RefCell<HashMap<SharedString, u64>> = RefCell::new(HashMap::new());
     /// Toasts shown before a `Toaster` was mounted.
-    static PENDING: RefCell<Vec<(String, ToastMessage)>> = const { RefCell::new(Vec::new()) };
+    static PENDING: RefCell<Vec<(SharedString, ToastMessage)>> = const { RefCell::new(Vec::new()) };
     /// The last generated id's number.
     static COUNT: Cell<u64> = const { Cell::new(0) };
 }
 
-fn place(store: Store, id: String, message: ToastMessage) {
+fn place(store: Store, id: SharedString, message: ToastMessage) {
     if let Some(old) = IDS.with_borrow(|ids| ids.get(&id).copied()) {
         store.dismiss(old);
     }
@@ -254,14 +254,14 @@ fn place(store: Store, id: String, message: ToastMessage) {
 
 /// A new toast id (no signal: a JS call may take one outside the
 /// reactive runtime).
-fn next_id() -> String {
+fn next_id() -> SharedString {
     let n = COUNT.get() + 1;
     COUNT.set(n);
-    format!("toast-{n}")
+    format!("toast-{n}").into()
 }
 
 /// Shows `toast` in the app's [`Toaster`] (or once one mounts): its id.
-pub fn show_toast(toast: Toast) -> String {
+pub fn show_toast(toast: Toast) -> SharedString {
     let id = toast.id.clone().unwrap_or_else(next_id);
     let message = toast.message();
     match STORE.get() {
@@ -282,7 +282,7 @@ pub fn dismiss_toast(id: &str) {
                 store.dismiss(shown);
             }
         }
-        None => PENDING.with_borrow_mut(|p| p.retain(|(i, _)| i != id)),
+        None => PENDING.with_borrow_mut(|p| p.retain(|(i, _)| &**i != id)),
     }
 }
 
@@ -314,13 +314,13 @@ pub fn Toaster() -> impl IntoElement {
 #[derive(Debug, Clone, PartialEq, JsObject)]
 pub struct ConfirmOptions {
     /// The question ("Delete 3 files?").
-    title: String,
+    title: SharedString,
     /// What follows from it.
-    description: Option<String>,
+    description: Option<SharedString>,
     /// The confirming choice's label (default "OK").
-    action_label: Option<String>,
+    action_label: Option<SharedString>,
     /// The cancelling choice's label (default "Cancel").
-    cancel_label: Option<String>,
+    cancel_label: Option<SharedString>,
     /// `danger` when the confirming choice destroys something: the
     /// platform marks it (default `accent`).
     #[prop(default)]
@@ -329,7 +329,7 @@ pub struct ConfirmOptions {
 
 impl ConfirmOptions {
     /// Asks `title`, with OK and Cancel.
-    pub fn new(title: impl Into<String>) -> Self {
+    pub fn new(title: impl Into<SharedString>) -> Self {
         Self {
             title: title.into(),
             description: None,
@@ -340,19 +340,19 @@ impl ConfirmOptions {
     }
 
     /// What follows from it.
-    pub fn description(mut self, description: impl Into<String>) -> Self {
+    pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.description = Some(description.into());
         self
     }
 
     /// The confirming choice's label (default "OK").
-    pub fn action_label(mut self, label: impl Into<String>) -> Self {
+    pub fn action_label(mut self, label: impl Into<SharedString>) -> Self {
         self.action_label = Some(label.into());
         self
     }
 
     /// The cancelling choice's label (default "Cancel").
-    pub fn cancel_label(mut self, label: impl Into<String>) -> Self {
+    pub fn cancel_label(mut self, label: impl Into<SharedString>) -> Self {
         self.cancel_label = Some(label.into());
         self
     }
@@ -412,7 +412,7 @@ impl Toasts {
     /// id, for `dismissToast`.
     // A JS call runs outside the reactive runtime: the id is taken at
     // once, the store is written in a task of the core, in order.
-    pub fn toast(toast: Toast, cx: CallCx) -> String {
+    pub fn toast(toast: Toast, cx: CallCx) -> SharedString {
         let id = toast.id.clone().unwrap_or_else(next_id);
         let toast = toast.id(id.clone());
         cx.start(async move {
@@ -422,7 +422,7 @@ impl Toasts {
     }
 
     /// Dismisses the toast `id` (nothing when it is not shown).
-    pub fn dismiss_toast(id: String, cx: CallCx) {
+    pub fn dismiss_toast(id: SharedString, cx: CallCx) {
         cx.start(async move { dismiss_toast(&id) });
     }
 

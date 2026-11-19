@@ -160,6 +160,96 @@ fn an_alert_dialog_cancels_and_confirms() -> Result<(), String> {
     Ok(())
 }
 
+// ---- Live text ------------------------------------------------------------
+
+/// Overlays whose texts are closures: a press in the dialog, and a timer
+/// while the alert and the sheet are open, rename the workspace.
+#[component]
+fn LiveApp() -> impl IntoElement {
+    let n = signal(1_u32);
+    let dialog = signal(false);
+    let alert = signal(false);
+    let sheet = signal(false);
+    let later = move || {
+        // Kept by the task: renamed after 1 s, while open.
+        std::mem::forget(set_timeout(Duration::from_secs(1), move || n.update(|n| *n += 1)));
+    };
+    page()
+        .child(om::button("Open dialog").on_press(move || dialog.set(true)))
+        .child(om::button("Open alert").on_press(move || {
+            alert.set(true);
+            later();
+        }))
+        .child(om::button("Open sheet").on_press(move || {
+            sheet.set(true);
+            later();
+        }))
+        .child(
+            om::dialog(move || format!("Workspace {}", n.get()))
+                .description(move || SharedString::from(format!("{} windows", n.get() * 2)))
+                .open(move || dialog.get())
+                .on_open_change(move |o: &bool| dialog.set(*o))
+                .footer(om::button("Next").on_press(move || n.update(|n| *n += 1))),
+        )
+        .child(
+            om::alert_dialog(
+                move || format!("Delete workspace {}?", n.get()),
+                move || format!("Delete {}", n.get()),
+            )
+            .cancel_label(move || SharedString::from(format!("Keep {}", n.get())))
+            .tone(move || if n.get() > 2 { om::Tone::Danger } else { om::Tone::Accent })
+            .open(move || alert.get())
+            .on_open_change(move |o: &bool| alert.set(*o)),
+        )
+        .child(
+            om::sheet(move || format!("Settings {}", n.get()))
+                .description(move || if n.get() % 2 == 0 { Some(SharedString::from("Even")) } else { None })
+                .close_label(move || SharedString::from(format!("Close {}", n.get())))
+                .open(move || sheet.get())
+                .on_open_change(move |o: &bool| sheet.set(*o))
+                .child(text("Scale")),
+        )
+}
+
+#[test]
+fn overlay_texts_stay_live_while_open() -> Result<(), String> {
+    let mut app = start_manual(Root::of::<LiveApp>());
+    app.wait_for("label:Open dialog")?;
+
+    app.press("label:Open dialog")?;
+    app.wait_for("text:Workspace 1")?;
+    app.wait_for("text:2 windows")?;
+    app.press("label:Next")?;
+    app.wait_for("text:Workspace 2")?;
+    app.wait_for("text:4 windows")?;
+    assert!(!app.screen().shows("Workspace 1"), "the title follows its closure");
+    app.press_key("escape")?;
+    app.run_for(Duration::from_millis(300))?;
+    app.wait_for_gone("text:Workspace 2", GONE)?;
+
+    app.press("label:Open alert")?;
+    app.wait_for("text:Delete workspace 2?")?;
+    app.wait_for("label:Delete 2")?;
+    app.wait_for("label:Keep 2")?;
+    app.run_for(Duration::from_millis(1100))?;
+    app.wait_for("text:Delete workspace 3?")?;
+    app.wait_for("label:Delete 3")?;
+    app.wait_for("label:Keep 3")?;
+    app.press("label:Keep 3")?;
+    app.run_for(Duration::from_millis(300))?;
+    app.wait_for_gone("text:Delete workspace 3?", GONE)?;
+
+    app.press("label:Open sheet")?;
+    app.wait_for("text:Settings 3")?;
+    app.wait_for("label:Close 3")?;
+    assert!(!app.screen().shows("Even"), "no description at 3");
+    app.run_for(Duration::from_millis(1100))?;
+    app.wait_for("text:Settings 4")?;
+    app.wait_for("text:Even")?;
+    app.wait_for("label:Close 4")?;
+    Ok(())
+}
+
 // ---- Sheet ----------------------------------------------------------------
 
 #[component]
@@ -292,7 +382,7 @@ fn a_hover_card_shows_after_the_pointer_rests() -> Result<(), String> {
 #[component]
 fn ToastApp() -> impl IntoElement {
     let undone = signal(0_u32);
-    let last_id = signal(String::new());
+    let last_id = signal(SharedString::default());
     page()
         .child(om::button("Notify").on_press(move || {
             om::toast(om::Toast::new("Screenshot saved").description("~/Pictures/shot.png"));

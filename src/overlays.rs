@@ -61,7 +61,7 @@ pub fn toaster() -> ToasterElement {
 /// Shows `toast` in the app's [`Toaster`] (or as soon as one mounts) and
 /// returns its id: `toast(Toast::new("Saved").success())`. Toasting an id
 /// that is shown replaces it.
-pub fn toast(toast: Toast) -> String {
+pub fn toast(toast: Toast) -> SharedString {
     ui::show_toast(toast)
 }
 

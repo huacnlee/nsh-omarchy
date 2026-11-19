@@ -38,10 +38,11 @@ pub struct DialogProps {
 #[component]
 pub fn Dialog(props: DialogProps, cx: Scope<OverlayEvent>) -> impl IntoElement {
     let open = follow(props.open);
-    let mut modal = dialogs::dialog(open, props.title.get_untracked())
+    dialogs::dialog(open, move || props.title.get())
         .width(420.0)
-        .close_on_backdrop_press(props.close_on_backdrop_press.get_untracked())
-        .close_on_escape(props.close_on_escape.get_untracked())
+        .description_opt(move || props.description.get())
+        .close_on_backdrop_press(move || props.close_on_backdrop_press.get())
+        .close_on_escape(move || props.close_on_escape.get())
         .on_dismiss(move || cx.emit(OverlayEvent::OpenChange(false)))
         .body(move || {
             view()
@@ -53,11 +54,7 @@ pub fn Dialog(props: DialogProps, cx: Scope<OverlayEvent>) -> impl IntoElement {
                         .gap(px(tokens::SPACE_2))
                         .pt(px(tokens::SPACE_1))
                 })
-        });
-    if let Some(description) = props.description.get_untracked() {
-        modal = modal.description(description);
-    }
-    modal
+        })
 }
 
 // ---- AlertDialog ----------------------------------------------------------
@@ -98,28 +95,27 @@ pub enum AlertDialogEvent {
 #[component]
 pub fn AlertDialog(props: AlertDialogProps, cx: Scope<AlertDialogEvent>) -> impl IntoElement {
     let open = follow(props.open);
-    let tone = match props.tone.get_untracked() {
+    let tone = move || match props.tone.get() {
         Tone::Danger => OverlayTone::Danger,
         Tone::Success => OverlayTone::Success,
         Tone::Warning => OverlayTone::Warning,
         _ => OverlayTone::Primary,
     };
-    let cancel = props
-        .cancel_label
-        .get_untracked()
-        .unwrap_or_else(|| "Cancel".into());
-    let mut modal = dialogs::alert_dialog(open, props.title.get_untracked())
+    let cancel = move || {
+        props
+            .cancel_label
+            .get()
+            .unwrap_or_else(|| "Cancel".into())
+    };
+    dialogs::alert_dialog(open, move || props.title.get())
         .width(420.0)
+        .description_opt(move || props.description.get())
         .on_dismiss(move || cx.emit(AlertDialogEvent::OpenChange(false)))
         .cancel(cancel)
-        .action(props.action_label.get_untracked(), tone, move || {
+        .action(move || props.action_label.get(), tone, move || {
             cx.emit(AlertDialogEvent::OpenChange(false));
             cx.emit(AlertDialogEvent::Action);
-        });
-    if let Some(description) = props.description.get_untracked() {
-        modal = modal.description(description);
-    }
-    modal
+        })
 }
 
 impl AlertDialogElement {
@@ -158,14 +154,15 @@ pub struct SheetProps {
 #[component]
 pub fn Sheet(props: SheetProps, cx: Scope<OverlayEvent>) -> impl IntoElement {
     let open = follow(props.open);
-    let mut panel = sheet_panel(open, props.title.get_untracked())
+    let mut panel = sheet_panel(open, move || props.title.get())
         .side(props.placement.get_untracked())
-        .close_label(
+        .description_opt(move || props.description.get())
+        .close_label(move || {
             props
                 .close_label
-                .get_untracked()
-                .unwrap_or_else(|| "Close".into()),
-        )
+                .get()
+                .unwrap_or_else(|| "Close".into())
+        })
         .on_dismiss(move || cx.emit(OverlayEvent::OpenChange(false)))
         .body(move || view().gap(px(tokens::SPACE_4)).child(props.children));
     if props.footer.get_untracked().is_some() {
@@ -175,9 +172,6 @@ pub fn Sheet(props: SheetProps, cx: Scope<OverlayEvent>) -> impl IntoElement {
                 .gap(px(tokens::SPACE_2))
                 .slot(props.footer.get(), |s| s.flex_row().gap(px(tokens::SPACE_2)))
         });
-    }
-    if let Some(description) = props.description.get_untracked() {
-        panel = panel.description(description);
     }
     panel
 }

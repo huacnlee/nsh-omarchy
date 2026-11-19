@@ -25,8 +25,8 @@ use super::dialog::{
 use crate::tokens;
 
 struct SheetAction {
-    label: SharedString,
-    tone: OverlayTone,
+    label: Reactive<SharedString>,
+    tone: Reactive<OverlayTone>,
     run: Rc<dyn Fn()>,
 }
 
@@ -34,8 +34,8 @@ struct SheetAction {
 /// close button, Escape, a backdrop press and every action set it false.
 pub struct Sheet {
     open: Signal<bool>,
-    title: SharedString,
-    description: Option<SharedString>,
+    title: Reactive<SharedString>,
+    description: Reactive<Option<SharedString>>,
     body: Option<Rc<dyn Fn() -> AnyElement>>,
     actions: Vec<SheetAction>,
     side: Placement,
@@ -43,15 +43,16 @@ pub struct Sheet {
     return_focus: Option<ElementRef>,
     on_dismiss: Option<Rc<dyn Fn()>>,
     footer: Option<Rc<dyn Fn() -> AnyElement>>,
-    close_label: SharedString,
+    close_label: Reactive<SharedString>,
 }
 
-/// A sheet titled `title` on the right edge, shown while `open` is true.
-pub fn sheet(open: Signal<bool>, title: impl Into<SharedString>) -> Sheet {
+/// A sheet titled `title` (a value, a signal or a closure: it stays live
+/// while open) on the right edge, shown while `open` is true.
+pub fn sheet(open: Signal<bool>, title: impl IntoReactive<SharedString>) -> Sheet {
     Sheet {
         open,
-        title: title.into(),
-        description: None,
+        title: title.into_reactive(),
+        description: Reactive::Static(None),
         body: None,
         actions: Vec::new(),
         side: Placement::Right,
@@ -59,7 +60,7 @@ pub fn sheet(open: Signal<bool>, title: impl Into<SharedString>) -> Sheet {
         return_focus: None,
         on_dismiss: None,
         footer: None,
-        close_label: "Close".into(),
+        close_label: Reactive::Static("Close".into()),
     }
 }
 
@@ -77,9 +78,14 @@ impl Sheet {
         self
     }
 
-    /// Secondary text under the title.
-    pub fn description(mut self, description: impl Into<SharedString>) -> Self {
-        self.description = Some(description.into());
+    /// Secondary text under the title (live, as the title).
+    pub fn description(self, description: impl IntoReactive<SharedString>) -> Self {
+        self.description_opt(description.into_reactive().map(Some))
+    }
+
+    /// Secondary text under the title, or none (live: it may come and go).
+    pub fn description_opt(mut self, description: impl IntoReactive<Option<SharedString>>) -> Self {
+        self.description = description.into_reactive();
         self
     }
 
@@ -92,13 +98,13 @@ impl Sheet {
     /// A footer action: closes the sheet, then runs `on_press`.
     pub fn action(
         mut self,
-        label: impl Into<SharedString>,
-        tone: OverlayTone,
+        label: impl IntoReactive<SharedString>,
+        tone: impl IntoReactive<OverlayTone>,
         on_press: impl Fn() + 'static,
     ) -> Self {
         self.actions.push(SheetAction {
-            label: label.into(),
-            tone,
+            label: label.into_reactive(),
+            tone: tone.into_reactive(),
             run: Rc::new(on_press),
         });
         self
@@ -112,8 +118,8 @@ impl Sheet {
     }
 
     /// The close button's label, for screen readers (default "Close").
-    pub fn close_label(mut self, label: impl Into<SharedString>) -> Self {
-        self.close_label = label.into();
+    pub fn close_label(mut self, label: impl IntoReactive<SharedString>) -> Self {
+        self.close_label = label.into_reactive();
         self
     }
 
@@ -176,11 +182,16 @@ impl IntoElement for Sheet {
                                 .font_weight(FontWeight::SEMIBOLD)
                                 .text_color(move || tokens::bright()),
                         )
-                        .child(description.clone().map(|d| {
-                            text(d)
-                                .text_size(px(tokens::TEXT_MD))
-                                .text_color(move || tokens::secondary())
-                        })),
+                        .child({
+                            let description = description.clone();
+                            dynamic(move || {
+                                description.get().map(|d| {
+                                    text(d)
+                                        .text_size(px(tokens::TEXT_MD))
+                                        .text_color(move || tokens::secondary())
+                                })
+                            })
+                        }),
                 )
                 .child(
                     overlay_close_button(close_label.clone(), move || dismiss())
@@ -190,7 +201,7 @@ impl IntoElement for Sheet {
                 .iter()
                 .map(|action| {
                     let run = action.run.clone();
-                    overlay_action_button(action.label.clone(), action.tone, move || {
+                    overlay_action_button(action.label.clone(), action.tone.clone(), move || {
                         open.set(false);
                         run();
                     })

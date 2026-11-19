@@ -201,8 +201,8 @@ pub fn NavSidebar(props: NavSidebarProps, cx: Scope<NavSidebarEvent>) -> impl In
 /// A group's heading, a tier apart from its rows: caption size, bold, in
 /// the secondary colour, with a group's gap above it (less over the first)
 /// and a small one to its first row. Shared with the gallery's sidebar.
-pub(crate) fn section_heading(title: impl Into<SharedString>, first: bool) -> Text {
-    text(title.into())
+pub(crate) fn section_heading(title: impl IntoReactive<SharedString>, first: bool) -> Text {
+    text(title)
         .px(px(tokens::SPACE_3))
         .pt(px(if first {
             tokens::SPACE_2

@@ -23,7 +23,7 @@ fn every_export_is_declared() {
         "export declare const Icon: ((props: IconProps) => JSX.Element);",
         "export declare const Button: ((props: ButtonProps) => JSX.Element);",
         "export declare const IconButton: ((props: IconButtonProps) => JSX.Element);",
-        "export declare const DropdownMenu: ((props: DropdownMenuProps) => JSX.Element);",
+        "export declare const Menu: ((props: MenuProps) => JSX.Element);",
         "export declare const ContextMenu: ((props: ContextMenuProps) => JSX.Element);",
         "export declare const MenuItem: ((props: MenuItemProps) => JSX.Element);",
         "export declare const MenuSeparator: ((props: MenuSeparatorProps) => JSX.Element);",

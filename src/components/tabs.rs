@@ -57,12 +57,23 @@ pub fn nav_tabs_segmented() -> TabsElement {
 /// One tab, labelled `label`. Chain `.selected(..)` and `.on_press(..)`:
 /// the app owns which tab is selected.
 pub fn nav_tab(label: impl IntoReactive<SharedString>) -> TabElement {
-    tab()
-        .flex_row()
+    nav_tab_look(tab(), || tokens::CONTROL_MD, || tokens::SPACE_3)
+        .child(text(label).text_size(px(tokens::TEXT_MD)))
+}
+
+/// A tab's look on `tab`, `height` points tall with `padding` at its ends:
+/// the content is the caller's.
+pub(crate) fn nav_tab_look(
+    tab: TabElement,
+    height: impl Fn() -> f32 + 'static,
+    padding: impl Fn() -> f32 + 'static,
+) -> TabElement {
+    tab.flex_row()
         .items_center()
         .justify_center()
-        .h(px(tokens::CONTROL_MD))
-        .px(px(tokens::SPACE_3))
+        .gap(px(tokens::SPACE_2))
+        .h(move || px(height()))
+        .px(move || px(padding()))
         .text_color(move || tokens::secondary())
         .transition_colors()
         .duration(tokens::DURATION_FAST)
@@ -72,7 +83,8 @@ pub fn nav_tab(label: impl IntoReactive<SharedString>) -> TabElement {
         })
         .active(|s| s.bg(move || tokens::pressed_fill()))
         .focus_visible(|s| {
-            s.outline(px(tokens::FOCUS_BORDER))
+            s.bg(move || tokens::hover_fill())
+                .outline(px(tokens::FOCUS_BORDER))
                 .outline_color(move || tokens::focus_border())
         })
         .selected_style(|s| s.text_color(move || tokens::bright()))
@@ -80,7 +92,6 @@ pub fn nav_tab(label: impl IntoReactive<SharedString>) -> TabElement {
             s.text_color(move || tokens::disabled())
                 .bg(move || AdaptiveColor::TRANSPARENT)
         })
-        .child(text(label).text_size(px(tokens::TEXT_MD)))
 }
 
 /// A tab's panel: kept mounted (its scroll offset and drafts survive a

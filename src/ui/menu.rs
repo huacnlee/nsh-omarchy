@@ -1,24 +1,25 @@
-//! `<DropdownMenu>`, `<ContextMenu>`, `<MenuItem>`, `<MenuSeparator>` and
-//! `<MenuLabel>` for TSX, drawn by [`crate::components::menu`].
+//! [`Menu`], [`ContextMenu`], [`MenuItem`], [`MenuSeparator`] and
+//! [`MenuLabel`], drawn by [`crate::components::menu`].
 
 use nsh_core::prelude::*;
 
+use crate::components::icon::{IconName, icon};
 use crate::components::menu::{
-    menu_context, menu_divider, menu_dropdown, menu_heading, menu_row, menu_shortcut,
+    checkable, menu_context, menu_divider, menu_dropdown, menu_heading, menu_shortcut, row_look,
 };
 use crate::tokens;
 
-/// The props of [`DropdownMenu`].
+/// The props of [`Menu`].
 #[derive(Debug, Clone, PartialEq, Props)]
-pub struct DropdownMenuProps {
+pub struct MenuProps {
     /// What opens it: a `Button` usually. Press, Return, Space or Down
     /// open it.
     pub trigger: Prop<Option<Slot>>,
     /// `MenuItem`, `MenuSeparator`, `MenuLabel`: made on each opening.
     #[prop(lazy)]
     pub children: Prop<Children>,
-    /// Open (controlled), with `onOpenChange`; without it the menu keeps
-    /// its own state.
+    /// Open or closed. Given, the app owns it and writes back what
+    /// `onOpenChange` asks for; left out, the menu keeps it itself.
     pub open: Prop<Option<bool>>,
     /// The side of the trigger it opens on (below when left out).
     #[prop(default)]
@@ -28,19 +29,22 @@ pub struct DropdownMenuProps {
     pub align: Prop<Align>,
 }
 
-/// The events of [`DropdownMenu`] and [`ContextMenu`].
+/// The events of [`Menu`] and [`ContextMenu`].
 #[derive(Debug, Clone, PartialEq, Event)]
 pub enum MenuEvent {
-    /// It opened or closed.
+    /// It asks to open (`true`) or close: the trigger, a chosen row,
+    /// Escape or a press outside.
     #[args(open)]
     OpenChange(bool),
 }
 
-/// A menu under its trigger: arrows, Home / End and typeahead move between
-/// rows, Return chooses, Escape and a press outside close it, and the focus
-/// goes back to the trigger.
+/// A menu under its trigger: `<Menu trigger={<Button label="File" />}>
+/// <MenuItem label="New" /></Menu>`. Press, Return, Space or Down on the
+/// trigger open it; arrows, Home / End and typeahead move between rows,
+/// Return chooses, Escape and a press outside close it, and the focus goes
+/// back to the trigger.
 #[component]
-pub fn DropdownMenu(props: DropdownMenuProps, cx: Scope<MenuEvent>) -> impl IntoElement {
+pub fn Menu(props: MenuProps, cx: Scope<MenuEvent>) -> impl IntoElement {
     // The menu is driven here: a slot forwarded into `nsh_base`'s trigger
     // sits in a node of the base menu's own, whose press the trigger (a
     // `Button`) would take. Our slot is the app's node itself, so its press
@@ -78,17 +82,23 @@ pub fn DropdownMenu(props: DropdownMenuProps, cx: Scope<MenuEvent>) -> impl Into
 /// The props of [`ContextMenu`].
 #[derive(Debug, Clone, PartialEq, Props)]
 pub struct ContextMenuProps {
-    /// The area a secondary click (a long press on touch screens) opens it
-    /// over.
-    pub children: Prop<Children>,
-    /// The menu's rows: `MenuItem`, `MenuSeparator`, `MenuLabel`.
+    /// The menu's rows: `MenuItem`, `MenuSeparator`, `MenuLabel` (in Rust,
+    /// a `view()` of them).
     pub menu: Prop<Option<Slot>>,
+    /// A secondary click opens nothing.
+    #[prop(default)]
+    pub disabled: Prop<bool>,
+    /// The area a secondary click (a long press on touch screens, Shift+F10
+    /// or the Menu key) opens it over.
+    pub children: Prop<Children>,
 }
 
-/// A menu at the pointer, opened by a secondary click on its area.
+/// A menu at the pointer, opened by a secondary click on its area:
+/// `<ContextMenu menu={<><MenuItem label="Copy" /></>}>…</ContextMenu>`.
 #[component]
 pub fn ContextMenu(props: ContextMenuProps, cx: Scope<MenuEvent>) -> impl IntoElement {
     let mut menu = menu_context()
+        .disabled(props.disabled)
         .on_open_change(move |e: &nsh_base::ContextMenuEvents| {
             if let nsh_base::ContextMenuEvents::OpenChange(open, _) = e {
                 cx.emit(MenuEvent::OpenChange(*open));
@@ -96,7 +106,9 @@ pub fn ContextMenu(props: ContextMenuProps, cx: Scope<MenuEvent>) -> impl IntoEl
         })
         .trigger(view().child(props.children));
     if let Some(rows) = props.menu.get() {
-        menu = menu.child(rows.element());
+        // In a view of ours: a slot placed straight into the base menu's
+        // children is looked up there.
+        menu = menu.child(view().gap(px(1.0)).slot(Some(rows), |s| s.gap(px(1.0))));
     }
     menu
 }
@@ -106,6 +118,8 @@ pub fn ContextMenu(props: ContextMenuProps, cx: Scope<MenuEvent>) -> impl IntoEl
 pub struct MenuItemProps {
     /// The row's text.
     pub label: Prop<SharedString>,
+    /// A glyph before the label, by its Lucide name (`"copy"`).
+    pub icon: Prop<Option<IconName>>,
     /// A shortcut at the row's end, as the platform writes it: `"mod-s"`
     /// reads `cmd-s` on macOS, `ctrl-s` elsewhere.
     pub shortcut: Prop<Option<SharedString>>,
@@ -130,23 +144,28 @@ pub enum MenuItemEvent {
     Select,
 }
 
-/// A row of a menu.
+/// A row of a menu: `<MenuItem label="New" shortcut="mod-n" onSelect={newFile} />`.
 #[component]
 pub fn MenuItem(props: MenuItemProps, cx: Scope<MenuItemEvent>) -> impl IntoElement {
-    let checkable = props.checked.get_untracked().is_some();
-    let row = if checkable {
-        crate::components::menu::menu_check_row(props.label, move || {
-            props.checked.get().unwrap_or(false)
-        })
-    } else {
-        menu_row(props.label)
-    };
-    let mut row = row
-        .disabled(move || props.disabled.get())
-        .on_select(move || cx.emit(MenuItemEvent::Select));
-    if props.danger.get_untracked() {
-        row = row.text_color(move || tokens::danger());
+    let checked = props.checked;
+    let is_checkable = checked.with_untracked(Option::is_some);
+    let label = props.label;
+    let glyph = props.icon;
+    let danger = props.danger;
+    let disabled = props.disabled;
+    let mut row = row_look(nsh_base::menu_item());
+    if is_checkable {
+        row = checkable(row, move || checked.get().unwrap_or(false));
     }
+    let mut row = row
+        .disabled(disabled)
+        .on_select(move || cx.emit(MenuItemEvent::Select))
+        .style_when(
+            move || danger.get() && !disabled.get(),
+            |s| s.text_color(move || tokens::danger()),
+        )
+        .child(dynamic(move || glyph.get().map(|name| icon(name).size(px(14.0)).into_element())))
+        .child(text(move || label.get()).flex_1().number_of_lines(1));
     if let Some(close) = props.close_on_select.get_untracked() {
         row = row.close_on_select(close);
     }
@@ -178,7 +197,7 @@ pub fn MenuLabel(props: MenuLabelProps) -> impl IntoElement {
 /// Registers the menus for TSX.
 pub(crate) fn register(registry: &mut Registry) {
     registry
-        .register::<DropdownMenu>()
+        .register::<Menu>()
         .register::<ContextMenu>()
         .register::<MenuItem>()
         .register::<MenuSeparator>()

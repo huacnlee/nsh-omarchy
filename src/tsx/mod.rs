@@ -6,10 +6,14 @@
 //! `tsx/`, over `nsh/base` and `themes/omarchy.json`; these exports sit beside
 //! it and draw with the same tokens.
 
+pub mod button;
 pub mod charts;
 pub mod icon;
+pub mod menu;
 pub mod omarchy;
 
+pub use button::{Button, ButtonEvent, IconButton};
 pub use charts::{AreaChart, BarChart, ChartCurve, ChartPoint, LineChart, PieChart, SeriesData};
 pub use icon::Icon;
+pub use menu::{ContextMenu, DropdownMenu, MenuItem, MenuLabel, MenuSeparator};
 pub use omarchy::{BuiltInTheme, Omarchy, ThemeAppearance, ThemeInfo};

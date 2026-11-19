@@ -35,5 +35,12 @@ fn native(registry: &mut Registry) {
         .register::<tsx::PieChart>()
         .register::<components::text_view::Markdown>()
         .register::<tsx::Icon>()
+        .register::<tsx::Button>()
+        .register::<tsx::IconButton>()
+        .register::<tsx::DropdownMenu>()
+        .register::<tsx::ContextMenu>()
+        .register::<tsx::MenuItem>()
+        .register::<tsx::MenuSeparator>()
+        .register::<tsx::MenuLabel>()
         .register::<gallery::Gallery>();
 }

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16" fill="none">
+  <title>NSH Omarchy</title>
+  <!-- Integer 16px geometry: a hollow frame open at two corners, around a stepped N. -->
+  <g fill="#9ece6a">
+    <path d="M0 0h10v1H1v9H0zM16 16H6v-1h9V6h1z"/>
+    <path d="M3 3h2v10H3zM11 3h2v10h-2zM5 4h1v2H5zM6 5h1v2H6zM7 6h1v2H7zM8 7h1v2H8zM9 8h1v2H9zM10 9h1v2h-1z"/>
+  </g>
+</svg>

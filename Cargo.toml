@@ -8,7 +8,7 @@ repository = "https://github.com/huacnlee/nsh-omarchy"
 readme = "README.md"
 keywords = ["nsh", "omarchy", "ui", "components", "nshm"]
 categories = ["gui"]
-exclude = ["/examples", "/tests", "/target", "/.claude", "/DESIGN.md"]
+exclude = ["/examples", "/website", "/tests", "/target", "/.claude", "/DESIGN.md"]
 
 [workspace]
 

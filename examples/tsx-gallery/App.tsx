@@ -1,6 +1,6 @@
 // The Omarchy TSX gallery: every component of nsh-omarchy (installed with
 // `nsh add nsh-omarchy`), one page per family.
-import { mount, Scroll, signal, Text, View } from "nsh";
+import { host, mount, Scroll, signal, Text, View } from "nsh";
 import { Button, Caption, Omarchy, Tab, Tabs, Toaster } from "nsh-omarchy";
 import { Actions } from "./pages/Actions";
 import { Choices } from "./pages/Choices";
@@ -30,6 +30,13 @@ function pickTheme(value: string) {
 export function App() {
   const theme = signal("system");
   pickTheme(theme());
+  // On the website, the page's host (host.js) sends the site's theme.
+  host.on("theme", (payload) => {
+    const value = (payload as { theme?: string } | null)?.theme;
+    if (value !== "light" && value !== "dark") return;
+    theme.set(value);
+    pickTheme(value);
+  });
   const current = signal("actions");
   return (
     <View class="flex-1 flex-row bg-background">

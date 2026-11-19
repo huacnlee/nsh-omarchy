@@ -50,6 +50,8 @@ pub enum OverlayTone {
     Warning,
 }
 
+nsh_core::static_reactive!(OverlayTone: OverlayTone);
+
 impl OverlayTone {
     fn label_color(self) -> AdaptiveColor {
         match self {
@@ -77,14 +79,17 @@ impl OverlayTone {
 /// pressed washes, a visible focus border. Returns the `nsh_base` button,
 /// so callers keep its builder API (`.element_ref`, `.disabled`, ...).
 pub fn overlay_action_button(
-    label: impl Into<SharedString>,
-    tone: OverlayTone,
+    label: impl IntoReactive<SharedString>,
+    tone: impl IntoReactive<OverlayTone>,
     on_press: impl Fn() + 'static,
 ) -> nsh_base::ButtonElement {
-    let label: SharedString = label.into();
+    let label = label.into_reactive();
+    let tone = tone.into_reactive();
+    let edge = tone.clone();
+    let accessible = label.clone();
     button()
         .on_press(on_press)
-        .accessibility_label(label.clone())
+        .accessibility_label(move || accessible.get())
         .h(px(tokens::CONTROL_MD))
         .px(px(tokens::SPACE_3))
         .flex_row()
@@ -92,7 +97,7 @@ pub fn overlay_action_button(
         .justify_center()
         .rounded(px(tokens::RADIUS))
         .border(px(tokens::BORDER))
-        .border_color(move || tone.edge_color())
+        .border_color(move || edge.get().edge_color())
         .transition_colors()
         .duration(tokens::DURATION_FAST)
         .hover(|s| s.bg(move || tokens::hover_fill()))
@@ -102,18 +107,19 @@ pub fn overlay_action_button(
         .child(
             text(label)
                 .text_size(px(tokens::TEXT_MD))
-                .text_color(move || tone.label_color()),
+                .text_color(move || tone.get().label_color()),
         )
 }
 
 /// A square, label-only icon button (`×`) that closes an overlay.
 pub fn overlay_close_button(
-    label: impl Into<SharedString>,
+    label: impl IntoReactive<SharedString>,
     on_press: impl Fn() + 'static,
 ) -> nsh_base::ButtonElement {
+    let label = label.into_reactive();
     button()
         .on_press(on_press)
-        .accessibility_label(label.into())
+        .accessibility_label(move || label.get())
         .w(px(tokens::CONTROL_SM))
         .h(px(tokens::CONTROL_SM))
         .items_center()
@@ -127,6 +133,17 @@ pub fn overlay_close_button(
         .active(|s| s.bg(move || tokens::pressed_fill()))
         .focus_visible(|s| s.border_color(move || tokens::focus_border()))
         .child(super::icon::indicator(super::icon::IconName::X, 16.0))
+}
+
+/// Reads a reactive value without subscribing (in event handlers).
+pub(crate) trait UntrackedValue<T> {
+    fn get_untracked_value(&self) -> T;
+}
+
+impl<T: Clone + 'static> UntrackedValue<T> for Reactive<T> {
+    fn get_untracked_value(&self) -> T {
+        untracked(|| self.get())
+    }
 }
 
 /// The dimming behind modal overlays. A private token: the window
@@ -163,13 +180,16 @@ pub(crate) fn overlay_enter(ms: f32) -> AnimatedValue {
 // ---- Dialog ---------------------------------------------------------------
 
 struct DialogAction {
-    label: SharedString,
-    tone: OverlayTone,
+    label: Reactive<SharedString>,
+    tone: Reactive<OverlayTone>,
     run: Rc<dyn Fn()>,
     /// Takes the focus as the dialog opens.
     initial: bool,
     /// Only closes: reported as a dismissal.
     cancel: bool,
+    /// Given as [`OverlayTone::Primary`] (a static tone): in a plain
+    /// dialog, the first such takes the first focus.
+    primary: bool,
 }
 
 /// A modal dialog built by [`dialog`] or [`alert_dialog`]: a title, an
@@ -178,8 +198,8 @@ struct DialogAction {
 /// backdrop press (not for an alert dialog) and every action set it false.
 pub struct Dialog {
     open: Signal<bool>,
-    title: SharedString,
-    description: Option<SharedString>,
+    title: Reactive<SharedString>,
+    description: Reactive<Option<SharedString>>,
     body: Option<Rc<dyn Fn() -> AnyElement>>,
     actions: Vec<DialogAction>,
     return_focus: Option<ElementRef>,
@@ -188,17 +208,18 @@ pub struct Dialog {
     on_dismiss: Option<Rc<dyn Fn()>>,
     /// `None`: a plain dialog's backdrop press dismisses it, an alert
     /// dialog's does not.
-    backdrop_dismisses: Option<bool>,
-    escape_dismisses: bool,
+    backdrop_dismisses: Option<Reactive<bool>>,
+    escape_dismisses: Reactive<bool>,
 }
 
-/// A dialog titled `title`, shown while `open` is true. The dialog writes
-/// `open` false when the user dismisses it or picks an action.
-pub fn dialog(open: Signal<bool>, title: impl Into<SharedString>) -> Dialog {
+/// A dialog titled `title` (a value, a signal or a closure: it stays live
+/// while open), shown while `open` is true. The dialog writes `open` false
+/// when the user dismisses it or picks an action.
+pub fn dialog(open: Signal<bool>, title: impl IntoReactive<SharedString>) -> Dialog {
     Dialog {
         open,
-        title: title.into(),
-        description: None,
+        title: title.into_reactive(),
+        description: Reactive::Static(None),
         body: None,
         actions: Vec::new(),
         return_focus: None,
@@ -206,7 +227,7 @@ pub fn dialog(open: Signal<bool>, title: impl Into<SharedString>) -> Dialog {
         width: 420.0,
         on_dismiss: None,
         backdrop_dismisses: None,
-        escape_dismisses: true,
+        escape_dismisses: Reactive::Static(true),
     }
 }
 
@@ -214,7 +235,7 @@ pub fn dialog(open: Signal<bool>, title: impl Into<SharedString>) -> Dialog {
 /// an alert dialog, and a backdrop press does not dismiss it (Escape
 /// still cancels). Its [`Dialog::cancel`] action takes the first focus, so
 /// Enter never confirms by accident.
-pub fn alert_dialog(open: Signal<bool>, title: impl Into<SharedString>) -> Dialog {
+pub fn alert_dialog(open: Signal<bool>, title: impl IntoReactive<SharedString>) -> Dialog {
     Dialog {
         alert: true,
         width: 380.0,
@@ -223,9 +244,14 @@ pub fn alert_dialog(open: Signal<bool>, title: impl Into<SharedString>) -> Dialo
 }
 
 impl Dialog {
-    /// Secondary text under the title.
-    pub fn description(mut self, description: impl Into<SharedString>) -> Self {
-        self.description = Some(description.into());
+    /// Secondary text under the title (live, as the title).
+    pub fn description(self, description: impl IntoReactive<SharedString>) -> Self {
+        self.description_opt(description.into_reactive().map(Some))
+    }
+
+    /// Secondary text under the title, or none (live: it may come and go).
+    pub fn description_opt(mut self, description: impl IntoReactive<Option<SharedString>>) -> Self {
+        self.description = description.into_reactive();
         self
     }
 
@@ -241,13 +267,16 @@ impl Dialog {
     /// focus.
     pub fn action(
         mut self,
-        label: impl Into<SharedString>,
-        tone: OverlayTone,
+        label: impl IntoReactive<SharedString>,
+        tone: impl IntoReactive<OverlayTone>,
         on_press: impl Fn() + 'static,
     ) -> Self {
+        let tone = tone.into_reactive();
+        let primary = matches!(&tone, Reactive::Static(OverlayTone::Primary));
         self.actions.push(DialogAction {
-            label: label.into(),
+            label: label.into_reactive(),
             tone,
+            primary,
             run: Rc::new(on_press),
             initial: false,
             cancel: false,
@@ -258,10 +287,11 @@ impl Dialog {
     /// A neutral action that only closes the dialog (reported to
     /// [`Dialog::on_dismiss`]). In an alert dialog it takes the first
     /// focus.
-    pub fn cancel(mut self, label: impl Into<SharedString>) -> Self {
+    pub fn cancel(mut self, label: impl IntoReactive<SharedString>) -> Self {
         self.actions.push(DialogAction {
-            label: label.into(),
-            tone: OverlayTone::Neutral,
+            label: label.into_reactive(),
+            tone: Reactive::Static(OverlayTone::Neutral),
+            primary: false,
             run: Rc::new(|| {}),
             initial: self.alert,
             cancel: true,
@@ -291,14 +321,14 @@ impl Dialog {
 
     /// Whether a press on the backdrop dismisses it (default: yes for a
     /// plain dialog, no for an alert dialog).
-    pub fn close_on_backdrop_press(mut self, close: bool) -> Self {
-        self.backdrop_dismisses = Some(close);
+    pub fn close_on_backdrop_press(mut self, close: impl IntoReactive<bool>) -> Self {
+        self.backdrop_dismisses = Some(close.into_reactive());
         self
     }
 
     /// Whether Escape and the back button dismiss it (default true).
-    pub fn close_on_escape(mut self, close: bool) -> Self {
-        self.escape_dismisses = close;
+    pub fn close_on_escape(mut self, close: impl IntoReactive<bool>) -> Self {
+        self.escape_dismisses = close.into_reactive();
         self
     }
 }
@@ -318,7 +348,7 @@ impl IntoElement for Dialog {
             backdrop_dismisses,
             escape_dismisses,
         } = self;
-        let backdrop_dismisses = backdrop_dismisses.unwrap_or(!alert);
+        let backdrop_dismisses = backdrop_dismisses.unwrap_or(Reactive::Static(!alert));
         overlay_focus_return(open, return_focus);
         let actions = Rc::new(actions);
         let report = Rc::new(move || {
@@ -346,7 +376,7 @@ impl IntoElement for Dialog {
                 .or_else(|| {
                     actions
                         .iter()
-                        .position(|a| !alert && a.tone == OverlayTone::Primary)
+                        .position(|a| !alert && a.primary)
                 })
                 .or_else(|| (!actions.is_empty()).then_some(0));
             let first = element_ref();
@@ -357,7 +387,7 @@ impl IntoElement for Dialog {
                     let run = action.run.clone();
                     let cancel = action.cancel;
                     let report = report.clone();
-                    let b = overlay_action_button(action.label.clone(), action.tone, move || {
+                    let b = overlay_action_button(action.label.clone(), action.tone.clone(), move || {
                         // Closed first: the action may open another overlay.
                         open.set(false);
                         if cancel {
@@ -378,11 +408,14 @@ impl IntoElement for Dialog {
                 .bg(move || overlay_scrim())
                 .focusable(false)
                 .bind_opacity(&enter);
-            let backdrop = if backdrop_dismisses {
+            let backdrop = {
                 let dismiss = dismiss.clone();
-                backdrop.on_press(move || dismiss())
-            } else {
-                backdrop
+                let backdrop_dismisses = backdrop_dismisses.clone();
+                backdrop.on_press(move || {
+                    if backdrop_dismisses.get_untracked_value() {
+                        dismiss()
+                    }
+                })
             };
             let card = view()
                 .w(px(width))
@@ -403,11 +436,16 @@ impl IntoElement for Dialog {
                         .font_weight(FontWeight::SEMIBOLD)
                         .text_color(move || tokens::bright()),
                 )
-                .child(description.clone().map(|d| {
-                    text(d)
-                        .text_size(px(tokens::TEXT_MD))
-                        .text_color(move || tokens::secondary())
-                }))
+                .child({
+                    let description = description.clone();
+                    dynamic(move || {
+                        description.get().map(|d| {
+                            text(d)
+                                .text_size(px(tokens::TEXT_MD))
+                                .text_color(move || tokens::secondary())
+                        })
+                    })
+                })
                 .child(body.as_ref().map(|b| b()))
                 .child((!buttons.is_empty()).then(|| {
                     view()
@@ -418,12 +456,13 @@ impl IntoElement for Dialog {
                         .children(buttons)
                 }));
             let dismiss = dismiss.clone();
+            let escape = escape_dismisses.clone();
             let mut modal = nsh_base::dialog()
                 .animation(ModalAnimation::None)
                 .label(title.clone())
-                .close_on_escape(escape_dismisses)
+                .close_on_escape(escape_dismisses.clone())
                 .on_cancel(move || {
-                    if escape_dismisses {
+                    if escape.get_untracked_value() {
                         dismiss()
                     }
                 })
@@ -435,9 +474,8 @@ impl IntoElement for Dialog {
             if alert {
                 modal = modal.role(AccessibilityRole::AlertDialog);
             }
-            if let Some(d) = description.clone() {
-                modal = modal.accessibility_description(d);
-            }
+            let described = description.clone();
+            modal = modal.accessibility_description(move || described.get().unwrap_or_default());
             modal.child(backdrop).child(card)
         })
         .into_element()

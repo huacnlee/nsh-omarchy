@@ -256,7 +256,7 @@ pub fn hover_card() -> AnyElement {
 
 pub fn toast() -> AnyElement {
     let restored = signal(0_u32);
-    let last = signal(String::new());
+    let last = signal(SharedString::default());
     page()
         .child(lead(
             "Notices at the bottom right. They leave after 6 s; the pointer on the stack \

@@ -9,7 +9,8 @@ use super::Value;
 use crate::components::button::ControlSize;
 use crate::components::calendar::calendar as calendar_look;
 use crate::components::date_picker::date_picker as date_picker_look;
-use crate::fields::{Controlled, Date, DateRange};
+use crate::types::Controlled;
+use crate::fields::{Date, DateRange};
 
 /// What the calendar draws: one day or none, or a range or none.
 #[derive(Clone, Copy)]

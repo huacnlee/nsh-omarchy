@@ -11,7 +11,7 @@
 
 use nsh_core::prelude::*;
 
-use crate::fields::Controlled;
+use crate::types::Controlled;
 use crate::tokens;
 
 mod color;

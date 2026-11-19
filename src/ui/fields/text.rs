@@ -6,7 +6,7 @@ use nsh_core::prelude::*;
 use super::{Value, rest_border};
 use crate::components::button::ControlSize;
 use crate::components::input::{number_field, text_input, textarea as textarea_field};
-use crate::fields::Controlled;
+use crate::types::Controlled;
 use crate::tokens;
 
 /// The methods of an [`Input`]'s or a [`Textarea`]'s ref.
@@ -45,7 +45,7 @@ pub struct InputProps {
     /// The text. Set, the app owns it and writes back what `onChange`
     /// reports; left out, the field keeps what is typed.
     #[prop(default)]
-    pub value: Prop<Controlled<String>>,
+    pub value: Prop<Controlled<SharedString>>,
     /// Shown while empty.
     pub placeholder: Prop<Option<SharedString>>,
     /// `small` (24 points tall), `medium` (28, the default) or `large` (32).
@@ -76,10 +76,10 @@ pub struct InputProps {
 pub enum InputEvent {
     /// The user changed the text: the text asked for.
     #[args(value)]
-    Change(String),
+    Change(SharedString),
     /// Return: the text.
     #[args(value)]
-    Submit(String),
+    Submit(SharedString),
 }
 
 /// A one-line text field: `<Input value={name()} onChange={({ value }) =>
@@ -92,14 +92,14 @@ pub fn Input(props: InputProps, cx: Scope<InputEvent>) -> impl IntoElement {
         field: field.clone(),
     });
     let label = super::spoken(props.accessibility_label);
-    let value = Value::new(props.value, String::new());
+    let value = Value::new(props.value, SharedString::default());
     let size = move || props.size.get();
     text_input()
         .element_ref(&field)
         .h(move || px(size().height()))
         .text_size(move || px(size().text_size()))
         .border_color(move || rest_border(props.invalid.get()))
-        .value(move || value.get())
+        .value(move || value.get().to_string())
         .placeholder(move || {
             props
                 .placeholder
@@ -113,10 +113,10 @@ pub fn Input(props: InputProps, cx: Scope<InputEvent>) -> impl IntoElement {
         .auto_focus(move || props.auto_focus.get())
         .optional_label(move || label())
         .on_change(move |text: &str| {
-            value.request(text.to_owned());
-            cx.emit(InputEvent::Change(text.to_owned()));
+            value.request(SharedString::from(text.to_owned()));
+            cx.emit(InputEvent::Change(text.to_owned().into()));
         })
-        .on_submit(move |text: &str| cx.emit(InputEvent::Submit(text.to_owned())))
+        .on_submit(move |text: &str| cx.emit(InputEvent::Submit(text.to_owned().into())))
 }
 
 /// The props of [`Textarea`].
@@ -125,7 +125,7 @@ pub struct TextareaProps {
     /// The text. Set, the app owns it and writes back what `onChange`
     /// reports; left out, the field keeps what is typed.
     #[prop(default)]
-    pub value: Prop<Controlled<String>>,
+    pub value: Prop<Controlled<SharedString>>,
     /// Shown while empty.
     pub placeholder: Prop<Option<SharedString>>,
     /// Visible lines before it grows (default 4).
@@ -150,7 +150,7 @@ pub struct TextareaProps {
 pub enum TextareaEvent {
     /// The user changed the text: the text asked for.
     #[args(value)]
-    Change(String),
+    Change(SharedString),
 }
 
 /// A text field of several lines; Return types a new line. Its ref is an
@@ -162,12 +162,12 @@ pub fn Textarea(props: TextareaProps, cx: Scope<TextareaEvent>) -> impl IntoElem
         field: field.clone(),
     });
     let label = super::spoken(props.accessibility_label);
-    let value = Value::new(props.value, String::new());
+    let value = Value::new(props.value, SharedString::default());
     textarea_field()
         .element_ref(&field)
         .min_h(move || px(8.0 + 16.0 * props.rows.get() as f32))
         .border_color(move || rest_border(props.invalid.get()))
-        .value(move || value.get())
+        .value(move || value.get().to_string())
         .placeholder(move || {
             props
                 .placeholder
@@ -179,8 +179,8 @@ pub fn Textarea(props: TextareaProps, cx: Scope<TextareaEvent>) -> impl IntoElem
         .readonly(move || props.readonly.get())
         .optional_label(move || label())
         .on_change(move |text: &str| {
-            value.request(text.to_owned());
-            cx.emit(TextareaEvent::Change(text.to_owned()));
+            value.request(SharedString::from(text.to_owned()));
+            cx.emit(TextareaEvent::Change(text.to_owned().into()));
         })
 }
 

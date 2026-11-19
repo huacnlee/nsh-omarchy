@@ -7,7 +7,8 @@ use nsh_core::prelude::*;
 use super::{Value, rest_border};
 use crate::components::button::ControlSize;
 use crate::components::select::{combobox_field, select_popup, select_trigger};
-use crate::fields::{Controlled, SelectItem};
+use crate::types::Controlled;
+use crate::fields::{SelectItem};
 
 /// `items` as `nsh_base`'s.
 fn base_items(items: &[SelectItem]) -> Vec<nsh_base::SelectItem> {
@@ -23,7 +24,7 @@ pub struct SelectProps {
     /// and writes back what `onChange` reports; left out, the select keeps
     /// the choice.
     #[prop(default)]
-    pub value: Prop<Controlled<Option<String>>>,
+    pub value: Prop<Controlled<Option<SharedString>>>,
     /// What the trigger says while nothing is chosen.
     pub placeholder: Prop<Option<SharedString>>,
     /// A search field above the items filters them.
@@ -47,7 +48,7 @@ pub struct SelectProps {
 pub enum SelectEvent {
     /// The user chose an item: its `value`.
     #[args(value)]
-    Change(String),
+    Change(SharedString),
 }
 
 /// A trigger that opens a list: Up / Down / Home / End and typeahead move,
@@ -63,7 +64,7 @@ pub fn Select(props: SelectProps, cx: Scope<SelectEvent>) -> impl IntoElement {
             items
                 .iter()
                 .find(|item| item.value == chosen)
-                .map(|item| SharedString::from(item.label.clone()))
+                .map(|item| item.label.clone())
         })
     });
     let size = move || props.size.get();
@@ -80,15 +81,15 @@ pub fn Select(props: SelectProps, cx: Scope<SelectEvent>) -> impl IntoElement {
         .min_w(px(160.0))
         .cover(false)
         .items(move || props.items.with(|items| base_items(items)))
-        .value(move || SelectValue::Controlled(value.get().map(SharedString::from)))
+        .value(move || SelectValue::Controlled(value.get()))
         .placeholder(move || props.placeholder.get())
         .searchable(move || props.searchable.get())
         .disabled(move || props.disabled.get())
         .accessibility_label(move || label())
         .on_change(move |next: &Option<SharedString>| {
             if let Some(next) = next {
-                value.request(Some(next.to_string()));
-                cx.emit(SelectEvent::Change(next.to_string()));
+                value.request(Some(next.clone()));
+                cx.emit(SelectEvent::Change(next.clone()));
             }
         })
 }
@@ -101,7 +102,7 @@ pub struct ComboboxProps {
     /// The chosen items' values. Set, the app owns them and writes back
     /// what `onChange` reports; left out, the combobox keeps them.
     #[prop(default)]
-    pub value: Prop<Controlled<Vec<String>>>,
+    pub value: Prop<Controlled<Vec<SharedString>>>,
     /// Several values: a choice toggles one and the list stays open.
     #[prop(default)]
     pub multiple: Prop<bool>,
@@ -120,7 +121,7 @@ pub struct ComboboxProps {
 pub enum ComboboxEvent {
     /// The user chose or removed an item: the values asked for.
     #[args(value)]
-    Change(Vec<String>),
+    Change(Vec<SharedString>),
 }
 
 /// A field whose typing filters the list; Down / Up or the chevron open
@@ -133,22 +134,13 @@ pub fn Combobox(props: ComboboxProps, cx: Scope<ComboboxEvent>) -> impl IntoElem
         .self_start()
         .min_w(px(224.0))
         .items(move || props.items.with(|items| base_items(items)))
-        .value(move || {
-            Some(
-                value
-                    .get()
-                    .into_iter()
-                    .map(SharedString::from)
-                    .collect::<Vec<_>>(),
-            )
-        })
+        .value(move || Some(value.get()))
         .multiple(move || props.multiple.get())
         .placeholder(move || props.placeholder.get())
         .disabled(move || props.disabled.get())
         .accessibility_label(move || label())
         .on_change(move |next: &Vec<SharedString>| {
-            let next: Vec<String> = next.iter().map(ToString::to_string).collect();
             value.request(next.clone());
-            cx.emit(ComboboxEvent::Change(next));
+            cx.emit(ComboboxEvent::Change(next.clone()));
         })
 }

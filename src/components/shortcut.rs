@@ -5,13 +5,37 @@
 //! elsewhere; on macOS `alt` reads `option`. Any spelling is accepted
 //! (`Ctrl+C`, `Ctrl C`, `ctrl-c`), so every shortcut on screen reads alike.
 
-use nsh_core::platform::Os;
+use std::sync::atomic::{AtomicU8, Ordering};
+
+use nsh_core::element::try_apple_keys;
 use nsh_core::prelude::*;
 
+/// Whether `mod` was Command the last time an engine was asked (0 not
+/// yet, 1 no, 2 yes): what a call from outside the engine's Rust code (a
+/// TSX module function, which runs on the JS thread) goes by.
+static APPLE_KEYS: AtomicU8 = AtomicU8::new(0);
+
+/// Whether `mod` is Command here: the engine's platform where one runs,
+/// else the last one an engine reported, else the platform built for.
+fn apple_keys() -> bool {
+    match try_apple_keys() {
+        Some(apple) => {
+            APPLE_KEYS.store(if apple { 2 } else { 1 }, Ordering::Relaxed);
+            apple
+        }
+        None => match APPLE_KEYS.load(Ordering::Relaxed) {
+            1 => false,
+            2 => true,
+            _ => cfg!(any(target_os = "macos", target_os = "ios")),
+        },
+    }
+}
+
 /// `keys` (`"mod-c"`, `"Ctrl+Shift+P"`, `"F2"`) as this platform writes it:
-/// `"cmd-c"` on macOS, `"ctrl-c"` on Linux and Windows.
+/// `"cmd-c"` on macOS, `"ctrl-c"` on Linux and Windows. It also works
+/// outside a component (from a TSX module function).
 pub fn shortcut_label(keys: &str) -> SharedString {
-    format_shortcut(keys, matches!(os(), Os::MacOs | Os::Ios)).into()
+    format_shortcut(keys, apple_keys()).into()
 }
 
 pub(crate) fn format_shortcut(keys: &str, apple: bool) -> String {

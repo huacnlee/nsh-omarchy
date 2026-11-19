@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 description = "An NSH component library designed for the Omarchy system and its UI and UX conventions"
-publish = false
+repository = "https://github.com/huacnlee/nsh-omarchy"
+readme = "README.md"
+keywords = ["nsh", "omarchy", "ui", "components", "nshm"]
+categories = ["gui"]
+exclude = ["/examples", "/tests", "/docs", "/target", "/.claude", "/tsx", "/DESIGN.md"]
 
 [workspace]
 

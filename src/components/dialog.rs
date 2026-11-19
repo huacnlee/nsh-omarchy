@@ -178,6 +178,10 @@ pub struct Dialog {
     alert: bool,
     width: f32,
     on_dismiss: Option<Rc<dyn Fn()>>,
+    /// `None`: a plain dialog's backdrop press dismisses it, an alert
+    /// dialog's does not.
+    backdrop_dismisses: Option<bool>,
+    escape_dismisses: bool,
 }
 
 /// A dialog titled `title`, shown while `open` is true. The dialog writes
@@ -193,6 +197,8 @@ pub fn dialog(open: Signal<bool>, title: impl Into<SharedString>) -> Dialog {
         alert: false,
         width: 420.0,
         on_dismiss: None,
+        backdrop_dismisses: None,
+        escape_dismisses: true,
     }
 }
 
@@ -274,6 +280,19 @@ impl Dialog {
         self.on_dismiss = Some(Rc::new(on_dismiss));
         self
     }
+
+    /// Whether a press on the backdrop dismisses it (default: yes for a
+    /// plain dialog, no for an alert dialog).
+    pub fn close_on_backdrop_press(mut self, close: bool) -> Self {
+        self.backdrop_dismisses = Some(close);
+        self
+    }
+
+    /// Whether Escape and the back button dismiss it (default true).
+    pub fn close_on_escape(mut self, close: bool) -> Self {
+        self.escape_dismisses = close;
+        self
+    }
 }
 
 impl IntoElement for Dialog {
@@ -288,7 +307,10 @@ impl IntoElement for Dialog {
             alert,
             width,
             on_dismiss,
+            backdrop_dismisses,
+            escape_dismisses,
         } = self;
+        let backdrop_dismisses = backdrop_dismisses.unwrap_or(!alert);
         overlay_focus_return(open, return_focus);
         let actions = Rc::new(actions);
         let report = Rc::new(move || {
@@ -348,11 +370,11 @@ impl IntoElement for Dialog {
                 .bg(move || overlay_scrim())
                 .focusable(false)
                 .bind_opacity(&enter);
-            let backdrop = if alert {
-                backdrop
-            } else {
+            let backdrop = if backdrop_dismisses {
                 let dismiss = dismiss.clone();
                 backdrop.on_press(move || dismiss())
+            } else {
+                backdrop
             };
             let card = view()
                 .w(px(width))
@@ -391,7 +413,11 @@ impl IntoElement for Dialog {
             let mut modal = nsh_base::dialog()
                 .animation(ModalAnimation::None)
                 .label(title.clone())
-                .on_cancel(move || dismiss())
+                .on_cancel(move || {
+                    if escape_dismisses {
+                        dismiss()
+                    }
+                })
                 .on_open(move || first.focus())
                 .flex_1()
                 .items_center()

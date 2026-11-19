@@ -6,7 +6,8 @@
 //! on; Space checks the focused radio (WAI-ARIA's radio group).
 //!
 //! States: hover and focus-visible wash the row and outline it in the
-//! focus border; a press darkens the wash; checked draws the dot; disabled
+//! focus border; a press darkens the wash; checked fills the box with the
+//! selected fill, drops its border and draws the dot; disabled
 //! dims the text, box and dot and takes no interaction styles.
 
 use nsh_base::{RadioGroupElement, radio as base_radio, radio_group as base_radio_group};
@@ -31,6 +32,8 @@ pub struct RadioControlProps {
     /// No presses, skipped by the arrow keys, dimmed.
     #[prop(default)]
     pub disabled: Prop<bool>,
+    /// What screen readers say when there is no label.
+    pub accessibility_label: Prop<Option<SharedString>>,
 }
 
 /// The events of a [`RadioControl`].
@@ -49,11 +52,16 @@ pub fn RadioControl(props: RadioControlProps, cx: Scope<RadioControlEvent>) -> i
         label,
         checked,
         disabled,
+        accessibility_label,
     } = props;
     base_radio()
         .checked(checked)
         .disabled(disabled)
-        .accessibility_label(move || Some(label.get()))
+        .accessibility_label(move || {
+            accessibility_label
+                .get()
+                .or_else(|| Some(label.get()).filter(|l| !l.is_empty()))
+        })
         .on_change(move |next: &bool| cx.emit(RadioControlEvent::Change(*next)))
         .flex_row()
         // Hug the box and its label instead of stretching across a column.
@@ -89,11 +97,21 @@ pub fn RadioControl(props: RadioControlProps, cx: Scope<RadioControlEvent>) -> i
                 .border_color(move || {
                     if disabled.get() {
                         tokens::divider()
+                    } else if checked.get() {
+                        AdaptiveColor::TRANSPARENT
                     } else {
                         tokens::control_border()
                     }
                 })
-                .bg(move || tokens::normal_fill())
+                .bg(move || {
+                    if checked.get() && !disabled.get() {
+                        tokens::selected_fill()
+                    } else {
+                        tokens::normal_fill()
+                    }
+                })
+                .transition_colors()
+                .duration(tokens::DURATION_FAST)
                 .child(
                     view()
                         .w(px(DOT))
@@ -110,7 +128,7 @@ pub fn RadioControl(props: RadioControlProps, cx: Scope<RadioControlEvent>) -> i
                         .duration(tokens::DURATION_FAST),
                 ),
         )
-        .child(text(label))
+        .child(when(move || !label.get().is_empty(), move || text(label)))
 }
 
 /// A radio labelled `label`, inside a [`radio_group`]: set `.checked(..)`,

@@ -1,8 +1,8 @@
 {
-  "name": "nsh-omarchy",
-  "id": "com.example.nshomarchy",
+  "name": "Omarchy Gallery",
+  "id": "dev.omarchy.nsh.gallery",
   "version": "1.0.0",
   "build": 1,
   "rust": ".",
-  "root": "gallery::Gallery"
+  "root": "Gallery"
 }

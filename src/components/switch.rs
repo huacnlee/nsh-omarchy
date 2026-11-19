@@ -36,6 +36,8 @@ pub struct SwitchControlProps {
     /// No presses, dimmed, no interaction styles.
     #[prop(default)]
     pub disabled: Prop<bool>,
+    /// What screen readers say when there is no label.
+    pub accessibility_label: Prop<Option<SharedString>>,
 }
 
 /// The events of a [`SwitchControl`].
@@ -53,11 +55,16 @@ pub fn SwitchControl(props: SwitchControlProps, cx: Scope<SwitchControlEvent>) -
         label,
         checked,
         disabled,
+        accessibility_label,
     } = props;
     base_switch()
         .checked(checked)
         .disabled(disabled)
-        .accessibility_label(move || Some(label.get()))
+        .accessibility_label(move || {
+            accessibility_label
+                .get()
+                .or_else(|| Some(label.get()).filter(|l| !l.is_empty()))
+        })
         .on_change(move |next: &bool| cx.emit(SwitchControlEvent::Change(*next)))
         .flex_row()
         // Hug the track and its label instead of stretching across a column.
@@ -126,7 +133,7 @@ pub fn SwitchControl(props: SwitchControlProps, cx: Scope<SwitchControlEvent>) -
                 .duration(tokens::DURATION_BASE)
                 .ease_out()
         })
-        .child(text(label))
+        .child(when(move || !label.get().is_empty(), move || text(label)))
 }
 
 /// A switch labelled `label`: set `.checked(..)`, `.disabled(..)` and write

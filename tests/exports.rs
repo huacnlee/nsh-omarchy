@@ -21,7 +21,13 @@ fn every_export_is_declared() {
         "export declare const PieChart: ((props: PieChartProps) => JSX.Element);",
         "export declare const Markdown: ((props: MarkdownProps) => JSX.Element);",
         "export declare const Icon: ((props: IconProps) => JSX.Element);",
-        "export declare const Gallery: ((props: GalleryProps) => JSX.Element);",
+        "export declare const Button: ((props: ButtonProps) => JSX.Element);",
+        "export declare const IconButton: ((props: IconButtonProps) => JSX.Element);",
+        "export declare const DropdownMenu: ((props: DropdownMenuProps) => JSX.Element);",
+        "export declare const ContextMenu: ((props: ContextMenuProps) => JSX.Element);",
+        "export declare const MenuItem: ((props: MenuItemProps) => JSX.Element);",
+        "export declare const MenuSeparator: ((props: MenuSeparatorProps) => JSX.Element);",
+        "export declare const MenuLabel: ((props: MenuLabelProps) => JSX.Element);",
     ] {
         assert!(ts.contains(line), "missing {line:?} in\n{ts}");
     }
@@ -36,6 +42,7 @@ fn the_module_and_props_have_their_ts_types() {
         "  applyTheme(name: BuiltInTheme): void;",
         "  current(): ThemeInfo | null;",
         "  onChange(listener: (theme: ThemeInfo) => void): () => void;",
+        "  shortcutLabel(keys: string): string;",
         "export type BuiltInTheme = \"tokyo-night\" | \"flexoki-light\";",
         "export type ThemeAppearance = \"dark\" | \"light\";",
         "  data: (ChartPoint)[];",
@@ -48,6 +55,10 @@ fn the_module_and_props_have_their_ts_types() {
     assert!(
         ts.contains("\"chevron-down\""),
         "icons by Lucide name:\n{ts}"
+    );
+    assert!(
+        !ts.contains("Gallery"),
+        "the gallery is the repository's app, not an export:\n{ts}"
     );
     assert!(
         !ts.contains("markdown()"),

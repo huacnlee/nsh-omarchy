@@ -13,7 +13,7 @@ use nsh_platform_windows as platform;
 fn main() -> impl std::process::Termination {
     env_logger::init();
     platform::run_app(
-        platform::AppSource::Rust(platform::Root::of::<nsh_omarchy::gallery::Gallery>()),
+        platform::AppSource::Rust(platform::Root::of::<nsh_omarchy_gallery::Gallery>()),
         platform::AppOptions {
             title: "Omarchy Gallery".to_owned(),
             #[cfg(any(target_os = "linux", target_os = "windows"))]

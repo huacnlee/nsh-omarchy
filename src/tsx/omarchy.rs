@@ -129,6 +129,14 @@ impl Omarchy {
         CURRENT.with_borrow(Clone::clone)
     }
 
+    /// A keyboard shortcut as this platform writes it, in Omarchy's form:
+    /// lowercase keys joined by `-`. `mod` is the command key (`cmd` on
+    /// macOS and iOS, `ctrl` elsewhere); any spelling is accepted:
+    /// `shortcutLabel("Ctrl+C")` is `"ctrl-c"`.
+    pub fn shortcut_label(keys: String) -> String {
+        crate::components::shortcut_label(&keys).to_string()
+    }
+
     /// Calls `listener` with the theme after each change of it: an applied
     /// palette, or the system theme changing while followed. Returns the
     /// function that stops listening; a listener added in a component stops

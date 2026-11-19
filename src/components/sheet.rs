@@ -42,6 +42,8 @@ pub struct Sheet {
     size: f32,
     return_focus: Option<ElementRef>,
     on_dismiss: Option<Rc<dyn Fn()>>,
+    footer: Option<Rc<dyn Fn() -> AnyElement>>,
+    close_label: SharedString,
 }
 
 /// A sheet titled `title` on the right edge, shown while `open` is true.
@@ -56,6 +58,8 @@ pub fn sheet(open: Signal<bool>, title: impl Into<SharedString>) -> Sheet {
         size: 360.0,
         return_focus: None,
         on_dismiss: None,
+        footer: None,
+        close_label: "Close".into(),
     }
 }
 
@@ -100,6 +104,19 @@ impl Sheet {
         self
     }
 
+    /// Content of the footer row, after the actions, made on each opening
+    /// (the app's own buttons).
+    pub fn footer<E: IntoElement>(mut self, footer: impl Fn() -> E + 'static) -> Self {
+        self.footer = Some(Rc::new(move || footer().into_element()));
+        self
+    }
+
+    /// The close button's label, for screen readers (default "Close").
+    pub fn close_label(mut self, label: impl Into<SharedString>) -> Self {
+        self.close_label = label.into();
+        self
+    }
+
     /// Where the focus goes when the sheet closes.
     pub fn return_focus(mut self, target: ElementRef) -> Self {
         self.return_focus = Some(target);
@@ -126,6 +143,8 @@ impl IntoElement for Sheet {
             size,
             return_focus,
             on_dismiss,
+            footer,
+            close_label,
         } = self;
         overlay_focus_return(open, return_focus);
         let actions = Rc::new(actions);
@@ -163,7 +182,10 @@ impl IntoElement for Sheet {
                                 .text_color(move || tokens::secondary())
                         })),
                 )
-                .child(overlay_close_button("Close", move || dismiss()).element_ref(&close_ref));
+                .child(
+                    overlay_close_button(close_label.clone(), move || dismiss())
+                        .element_ref(&close_ref),
+                );
             let buttons = actions
                 .iter()
                 .map(|action| {
@@ -187,7 +209,7 @@ impl IntoElement for Sheet {
                         .min_h(px(0.0))
                         .child(body.as_ref().map(|b| b())),
                 )
-                .child((!buttons.is_empty()).then(|| {
+                .child((!buttons.is_empty() || footer.is_some()).then(|| {
                     view()
                         .flex_row()
                         .justify_end()
@@ -196,6 +218,7 @@ impl IntoElement for Sheet {
                         .border_t(px(tokens::BORDER))
                         .border_color(move || tokens::divider())
                         .children(buttons)
+                        .child(footer.as_ref().map(|f| f()))
                 }))
                 .into_element()
         };

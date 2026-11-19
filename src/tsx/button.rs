@@ -19,6 +19,14 @@ fn pressable(disabled: Prop<bool>, selected: Prop<bool>) -> View {
         })
 }
 
+/// Gives `view` the app's `tooltip` slot (a `<Tooltip>`) as its tooltip.
+fn with_tooltip(view: View, tooltip: Option<Slot>) -> View {
+    match tooltip {
+        Some(tooltip) => view.tooltip(tooltip.element().into_element()),
+        None => view,
+    }
+}
+
 /// The props of [`Button`].
 #[derive(Debug, Clone, PartialEq, Props)]
 pub struct ButtonProps {
@@ -44,6 +52,9 @@ pub struct ButtonProps {
     /// Content after the label (a keycap, a badge), or the whole content
     /// without `label`.
     pub children: Prop<Children>,
+    /// A hint shown while the pointer rests on it or the keyboard focuses
+    /// it: `<Tooltip label="Save" shortcut="mod-s" />`.
+    pub tooltip: Prop<Option<Slot>>,
 }
 
 /// The events of a [`Button`].
@@ -61,6 +72,7 @@ pub fn Button(props: ButtonProps, cx: Scope<ButtonEvent>) -> impl IntoElement {
         .map(|v| button_look!(v, move || props.variant.get(), move || props.size.get()))
         .optional_label(move || props.accessibility_label.get())
         .on_press(move || cx.emit(ButtonEvent::Press))
+        .map(|v| with_tooltip(v, props.tooltip.get()))
         .slot(props.icon.get(), |s| s)
         .child(dynamic(move || {
             label.get().map(|label| text(label).into_element())
@@ -87,6 +99,9 @@ pub struct IconButtonProps {
     /// Keeps the selected fill.
     #[prop(default)]
     pub selected: Prop<bool>,
+    /// A hint shown while the pointer rests on it or the keyboard focuses
+    /// it: `<Tooltip label="Add" shortcut="mod-n" />`.
+    pub tooltip: Prop<Option<Slot>>,
 }
 
 /// A square, icon-only action: `<IconButton label="Add"><Icon name="plus" /></IconButton>`.
@@ -99,5 +114,6 @@ pub fn IconButton(props: IconButtonProps, cx: Scope<ButtonEvent>) -> impl IntoEl
         .px(px(0.0))
         .label(move || props.label.get())
         .on_press(move || cx.emit(ButtonEvent::Press))
+        .map(|v| with_tooltip(v, props.tooltip.get()))
         .child(props.children)
 }

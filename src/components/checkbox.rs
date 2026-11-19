@@ -31,6 +31,8 @@ pub struct CheckboxControlProps {
     /// No presses, dimmed, no interaction styles.
     #[prop(default)]
     pub disabled: Prop<bool>,
+    /// What screen readers say when there is no label.
+    pub accessibility_label: Prop<Option<SharedString>>,
 }
 
 /// The events of a [`CheckboxControl`].
@@ -52,6 +54,7 @@ pub fn CheckboxControl(
         checked,
         indeterminate,
         disabled,
+        accessibility_label,
     } = props;
     let shows_check = computed(move || checked.get() && !indeterminate.get());
     let marked = computed(move || checked.get() || indeterminate.get());
@@ -66,7 +69,11 @@ pub fn CheckboxControl(
         .checked(checked)
         .indeterminate(indeterminate)
         .disabled(disabled)
-        .accessibility_label(move || Some(label.get()))
+        .accessibility_label(move || {
+            accessibility_label
+                .get()
+                .or_else(|| Some(label.get()).filter(|l| !l.is_empty()))
+        })
         .on_change(move |next: &bool| cx.emit(CheckboxControlEvent::Change(*next)))
         .flex_row()
         // Hug the box and its label instead of stretching across a column.
@@ -124,7 +131,7 @@ pub fn CheckboxControl(
                 .child(when(shows_check, move || check_mark(mark_color)))
                 .child(when(indeterminate, move || dash_mark(mark_color))),
         )
-        .child(text(label))
+        .child(when(move || !label.get().is_empty(), move || text(label)))
 }
 
 /// A checkbox labelled `label`: set `.checked(..)`, `.indeterminate(..)`,

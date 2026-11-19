@@ -57,6 +57,15 @@ fn item_style(s: StyleRefinement) -> StyleRefinement {
         })
 }
 
+/// A section's header: small secondary text above its rows.
+fn group_style(s: StyleRefinement) -> StyleRefinement {
+    s.px(px(tokens::SPACE_2))
+        .pt(px(tokens::SPACE_2))
+        .pb(px(tokens::SPACE_1))
+        .text_size(px(tokens::TEXT_XS))
+        .text_color(move || tokens::secondary())
+}
+
 fn item_class() -> SharedString {
     format!("{HIGHLIGHT} {DISABLED}").into()
 }
@@ -106,7 +115,27 @@ pub fn select_field(
                 .map(|item| item.title.clone())
         })
     };
-    let trigger = view()
+    let trigger = select_trigger(
+        move || shown.get(),
+        move || placeholder.clone(),
+        || false,
+    );
+    select_popup(trigger)
+        .items(items)
+        .value(move || value())
+}
+
+/// A select's trigger: the chosen item's title (`shown`), or `placeholder`
+/// in secondary text while nothing is chosen, and a chevron; the control
+/// look, its border the accent while the list is open. `disabled` dims
+/// the title.
+pub(crate) fn select_trigger(
+    shown: impl Fn() -> Option<SharedString> + Clone + 'static,
+    placeholder: impl Fn() -> SharedString + 'static,
+    disabled: impl Fn() -> bool + 'static,
+) -> View {
+    let has_value = shown.clone();
+    view()
         .flex_row()
         .items_center()
         .gap(px(tokens::SPACE_2))
@@ -116,6 +145,7 @@ pub fn select_field(
         .border_1()
         .border_color(move || tokens::control_border())
         .bg(move || tokens::normal_fill())
+        .text_size(px(tokens::TEXT_MD))
         .cursor_pointer()
         .transition_colors()
         .duration(tokens::DURATION_FAST)
@@ -128,28 +158,34 @@ pub fn select_field(
                 .border_color(move || tokens::divider())
         })
         .child(
-            text(move || shown.get().unwrap_or_else(|| placeholder.clone()))
+            text(move || shown().unwrap_or_else(&placeholder))
                 .flex_1()
                 .min_w(px(0.0))
                 .number_of_lines(1)
-                .text_size(px(tokens::TEXT_MD))
                 .text_color(move || {
-                    if shown.with(Option::is_some) {
+                    if disabled() {
+                        tokens::disabled()
+                    } else if has_value().is_some() {
                         tokens::foreground()
                     } else {
                         tokens::secondary()
                     }
                 }),
         )
-        .child(chevron());
+        .child(chevron())
+}
+
+/// A select dressed the Omarchy way around `trigger`: the popup, its rows,
+/// the search field and the empty note. Items, value and the rest are the
+/// caller's.
+pub(crate) fn select_popup(trigger: impl IntoElement) -> SelectElement {
     select()
-        .items(items)
-        .value(move || value())
         .offset(px(tokens::SPACE_1))
         .popup_style(popup_style)
         .list_style(list_style)
         .item_class(item_class())
         .item_style(item_style)
+        .group_style(group_style)
         .search_placeholder("Search options\u{2026}")
         .search_class(SharedString::from(PLACEHOLDER))
         .search_style(|s: StyleRefinement| {
@@ -219,5 +255,6 @@ pub fn combobox_field(items: Vec<SelectItem>) -> ComboboxElement {
         .list_style(list_style)
         .item_class(item_class())
         .item_style(item_style)
+        .group_style(group_style)
         .empty(empty_note("No matching options"))
 }

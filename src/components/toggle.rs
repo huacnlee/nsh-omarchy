@@ -13,57 +13,68 @@
 use nsh_base::{ToggleElement, toggle as base_toggle, toggle_group as base_toggle_group};
 use nsh_core::prelude::*;
 
-use super::button::{ButtonSize, actions_duration};
+use super::button::ButtonSize;
 use super::button_group::labelled_group;
 use crate::tokens;
 
-/// A styled toggle with no content: add a label, an icon or both with
-/// `.child(..)`. Give an icon-only toggle an `.accessibility_label(..)`.
-pub fn toggle_style(size: ButtonSize) -> ToggleElement {
-    base_toggle()
+/// The toggle look on `$el` (a builder of `nsh_base`'s toggle, or a view:
+/// the TSX `Toggle` draws it on a view of its own), its size following
+/// `$size()` (a prop that may change).
+macro_rules! toggle_look {
+    ($el:expr, $size:expr) => {{
+        let size = $size;
+        $el
         .flex_row()
         .flex_shrink_0()
         .self_start()
         .items_center()
         .justify_center()
-        .h(px(size.height()))
-        .px(px(size.padding()))
-        .gap(px(size.gap()))
-        .rounded(px(tokens::RADIUS))
-        .border(px(tokens::BORDER))
-        .border_color(move || tokens::border())
+        .h(move || px(size().height()))
+        .px(move || px(size().padding()))
+        .gap(move || px(size().gap()))
+        .rounded(px($crate::tokens::RADIUS))
+        .border(px($crate::tokens::BORDER))
+        .border_color(move || $crate::tokens::border())
         .bg(AdaptiveColor::TRANSPARENT)
-        .text_color(move || tokens::foreground())
-        .text_size(px(size.text_size()))
+        .text_color(move || $crate::tokens::foreground())
+        .text_size(move || px(size().text_size()))
         .cursor_pointer()
         .transition_colors()
-        .duration(move || actions_duration(tokens::DURATION_FAST))
+        .duration(move || $crate::components::button::actions_duration($crate::tokens::DURATION_FAST))
         .hover(|s| {
-            s.bg(move || tokens::hover_fill())
-                .border_color(move || tokens::focus_border())
+            s.bg(move || $crate::tokens::hover_fill())
+                .border_color(move || $crate::tokens::focus_border())
         })
         .focus_visible(|s| {
-            s.bg(move || tokens::hover_fill())
-                .border_color(move || tokens::focus_border())
+            s.bg(move || $crate::tokens::hover_fill())
+                .border_color(move || $crate::tokens::focus_border())
         })
         .active(|s| {
-            s.bg(move || tokens::pressed_fill())
-                .border_color(move || tokens::bright())
+            s.bg(move || $crate::tokens::pressed_fill())
+                .border_color(move || $crate::tokens::bright())
         })
         // On: the selection fill and bright text, the outline left to hover
         // and focus.
         .aria_pressed(|s| {
-            s.bg(move || tokens::selected_fill())
-                .text_color(move || tokens::bright())
+            s.bg(move || $crate::tokens::selected_fill())
+                .text_color(move || $crate::tokens::bright())
         })
         // `disabled:` ranks above hover, focus and press; `aria-pressed:`
         // ranks above it, so a disabled toggle that is on keeps its fill.
         .disabled_style(|s| {
             s.bg(AdaptiveColor::TRANSPARENT)
-                .border_color(move || tokens::divider())
-                .text_color(move || tokens::disabled())
+                .border_color(move || $crate::tokens::divider())
+                .text_color(move || $crate::tokens::disabled())
                 .cursor(Cursor::Default)
         })
+    }};
+}
+pub(crate) use toggle_look;
+
+/// A styled toggle with no content: add a label, an icon or both with
+/// `.child(..)`. Give an icon-only toggle an `.accessibility_label(..)`.
+pub fn toggle_style(size: ButtonSize) -> ToggleElement {
+    toggle_look!(base_toggle(), move || size)
 }
 
 /// A labelled toggle, medium size:

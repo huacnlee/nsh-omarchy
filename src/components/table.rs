@@ -1,17 +1,13 @@
-//! Omarchy tables: [`table`] for a few rows the app writes (a header of
+//! Omarchy tables: the looks of a static table's parts (a header of
 //! secondary titles, divider rows, a hover wash, a selected row's fill),
-//! and [`data_table`] for any number of rows, styled over
-//! `nsh_base`'s `DataTable` (virtualized, sortable, keyboard-selectable).
+//! and [`data_table`] for any number of rows, styled over `nsh_base`'s
+//! `DataTable` (virtualized, sortable, keyboard-selectable).
 //!
 //! Motion: a row's hover and selection washes are fast color transitions
 //! (`DURATION_FAST`).
 
 use nsh_base::text_view::PartStyle;
-use nsh_base::{
-    ButtonElement, DataTableAlign, DataTableClasses, DataTableColumn, DataTableElement,
-    DataTableStyles, TableBodyElement, TableCellElement, TableElement, TableHeadElement,
-    TableHeaderElement, TableRowElement, button,
-};
+use nsh_base::{ButtonElement, DataTableClasses, DataTableElement, DataTableStyles, button};
 use nsh_core::element::{IntoProp, Style, StyleRefinement};
 use nsh_core::prelude::*;
 
@@ -19,11 +15,9 @@ use crate::tokens;
 
 // ---- Static table -------------------------------------------------------
 
-/// A static table with a table's semantics inside a 1px border. Its
-/// children are a [`table_header`] and a [`table_body`].
-pub fn table(accessibility_label: impl Into<SharedString>) -> TableElement {
-    nsh_base::table()
-        .accessibility_label(accessibility_label.into())
+/// A static table's frame: a 1px border on the background.
+pub fn table_look(table: View) -> View {
+    table
         .border_1()
         .border_color(move || tokens::border())
         .bg(move || tokens::background())
@@ -31,10 +25,10 @@ pub fn table(accessibility_label: impl Into<SharedString>) -> TableElement {
         .text_color(move || tokens::foreground())
 }
 
-/// The header group: its row of [`table_head`] titles on a raised strip,
-/// with the table's border under it.
-pub fn table_header() -> TableHeaderElement {
-    nsh_base::table_header()
+/// The header group: its row of titles on a raised strip, with the table's
+/// border under it.
+pub fn header_look(header: View) -> View {
+    header
         .bg(move || tokens::surface())
         .border_b_1()
         .border_color(move || tokens::border())
@@ -45,16 +39,19 @@ pub fn table_header() -> TableHeaderElement {
 const COLUMN_LINE: &str = "last:border-r-0";
 
 /// The header's row of column titles.
-pub fn table_header_row() -> TableRowElement {
-    nsh_base::table_row()
-        .items_center()
-        .min_h(px(tokens::CONTROL_MD))
+pub fn header_row_look(row: View) -> View {
+    row.flex_row().items_center().min_h(px(tokens::CONTROL_MD))
 }
 
-/// A column title: small, semibold, secondary. `width` fixes the column's
-/// width; `None` lets it share the row.
-pub fn table_head(title: impl Into<SharedString>, width: Option<f32>) -> TableHeadElement {
-    sized(nsh_base::table_head(), width)
+/// A column title: small, semibold, secondary, at the end when `numeric`.
+/// `width` fixes the column's width; `None` lets it share the row.
+pub fn head_look(
+    head: View,
+    title: impl IntoReactive<SharedString>,
+    width: impl Fn() -> Option<f32> + 'static,
+    numeric: impl Fn() -> bool + 'static,
+) -> View {
+    sized(head, width, numeric)
         .self_stretch()
         .px(px(tokens::SPACE_2))
         .justify_center()
@@ -62,7 +59,7 @@ pub fn table_head(title: impl Into<SharedString>, width: Option<f32>) -> TableHe
         .border_color(move || tokens::divider())
         .app_class(SharedString::from(COLUMN_LINE))
         .child(
-            text(title.into())
+            text(title)
                 .number_of_lines(1)
                 .text_size(px(tokens::TEXT_SM))
                 .font_weight(FontWeight::SEMIBOLD)
@@ -70,22 +67,11 @@ pub fn table_head(title: impl Into<SharedString>, width: Option<f32>) -> TableHe
         )
 }
 
-/// A numeric column's title: as [`table_head`], at the end.
-pub fn table_head_numeric(title: impl Into<SharedString>, width: Option<f32>) -> TableHeadElement {
-    table_head(title, width).items_end()
-}
-
-/// The body group of the rows.
-pub fn table_body() -> TableBodyElement {
-    nsh_base::table_body()
-}
-
 /// A body row: pressable and focusable (role `row`, Tab reaches it, Space
 /// and Return press it) with a divider above it (but the first, under the
-/// header's border), a hover wash and, while
-/// `selected`, the selected fill and bright text. Give it
-/// `.on_press(..)` to select it and `.accessibility_label(..)` to name it.
-pub fn table_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
+/// header's border), a hover wash and, while `selected`, the selected fill
+/// and bright text.
+pub fn body_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
     button()
         .role(AccessibilityRole::Row)
         .selected(selected)
@@ -106,74 +92,54 @@ pub fn table_row<M>(selected: impl IntoProp<bool, M>) -> ButtonElement {
         .focus_visible(|s| s.bg(move || tokens::hover_fill()))
 }
 
-/// A text cell. `width` fixes the column's width; `None` shares the row.
-pub fn table_cell(content: impl Into<SharedString>, width: Option<f32>) -> TableCellElement {
-    column_line(sized(nsh_base::table_cell(), width))
+/// A text cell with the column line at its trailing edge; a `numeric` one
+/// in monospaced tabular figures at the end. `width` fixes the column's
+/// width; `None` shares the row.
+pub fn cell_look(
+    cell: View,
+    content: Prop<SharedString>,
+    width: impl Fn() -> Option<f32> + 'static,
+    numeric: impl Fn() -> bool + Copy + 'static,
+) -> View {
+    sized(cell, width, numeric)
         .px(px(tokens::SPACE_2))
         .py(px(tokens::SPACE_1))
         .justify_center()
-        .child(text(content.into()).number_of_lines(1))
-}
-
-/// A numeric cell: monospaced tabular figures at the end.
-pub fn table_cell_numeric(
-    content: impl Into<SharedString>,
-    width: Option<f32>,
-) -> TableCellElement {
-    column_line(sized(nsh_base::table_cell(), width))
-        .px(px(tokens::SPACE_2))
-        .py(px(tokens::SPACE_1))
-        .justify_center()
-        .items_end()
-        .child(
-            text(content.into())
-                .number_of_lines(1)
-                .font_family(move || tokens::font_mono())
-                .tabular_nums(),
-        )
-}
-
-/// The divider at a cell's trailing edge, the row's full height.
-fn column_line(cell: TableCellElement) -> TableCellElement {
-    cell.border_r_1()
+        .border_r_1()
         .border_color(move || tokens::divider())
         .app_class(SharedString::from(COLUMN_LINE))
+        .child(dynamic(move || {
+            let label = text(move || content.get()).number_of_lines(1);
+            match numeric() {
+                true => label
+                    .font_family(move || tokens::font_mono())
+                    .tabular_nums()
+                    .into_element(),
+                false => label.into_element(),
+            }
+        }))
 }
 
-fn sized<S: Styled>(element: S, width: Option<f32>) -> S {
-    match width {
-        Some(w) => element.w(px(w)).flex_none(),
-        None => element.flex_1().min_w(px(0.0)),
-    }
+/// A column's width (`None`: a share of the row) and alignment (`numeric`:
+/// at the end).
+fn sized(
+    element: View,
+    width: impl Fn() -> Option<f32> + 'static,
+    numeric: impl Fn() -> bool + 'static,
+) -> View {
+    element.style_with(move |s| {
+        let s = match width() {
+            Some(w) => s.w(px(w)).flex_none(),
+            None => s.flex_1().min_w(px(0.0)),
+        };
+        match numeric() {
+            true => s.items_end(),
+            false => s,
+        }
+    })
 }
 
 // ---- DataTable ----------------------------------------------------------
-
-/// A column of a [`data_table`]: the `key` of its field in the rows, its
-/// title and its width. Set `sortable` on it for a sort button.
-pub fn data_column(
-    key: impl Into<SharedString>,
-    title: impl Into<SharedString>,
-    width: f32,
-) -> DataTableColumn {
-    let mut column = DataTableColumn::default();
-    column.key = key.into();
-    column.title = Some(title.into());
-    column.width = Some(px(width));
-    column
-}
-
-/// A numeric column: at the end, in monospaced tabular figures.
-pub fn data_column_numeric(
-    key: impl Into<SharedString>,
-    title: impl Into<SharedString>,
-    width: f32,
-) -> DataTableColumn {
-    let mut column = data_column(key, title, width);
-    column.align = DataTableAlign::End;
-    column.cell_class = Some("font-mono tabular-nums".into());
-    column
-}
 
 /// A virtualized table of any number of rows: secondary titles on a raised
 /// strip under the table's border, divider rows and column lines, a
@@ -182,9 +148,8 @@ pub fn data_column_numeric(
 /// Down while the table has the keyboard. Sortable columns report the next
 /// sort with `on_sort_change`: the owner sorts its rows and sets `.sort(..)`.
 /// Give it a height.
-pub fn data_table(accessibility_label: impl Into<SharedString>) -> DataTableElement {
+pub fn data_table() -> DataTableElement {
     nsh_base::data_table()
-        .accessibility_label(accessibility_label.into())
         .row_height(px(tokens::CONTROL_MD))
         .header_height(px(tokens::CONTROL_MD))
         .font_size(px(tokens::TEXT_MD))

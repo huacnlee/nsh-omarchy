@@ -1,47 +1,40 @@
 # nsh-omarchy
 
 [Omarchy](https://omarchy.org)'s look for [NSH (Native Shell)](https://nsh.dev) apps: square corners, one accent,
-foreground-tinted state fills, a visible focus border, compact desktop type, and keyboard-first controls. It is a port of
-[gpui-omarchy](https://github.com/huacnlee/gpui-omarchy) from GPUI to NSH: `nsh_base` supplies the behavior (focus,
-keyboard, popups, accessibility) and this library supplies the presentation.
+foreground-tinted state fills, a visible focus border, compact desktop type and keyboard-first controls. It is a port
+of [gpui-omarchy](https://github.com/huacnlee/gpui-omarchy) to NSH: `nsh-base` supplies the behavior (focus,
+keyboard, popups, accessibility), this library the presentation.
 
-The colors follow the Omarchy theme the system uses (`~/.local/state/omarchy/current/theme/colors.toml`), switching
+The colors follow the Omarchy theme the system uses (`~/.local/state/omarchy/current/theme/colors.toml`) and switch
 live when it changes. Without Omarchy, it draws Tokyo Night (dark) or Flexoki Light.
+
+It is an [nshm](https://nsh.dev/docs/nshm.md): one Rust crate that a Rust app calls and a TSX app imports, with the
+same components on both sides.
+
+```sh
+nsh add nsh-omarchy
+```
 
 | Family | Components |
 | --- | --- |
-| Actions | Button (default, primary, ghost, danger × sm, md, lg), icon button, toggle, toggle group, button group, link |
-| Choices | Checkbox, switch, radio group, slider, progress |
-| Fields | Text input, textarea, number field, OTP field, select, combobox |
-| Navigation | Tabs, menu, context menu, accordion, collapsible, pagination, sidebar |
-| Overlays | Dialog, alert dialog, sheet, popover, tooltip, hover card, toast |
-| Display | Card, panel, separator, badge, keycap, empty state, avatar, icons, typography, Markdown |
-| Data | Table, list, tree, calendar, date picker, color picker, resizable panels |
-| Charts | Line, bar, area, pie |
+| Actions | Button, IconButton, ButtonGroup, Toggle, ToggleGroup, Link |
+| Choices | Checkbox, Switch, RadioGroup + Radio, Slider, Progress |
+| Fields | Input, Textarea, NumberInput, OtpInput, Select, Combobox, Calendar, DatePicker, ColorPicker, Field |
+| Navigation | Tabs + Tab, Sidebar + SidebarSection + SidebarItem, Accordion + AccordionItem, Collapsible, Pagination, Menu, ContextMenu, MenuItem, MenuSeparator, MenuLabel, TitleBar |
+| Overlays | Dialog, AlertDialog, Sheet, Popover, HoverCard, Tooltip, Toaster, `toast()`, `confirm()` |
+| Data | Table (+ TableHeader, TableBody, TableRow, TableHead, TableCell), DataTable, ListItem, Tree, Scrollbar, ResizablePanelGroup + ResizablePanel, `list()` (Rust) |
+| Display | Card, Panel, Separator, Badge, Keycap, Shortcut, Avatar, EmptyState, Icon, Heading, Title, Body, Caption, Code, Markdown |
+| Charts | LineChart, AreaChart, BarChart, PieChart |
+| Theme | `Omarchy` (TSX), `Theme`, `follow_system()`, `on_theme_change()` (Rust) |
 
-Run the gallery, a page per component, with a theme switch:
-
-```sh
-cargo run            # or: nsh run
-```
-
-How you use the library depends on the kind of NSH app: [Rust](#in-a-rust-app), [Rust with TSX](#in-a-rust--tsx-app)
-or [TSX only](#in-a-tsx-app).
+[docs/api.md](docs/api.md) is the complete API: every component's constructor, props, shorthands and events, in Rust
+and TSX.
 
 ## In a Rust app
 
-Add the crate next to `nsh-core` and `nsh-base` (0.5):
-
-```toml
-[dependencies]
-nsh-core = "0.5.0"
-nsh-base = "0.5.0"
-nsh-omarchy = { git = "https://github.com/huacnlee/nsh-omarchy" }
-```
-
-Call `nsh_omarchy::init()` once in the root component: it applies the system's Omarchy theme and follows it. Then build
-screens from the library's constructors. Each returns the styled `nsh_base` element, so its builder API
-(`.on_press`, `.disabled`, `.checked`, `.on_change`, …) is all there. This example is `tests/readme.rs`:
+`nsh add nsh-omarchy` adds the crate to the app's `[dependencies]` (or add `nsh-omarchy = "0.1"` yourself). Call
+`init()` once in the root component, then build screens from the constructors. A constructor takes the component's
+required content; everything else is an optional builder with a default. This example is `tests/readme.rs`:
 
 ```rust
 use nsh_core::prelude::*;
@@ -49,10 +42,10 @@ use nsh_omarchy::{self as om, tokens};
 
 #[component]
 pub fn App() -> impl IntoElement {
-    // Draw with the Omarchy theme the system uses, and follow its changes.
+    // Draw with the system's Omarchy theme, and follow it as it changes.
     om::init();
-    let saved = signal(0_u32);
     let notify = signal(true);
+    let saved = signal(0_u32);
     view()
         .flex_1()
         .p(px(tokens::SPACE_6))
@@ -65,117 +58,41 @@ pub fn App() -> impl IntoElement {
                         .checked(move || notify.get())
                         .on_change(move |on: &bool| notify.set(*on)),
                 )
-                .child(om::button_primary("Save").on_press(move || saved.update(|n| *n += 1))),
+                .child(om::button("Save").primary().on_press(move || {
+                    saved.update(|n| *n += 1);
+                    om::toast(om::Toast::new("Settings saved"));
+                })),
         )
-        .child(om::body_text(move || format!("Saved {} times", saved.get())))
+        .child(om::body(move || format!("Saved {} times", saved.get())))
+        .child(om::toaster())
 }
 ```
 
+- **Setters take a value, a signal or a closure.** A closure keeps the prop live: `.checked(move || notify.get())`.
+- **Values are controlled when given.** Leave `checked`/`value` out and the component keeps the value itself; give it
+  and write back what `on_change` reports.
+- **Shorthands** for the common variants: `.primary()`, `.ghost()`, `.danger()`, `.small()`, `.large()`,
+  `.vertical()`, `.segmented()`, …
 - **Colors and sizes come from `nsh_omarchy::tokens`**: `tokens::surface()`, `tokens::accent()`,
   `tokens::hover_fill()`, `tokens::CONTROL_MD`, `tokens::SPACE_4`, `tokens::TEXT_SM`, `tokens::DURATION_FAST`, …
-  Read color tokens in a closure (`.bg(move || tokens::surface())`) so they follow a theme change. They are also
-  Tailwind classes: `bg-surface`, `text-bright`, `border-omarchy-accent`, `text-text-secondary`.
+  Read color tokens in a closure (`.bg(move || tokens::surface())`) so they follow a theme change.
 - **Themes**: `Theme::tokyo_night().apply()` or `Theme::flexoki_light().apply()` pins a palette;
-  `nsh_omarchy::follow_system()` goes back to following the system. `active_theme()` is the palette in use.
-- **Components are controlled**: you pass the value and write back what `on_change` reports.
-- The public API of every family is documented in its file under `src/components/`; the gallery pages in
-  `src/gallery/pages/` show each one in use.
-
-## In a Rust + TSX app
-
-A mixed app links the crate and imports its exports in TSX from the bare specifier `nsh-omarchy`. Put the crate (a git
-submodule, a checkout, a symlink) in the app and list it in `nsh.json`'s `"rust"`:
-
-```json
-{
-  "name": "My App",
-  "id": "com.example.myapp",
-  "version": "1.0.0",
-  "build": 1,
-  "rust": ["vendor/nsh-omarchy"]
-}
-```
-
-```tsx
-import { mount, signal, Text, View } from "nsh";
-import { BarChart, Icon, Markdown, Omarchy, type ThemeInfo } from "nsh-omarchy";
-
-function App() {
-  // Rust owns the theme; TSX applies one and hears every change.
-  Omarchy.followSystem();
-  const theme = signal<ThemeInfo | null>(Omarchy.current());
-  Omarchy.onChange((t) => theme.set(t));
-  return (
-    <View class="flex-1 gap-4 p-6 bg-background">
-      <View class="flex-row items-center gap-2">
-        <Icon name="sun" label="Theme" />
-        <Text class="text-foreground">{() => theme()?.name ?? "…"}</Text>
-      </View>
-      <BarChart data={[{ label: "Mon", value: 12 }, { label: "Tue", value: 18 }]} accessibilityLabel="Builds" />
-      <Markdown source="Read the **manual**." />
-    </View>
-  );
-}
-
-mount(App);
-```
-
-| Export | What it is |
-| --- | --- |
-| `Omarchy` | `followSystem()`, `stopFollowing()`, `applyTheme("tokyo-night" \| "flexoki-light")`, `current(): ThemeInfo \| null`, `onChange(listener): stop` |
-| `<LineChart>`, `<AreaChart>`, `<BarChart>`, `<PieChart>` | `data: { label, value }[]` or `series: { name, values }[]`, with `grid`, `xAxis`, `yAxis`, `legend`, `unit`, `stacked`, `curve`, `donut`, … |
-| `<Markdown>` | `source`, `selectable`, `onLinkPress(e: { value })` |
-| `<Icon>` | `name` (a Lucide name such as `"chevron-down"`), `label`, `size` |
-| `<Gallery>` | The whole gallery, as one component |
-
-When the Rust theme changes, the `nsh.json` theme's Tailwind classes follow it (`bg-background`, `text-foreground`,
-`bg-surface`, `border-omarchy-accent`), so TSX screens drawn with them match the Rust components. `App.tsx` and
-`App.test.tsx` in this repository are a working example; `nsh check`, `nsh build App.tsx` and `nsh test` cover them.
-
-> NSH 0.5.0 from crates.io and the nightly CLI disagree on an `nsh-ios-app` feature, so `nsh check`/`nsh test` of a
-> mixed app currently need an NSH CLI that matches the crates, or a local `.cargo/config.toml` that patches `nsh-*` to
-> the CLI's own checkout.
+  `follow_system()` goes back to following the system; `active_theme()` is the palette in use, and
+  `on_theme_change(|theme| ..)` hears every change.
 
 ## In a TSX app
 
-A TSX-only app links no Rust, so the crate's native `nsh-omarchy` module is not there. It uses the library's TSX
-source in `tsx/` instead: the same components rebuilt on `nsh/base` and drawn with the classes of
-`themes/omarchy.json`. Put the repository in the app (a git submodule, a checkout, a symlink), name its theme file in
-`nsh.json`, and alias `nsh-omarchy` to `tsx/` for the bundler and for TypeScript:
-
-```json
-{
-  "name": "My App",
-  "id": "com.example.myapp",
-  "theme": "vendor/nsh-omarchy/themes/omarchy.json",
-  "resolve": { "alias": { "nsh-omarchy": "./vendor/nsh-omarchy/tsx/index.ts" } }
-}
-```
-
-```json
-// tsconfig.json: `paths` replaces the inherited one, so it repeats nsh's entries
-{
-  "extends": "./.nsh/tsconfig.json",
-  "compilerOptions": {
-    "paths": {
-      "nsh": ["./.nsh/types/nsh/index.d.ts"],
-      "nsh/*": ["./.nsh/types/nsh/*.d.ts"],
-      "nsh-omarchy": ["./vendor/nsh-omarchy/tsx/index.ts"],
-      "*": ["./.nsh/types/*.d.ts"]
-    }
-  },
-  "include": ["*.ts", "*.tsx", "vendor/nsh-omarchy/tsx"]
-}
-```
-
-Without the alias, import it by path: `from "./vendor/nsh-omarchy/tsx"`. Keep `include` to the app's files and `tsx/`:
-`**/*.tsx` would also type check the rest of the repository.
+`nsh add nsh-omarchy` lists the nshm in `nsh.json`; import its components from `"nsh-omarchy"`. A TSX-only app needs
+the Rust toolchain to build its hosts ([nshm](https://nsh.dev/docs/nshm.md)). `examples/tsx-gallery` is an app that
+uses every component.
 
 ```tsx
-import { mount, signal, Text, View } from "nsh";
-import { Button, Card, Switch, Toaster, toast } from "nsh-omarchy";
+import { mount, signal, View } from "nsh";
+import { Body, Button, Omarchy, Panel, Switch, Toaster, toast } from "nsh-omarchy";
 
 function App() {
+  // Draw with the system's Omarchy theme, and follow it as it changes.
+  Omarchy.followSystem();
   const notify = signal(true);
   const saved = signal(0);
   const save = () => {
@@ -184,52 +101,49 @@ function App() {
   };
   return (
     <View class="flex-1 gap-4 p-6 bg-background">
-      <Card title="Settings" footer={<Button label="Save" variant="primary" onPress={save} />}>
+      <Panel title="Settings">
         <Switch label="Notifications" checked={notify()} onChange={({ checked }) => notify.set(checked)} />
-      </Card>
-      <Text class="text-foreground">{() => `Saved ${saved()} times`}</Text>
+        <Button label="Save" variant="primary" onPress={save} />
+      </Panel>
+      <Body>{`Saved ${saved()} times`}</Body>
       <Toaster />
     </View>
   );
 }
 
-mount(App);
+mount(() => <App />);
 ```
 
-| File | Components |
-| --- | --- |
-| `button.tsx` | `Button`, `IconButton`, `Toggle`, `ToggleGroup`, `ButtonGroup` |
-| `choices.tsx` | `Checkbox`, `Switch`, `RadioGroup`, `Radio`, `Slider`, `Progress` |
-| `fields.tsx` | `Input`, `Textarea`, `NumberInput`, `Select`, `Combobox`, `Field` |
-| `navigation.tsx` | `Tabs`, `DropdownMenu`, `ContextMenu`, `MenuItem`, `Accordion`, `Pagination`, `Sidebar`, `Link` |
-| `overlays.tsx` | `Dialog`, `AlertDialog`, `Sheet`, `Popover`, `Tooltip`, `HoverCard`, `Toaster`, `toast()` |
-| `display.tsx` | `Card`, `Panel`, `Separator`, `Badge`, `Keycap`, `Shortcut`, `EmptyState`, `Avatar`, `Heading`, `Title`, `Body`, `Caption`, `Code` |
-| `theme.ts` | The class sets the components share (`fill.hover`, `ink.secondary`, `surface.raised`, …) for your own views |
+Rust's `snake_case` names are `camelCase` in TSX (`on_open_change` is `onOpenChange`), and each event hands one object
+(`onChange={({ checked }) => ..}`). `Omarchy` is the theme module: `followSystem()`, `stopFollowing()`,
+`applyTheme("tokyo-night" | "flexoki-light")`, `current()`, `onChange(listener)` and `shortcutLabel("mod-s")`.
 
-Components are controlled (`checked` with `onChange`, `value` with `onChange`), as in Rust. The theme follows the
-system's light or dark appearance (`setColorScheme` from `nsh` pins one); the live Omarchy theme and the charts need the
-Rust side, so use a [Rust + TSX app](#in-a-rust--tsx-app) for them. `examples/tsx-gallery` shows every component:
-
-```sh
-cd examples/tsx-gallery
-nsh run          # the gallery
-nsh test         # its headless tests
-```
+NSH's standard classes (`bg-background`, `text-foreground`, `border-border`) follow the Omarchy theme as they are. To
+draw your own views with Omarchy's extra roles (`bg-surface`, `text-bright`, `text-text-secondary`,
+`border-omarchy-accent`), copy [`themes/omarchy.json`](themes/omarchy.json) into the app and name it in `nsh.json`
+(`"theme": "omarchy.json"`).
 
 ## Developing
 
 ```sh
-cargo test                   # every component headless: presses, keys, focus, theme following
-cargo run                    # the gallery on this machine's desktop backend
-nsh run --target web         # or ios, android, macos, linux, windows
+cargo test                       # every component headless: presses, keys, focus, theme following
+cd examples/gallery && nsh run   # the Rust gallery, a page per component
+cd examples/tsx-gallery
+nsh test                         # the TSX gallery's tests, against this checkout
+nsh run
 ```
 
 | Path | Holds |
 | --- | --- |
-| `src/theme.rs` | The palettes and their projection onto NSH's design tokens |
-| `src/system_theme/` | Reading and following the system's Omarchy theme |
+| `src/<family>.rs` | The public API of a family: constructors, re-exports, data types |
+| `src/ui/` | The `#[component]`s, exported to TSX by `#[native_module("nsh-omarchy")]` in `src/lib.rs` |
+| `src/components/` | The drawing helpers the components share |
+| `src/theme.rs`, `src/system_theme/` | The palettes, and reading and following the system's Omarchy theme |
 | `src/tokens.rs` | The tokens every component draws with |
-| `src/components/` | The components, one family per file |
-| `src/gallery/` | The gallery app |
 | `themes/omarchy.json` | The palettes as an NSH theme file, generated by `cargo test` (`UPDATE_THEME_JSON=1` rewrites it) |
+| `docs/api.md` | The public API |
 | `DESIGN.md` | The visual language and the rules for code |
+
+## License
+
+MIT

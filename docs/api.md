@@ -86,7 +86,7 @@ setter is a prop of the same name in TSX (camelCase).
 | `icon_button(icon, label)` | as `button` (default variant ghost); `label` is for screen readers | `on_press` | `<IconButton icon label>` |
 | `button_group()` | `size`, `disabled`; children: `button`s, joined edge to edge | — | `<ButtonGroup>` |
 | `toggle(label)` | `checked`, `icon`, `size`, `disabled`, `value` (inside a group) | `on_change(&bool)` | `<Toggle label>` |
-| `toggle_group()` | `value(Vec<String>)`, `single`, `size`, `disabled`; children: `toggle`s with a `value` | `on_change(&Vec<String>)` | `<ToggleGroup>` |
+| `toggle_group()` | `value(Vec<SharedString>)`, `single`, `size`, `disabled`; children: `toggle`s with a `value` | `on_change(&Vec<SharedString>)` | `<ToggleGroup>` |
 | `link(label, href)` | `open_with(LinkTarget)` *system browser or the app* | `on_press` | `<Link label href>` |
 
 ### Choices
@@ -95,7 +95,7 @@ setter is a prop of the same name in TSX (camelCase).
 | --- | --- | --- | --- |
 | `checkbox(label)` | `checked`, `indeterminate`, `disabled`, `accessibility_label` | `on_change(&bool)` | `<Checkbox label>` |
 | `switch(label)` | `checked`, `disabled`, `accessibility_label` | `on_change(&bool)` | `<Switch label>` |
-| `radio_group()` | `value(Option<String>)`, `layout(Axis)` *`horizontal` `vertical`*, `disabled`, `accessibility_label`; children: `radio`s | `on_change(&String)` | `<RadioGroup>` |
+| `radio_group()` | `value(Option<SharedString>)`, `layout(Axis)` *`horizontal` `vertical`*, `disabled`, `accessibility_label`; children: `radio`s | `on_change(&SharedString)` | `<RadioGroup>` |
 | `radio(value, label)` | `disabled` | — | `<Radio value label>` |
 | `slider()` | `value(SliderValue)` (one value or a range), `min`, `max`, `step`, `disabled`, `show_value`, `accessibility_label` | `on_change(&SliderValue)`, `on_change_end` | `<Slider>` |
 | `progress()` | `value(f64)` (0–100), `indeterminate`, `tone` *`success` `warning` `danger`*, `label`, `show_value` | — | `<Progress>` |
@@ -104,12 +104,12 @@ setter is a prop of the same name in TSX (camelCase).
 
 | Rust | Builders | Events | TSX |
 | --- | --- | --- | --- |
-| `input()` | `value`, `placeholder`, `size`, `disabled`, `readonly`, `invalid`, `masked`, `auto_focus`, `accessibility_label` | `on_change(&String)`, `on_submit(&String)` | `<Input>` |
-| `textarea()` | `value`, `placeholder`, `rows`, `disabled`, `readonly`, `invalid`, `accessibility_label` | `on_change(&String)` | `<Textarea>` |
+| `input()` | `value`, `placeholder`, `size`, `disabled`, `readonly`, `invalid`, `masked`, `auto_focus`, `accessibility_label` | `on_change(&SharedString)`, `on_submit(&SharedString)` | `<Input>` |
+| `textarea()` | `value`, `placeholder`, `rows`, `disabled`, `readonly`, `invalid`, `accessibility_label` | `on_change(&SharedString)` | `<Textarea>` |
 | `number_input()` | `value(Option<f64>)`, `min`, `max`, `step`, `suffix`, `placeholder`, `disabled`, `readonly`, `invalid`, `accessibility_label` | `on_change(&Option<f64>)` | `<NumberInput>` |
-| `otp_input(length)` | `value`, `groups`, `masked`, `disabled`, `invalid`, `accessibility_label` | `on_change(&String)`, `on_complete(&String)` | `<OtpInput length>` |
-| `select(items)` | `value(Option<String>)`, `placeholder`, `searchable`, `size`, `disabled`, `invalid`, `accessibility_label` | `on_change(&String)` | `<Select items>` |
-| `combobox(items)` | `value(Vec<String>)`, `multiple`, `placeholder`, `disabled`, `accessibility_label` | `on_change(&Vec<String>)` | `<Combobox items>` |
+| `otp_input(length)` | `value`, `groups`, `masked`, `disabled`, `invalid`, `accessibility_label` | `on_change(&SharedString)`, `on_complete(&SharedString)` | `<OtpInput length>` |
+| `select(items)` | `value(Option<SharedString>)`, `placeholder`, `searchable`, `size`, `disabled`, `invalid`, `accessibility_label` | `on_change(&SharedString)` | `<Select items>` |
+| `combobox(items)` | `value(Vec<SharedString>)`, `multiple`, `placeholder`, `disabled`, `accessibility_label` | `on_change(&Vec<SharedString>)` | `<Combobox items>` |
 | `calendar()` | `value(Option<Date>)`, `range`, `range_value(Option<DateRange>)`, `min`, `max`, `disabled` | `on_change(&Date)`, `on_range_change(&DateRange)` | `<Calendar>` |
 | `date_picker()` | as `calendar`, plus `placeholder`, `size`, `accessibility_label`; the trigger shows the value as `Nov 19, 2026` | as `calendar` | `<DatePicker>` |
 | `color_picker()` | `value(Hsla)`, `alpha`, `swatches(Vec<Hsla>)`, `disabled`, `accessibility_label` | `on_change(&Hsla)` | `<ColorPicker>` |
@@ -123,12 +123,12 @@ setter is a prop of the same name in TSX (camelCase).
 
 | Rust | Builders | Events | TSX |
 | --- | --- | --- | --- |
-| `tabs()` | `value(String)`, `variant` *`underline` `segmented`*, `size`, `accessibility_label`; children: `tab`s | `on_change(&String)` | `<Tabs>` |
+| `tabs()` | `value(SharedString)`, `variant` *`underline` `segmented`*, `size`, `accessibility_label`; children: `tab`s | `on_change(&SharedString)` | `<Tabs>` |
 | `tab(value, label)` | `icon`, `disabled`, `suffix(element)` | — | `<Tab value label>` |
-| `sidebar()` | `value(String)`, `header(element)`, `footer(element)`, `accessibility_label`; children: `sidebar_section`s and `sidebar_item`s | `on_change(&String)` | `<Sidebar>` |
+| `sidebar()` | `value(SharedString)`, `header(element)`, `footer(element)`, `accessibility_label`; children: `sidebar_section`s and `sidebar_item`s | `on_change(&SharedString)` | `<Sidebar>` |
 | `sidebar_section(title)` | children: `sidebar_item`s | — | `<SidebarSection title>` |
 | `sidebar_item(value, label)` | `icon`, `disabled`, `suffix(element)` | — | `<SidebarItem value label>` |
-| `accordion()` | `value(Vec<String>)` (the open items), `multiple`, `disabled`; children: `accordion_item`s | `on_change(&Vec<String>)` | `<Accordion>` |
+| `accordion()` | `value(Vec<SharedString>)` (the open items), `multiple`, `disabled`; children: `accordion_item`s | `on_change(&Vec<SharedString>)` | `<Accordion>` |
 | `accordion_item(value, title)` | `disabled`; children: the content | — | `<AccordionItem value title>` |
 | `collapsible(title)` | `open`, `disabled`; children: the content | `on_open_change(&bool)` | `<Collapsible title>` |
 | `pagination(page, total_pages)` | `visible_pages`, `disabled`, `accessibility_label` | `on_change(&u32)` | `<Pagination page totalPages>` |
@@ -167,7 +167,10 @@ const ok = await confirm({ title: "Delete 3 files?", actionLabel: "Delete", tone
 
 `Toast` builders: `description`, `kind(ToastKind)` *`info` `success` `warning` `error`*,
 `action(label, fn)`, `timeout(Option<Duration>)` (default `TOAST_TIMEOUT`; `None` stays until
-dismissed). Toasting an id that is shown replaces it.
+dismissed; an error stays until dismissed), `id(..)`. `toast` returns the id (`SharedString`);
+toasting an id that is shown replaces it. In TSX `timeout` is in milliseconds (`null` stays) and
+`TOAST_TIMEOUT` is exported. `ConfirmOptions` builders: `description`, `action_label` (default
+`"OK"`), `cancel_label`, `tone` *`danger`*.
 
 ### Data
 
@@ -176,13 +179,13 @@ dismissed). Toasting an id that is shown replaces it.
 | `table()` | `accessibility_label`; children: `table_header`, `table_body` | — | `<Table>` |
 | `table_header()`, `table_body()` | children: `table_row`s | — | `<TableHeader>`, `<TableBody>` |
 | `table_row()` | `selected`, `accessibility_label`; children: cells | `on_press` | `<TableRow>` |
-| `table_head(title)` | `width(Option<f32>)`, `numeric` | — | `<TableHead title>` |
-| `table_cell(text)` | `width(Option<f32>)`, `numeric` | — | `<TableCell text>` |
-| `data_table(columns, rows)` | `selected(Option<String>)`, `sort(Option<TableSort>)`, `accessibility_label`; virtualized, give it a height | `on_selected_change(&String)`, `on_sort_change(&TableSort)`, `on_row_press(&String)` | `<DataTable columns rows>` |
-| `list(count, row)` | a virtualized list of `count` rows made by `row(index)`; give it a height | — | NSH's `<List>` |
+| `table_head(title)` | `width(Option<f32>)`, `numeric(bool)` | — | `<TableHead title>` |
+| `table_cell(text)` | `width(Option<f32>)`, `numeric(bool)` | — | `<TableCell text>` |
+| `data_table(columns, rows)` | `selected(Option<SharedString>)`, `sort(Option<TableSort>)`, `accessibility_label`; virtualized, give it a height | `on_selected_change(&SharedString)`, `on_sort_change(&TableSort)`, `on_row_press(&SharedString)` | `<DataTable columns rows>` |
+| `list(count, row)` | Rust only: a virtualized list of `count` rows made by `row(index)`; give it a height | — | NSH's `<List>` |
 | `list_item()` | `selected`, `disabled`, `accessibility_label`; children: the content | `on_press` | `<ListItem>` |
-| `tree(items)` | `expanded(Vec<String>)`, `selected(Option<String>)`, `accessibility_label`; give it a height | `on_expanded_change(&Vec<String>)`, `on_selected_change(&String)` | `<Tree items>` |
-| `scrollbar(target)` | over the scroll view or list `target` names (`ElementRef`) | — | `<Scrollbar target>` |
+| `tree(items)` | `expanded(Vec<SharedString>)`, `selected(Option<SharedString>)`, `accessibility_label`; give it a height | `on_expanded_change(&Vec<SharedString>)`, `on_selected_change(&SharedString)` | `<Tree items>` |
+| `scrollbar(target)` | over the scroll view or list `target` names (a `ListRef` or `ViewRef`) | — | `<Scrollbar target>` |
 | `resizable_panel_group()` | `layout(Axis)` *`horizontal` `vertical`*; children: `resizable_panel`s | `on_resize(&Vec<f32>)` | `<ResizablePanelGroup>` |
 | `resizable_panel()` | `size(Option<f32>)`, `min_size`, `max_size`; children | — | `<ResizablePanel>` |
 
@@ -209,11 +212,31 @@ dismissed). Toasting an id that is shown replaces it.
 | `empty_state(title)` | `description`, `icon`; children: actions | — | `<EmptyState title>` |
 | `icon(name)` | `size`, `label` (for screen readers; without it the icon is decorative) | — | `<Icon name>` |
 | `heading(text)`, `title(text)`, `body(text)`, `caption(text)`, `code(text)` | the type ramp | — | `<Heading>` … `<Code>` with text children |
-| `markdown(source)` | `selectable` | `on_link_press(&String)` | `<Markdown source>` |
+| `markdown(source)` | `selectable` | `on_link_press(&SharedString)` | `<Markdown source>` |
 | `line_chart(data)`, `area_chart(data)`, `bar_chart(data)`, `pie_chart(data)` | `series`, `grid`, `x_axis`, `y_axis`, `legend`, `unit`, `stacked`, `curve`, `donut`, `name`, `accessibility_label` | — | `<LineChart data>` … |
 
 `shortcut_label("mod-s")` returns the text this platform shows (`cmd-s` on macOS, `ctrl-s`
 elsewhere); TSX: `Omarchy.shortcutLabel("mod-s")`.
+
+### Behavior notes
+
+- Strings in props and events are `SharedString`; setters take a `&str`, a `String`, a signal or
+  a closure. A closure for an *optional* string prop must return `SharedString` or
+  `Option<SharedString>` (`move || SharedString::from(format!(..))`), a limit of nsh-core 0.6's
+  `IntoProp`.
+- `Tabs` and `Sidebar` left uncontrolled start on their first item; `Pagination` keeps the page
+  it shows when `page` is not changed back by the app.
+- `NumberInput`'s `value` is `None` when the field is empty; a controlled field cannot be forced
+  back to empty while it has focus.
+- `ContextMenu`'s `menu` takes one element; give it a `view()` (or fragment) holding the rows.
+- `DataTable` and `Tree` take `selected` as `SelectValue` (`"id"`, `None`, `Some(..)` or a
+  closure; TSX `string | null`, left out = uncontrolled); `Tree`'s `expanded` is
+  `Option<Vec<SharedString>>`. Pressing a sorted column flips ascending/descending (there is no
+  unsorted state). `DataRow` cells are stored as text.
+- `Badge` is filled by default; `.outline()` draws it as an outline. Chart data:
+  `ChartPoint::new(label, value)`, `SeriesData::new(name, values)`.
+- Dialog, AlertDialog and Sheet texts, tones and the `close_on_*` flags stay live while open;
+  a Sheet's `placement` and whether it has a `footer` are read when it opens.
 
 ## 3. Theme
 
@@ -236,7 +259,8 @@ let theme = om::active_theme();   // name(), mode()
 
 `Theme` has private fields and readers. `tokens` is public (`tokens::accent()`,
 `tokens::SPACE_2`, `tokens::DURATION_FAST`); TSX uses the same tokens as classes of
-`themes/omarchy.json` (`bg-surface`, `text-secondary`).
+`themes/omarchy.json` (`bg-surface`, `text-text-secondary`), which an app names as its
+`nsh.json` theme to use them; NSH's standard classes (`bg-background`) follow the theme as they are.
 
 ## 4. Crate layout
 

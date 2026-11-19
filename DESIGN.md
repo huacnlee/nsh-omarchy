@@ -1,8 +1,8 @@
 # nsh-omarchy design
 
-An NSH (`nsh-core` / `nsh-base` 0.5) component library that brings Omarchy's
+An NSH (`nsh-core` / `nsh-base` 0.6) component library, published as an nshm, that brings Omarchy's
 look and keyboard-first behavior to NSH apps. It ports the design of
-[gpui-omarchy](../gpui-omarchy) (read its `docs/design.md` and `src/*.rs`) from
+[gpui-omarchy](https://github.com/huacnlee/gpui-omarchy) (read its `docs/design.md` and `src/*.rs`) from
 GPUI to NSH: `nsh_base` supplies behavior (focus, keyboard, popups, a11y), this
 crate supplies the presentation.
 
@@ -31,10 +31,21 @@ crate supplies the presentation.
   `.bg(move || tokens::surface())`. Never `rgb(..)` outside `theme.rs`.
 - Sizes from `tokens` constants (`px(tokens::CONTROL_MD)`), not magic numbers
   where a token exists.
-- Components are controlled: take the value, emit the change, the owner writes.
-- Constructors are plain functions returning the styled `nsh_base` element (so
-  callers keep its builder API), or `#[component]`s when they need their own
-  state/events. Names are snake_case constructors, e.g. `button("Save")`.
+- The public API is `docs/api.md`, frozen from 0.1.0: names, constructor
+  arguments, shorthands and events do not change. New props, components and
+  enum variants (every public enum is `#[non_exhaustive]`) may be added.
+- Every component is one `#[component]` in `src/ui/`, so Rust and TSX get the
+  same thing. Its public constructor lives in `src/<family>.rs` and takes the
+  required content (`button("Save")`); everything else is an optional setter
+  with a default. Shorthands (`.primary()`, `.small()`) are inherent methods
+  on the element, generated in `src/ui/shorthand.rs`.
+- Setters take a value, a signal or a closure. Read props in closures where
+  they must stay live; read once only what decides structure.
+- Values are controlled when given; left out, the component keeps its own.
+  Events report the requested value; identity is a string `value`/`id`, never
+  an index. Strings in props and events are `SharedString`.
+- A control an app may put in a trigger slot draws on a plain view (one
+  component deep), so the trigger's press reaches it (nsh-core 0.6).
 - Every pressable is an `nsh_base` semantic control (button, menu_item, …) with
   a label; every action works by keyboard with a visible focus.
 - Motion: hover/pressed washes use `.transition_colors().duration(tokens::DURATION_FAST)`;
@@ -44,12 +55,16 @@ crate supplies the presentation.
 
 | Path | Holds |
 |---|---|
+| `src/lib.rs` | Root re-exports, `init()`, `#[native_module("nsh-omarchy")]` |
+| `src/<family>.rs` | A family's public constructors, re-exports and data types |
+| `src/ui/` | The `#[component]`s and their `register` fns |
+| `src/components/` | Drawing helpers shared by the components (crate-private) |
 | `src/theme.rs` | `Theme` palettes and their projection onto NSH tokens |
-| `src/system_theme.rs` | Reading/following `~/.local/state/omarchy/current/theme/colors.toml` |
+| `src/system_theme/` | Reading/following `~/.local/state/omarchy/current/theme/colors.toml` |
 | `src/tokens.rs` | Token functions and constants every component uses |
-| `src/components/<family>.rs` | Styled components, one family per file |
-| `src/gallery/` | The gallery app (`nsh run`), one page per component |
-| `tests/` | Headless tests |
+| `tests/` | Headless tests through the public API |
+| `examples/gallery` | The Rust gallery, one page per component |
+| `examples/tsx-gallery` | The TSX gallery, installing this crate as an nshm |
 
 ## Motion inventory (gallery)
 

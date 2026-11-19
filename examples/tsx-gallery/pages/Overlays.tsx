@@ -8,6 +8,7 @@ import {
   Caption,
   confirm,
   Dialog,
+  dismissToast,
   Field,
   HoverCard,
   Input,
@@ -17,7 +18,7 @@ import {
   Title,
   toast,
   Tooltip,
-} from "../../../tsx";
+} from "nsh-omarchy";
 import { Row, Section, Status } from "./Section";
 
 export function Overlays() {
@@ -27,6 +28,7 @@ export function Overlays() {
   const name = signal("Workspace 1");
   const last = signal("nothing");
   const dnd = signal(false);
+  const lastToast = signal("");
   return (
     <View class="gap-6">
       <Section title="Dialog and AlertDialog" description="A square card over the scrim; the alert only closes by its buttons or Escape.">
@@ -36,7 +38,18 @@ export function Overlays() {
           <Button
             label="Native confirm"
             variant="ghost"
-            onPress={async () => last.set((await confirm({ title: "Restart Hyprland?", actionLabel: "Restart" })) ? "Restarted" : "Kept")}
+            onPress={async () =>
+              last.set((await confirm({ title: "Restart Hyprland?", actionLabel: "Restart" })) ? "Restarted" : "Kept")
+            }
+          />
+          <Button
+            label="Danger confirm"
+            variant="ghost"
+            onPress={async () =>
+              last.set(
+                (await confirm({ title: "Delete 3 files?", actionLabel: "Delete", tone: "danger" })) ? "Files deleted" : "Files kept",
+              )
+            }
           />
         </Row>
         <Status text={`Last: ${last()}`} />
@@ -69,6 +82,7 @@ export function Overlays() {
           title="Delete workspace?"
           description="Its windows move to workspace 1. This cannot be undone."
           actionLabel="Delete"
+          tone="danger"
           onAction={() => last.set("Deleted")}
         />
       </Section>
@@ -107,8 +121,18 @@ export function Overlays() {
           <Button
             label="With action"
             onPress={() =>
-              toast({ title: "Window closed", kind: "success", action: { label: "Undo", onAction: () => last.set("Undone") } })
+              lastToast.set(
+                toast({ title: "Window closed", kind: "success", action: { label: "Undo", onAction: () => last.set("Undone") } }),
+              )
             }
+          />
+          <Button label="Dismiss last" variant="ghost" onPress={() => dismissToast(lastToast())} />
+          <Button
+            label="Progress"
+            onPress={() => {
+              toast({ id: "progress", title: "Step 1 of 2", timeout: null });
+              toast({ id: "progress", title: "Step 2 of 2", kind: "success", timeout: 2000 });
+            }}
           />
           <Button label="Warning" onPress={() => toast({ title: "Battery low", kind: "warning" })} />
           <Button label="Error" variant="danger" onPress={() => toast({ title: "Update failed", description: "No network.", kind: "error" })} />

@@ -6,6 +6,7 @@ pub mod avatar;
 pub mod button;
 pub mod button_group;
 pub mod calendar;
+#[cfg(feature = "chart")]
 pub mod chart;
 pub mod checkbox;
 pub mod color_picker;
@@ -44,6 +45,7 @@ pub use avatar::*;
 pub use button::*;
 pub use button_group::*;
 pub use calendar::*;
+#[cfg(feature = "chart")]
 pub use chart::*;
 pub use checkbox::*;
 pub use color_picker::*;

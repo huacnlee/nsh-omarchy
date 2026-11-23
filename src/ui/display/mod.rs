@@ -17,12 +17,14 @@ use nsh_core::prelude::*;
 
 /// Registers this area's components for TSX (with the icon and the charts).
 pub(crate) fn register(registry: &mut Registry) {
+    #[cfg(feature = "chart")]
     registry
-        .register::<super::icon::Icon>()
         .register::<super::charts::LineChart>()
         .register::<super::charts::AreaChart>()
         .register::<super::charts::BarChart>()
-        .register::<super::charts::PieChart>()
+        .register::<super::charts::PieChart>();
+    registry
+        .register::<super::icon::Icon>()
         .register::<markdown::Markdown>()
         .register::<surfaces::Card>()
         .register::<surfaces::Panel>()

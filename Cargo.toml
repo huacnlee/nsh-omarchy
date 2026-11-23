@@ -17,11 +17,16 @@ name = "nsh_omarchy"
 
 [dependencies]
 nsh-core = "0.6.0"
-nsh-base = "0.6.0"
+nsh-base = { version = "0.6.0", default-features = false }
 log = "0.4"
 toml = "0.8"
 # Calendar days (`Date`); the version nsh-base uses.
 chrono = { version = "0.4.45", default-features = false, features = ["std"] }
+
+[features]
+default = ["chart"]
+# The line, area, bar and pie charts, drawn with nsh-base's plot.
+chart = ["nsh-base/plot"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock"] }

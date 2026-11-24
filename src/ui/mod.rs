@@ -9,6 +9,7 @@ mod shorthand;
 
 pub mod actions;
 pub mod button;
+#[cfg(feature = "chart")]
 pub mod charts;
 pub mod choices;
 pub mod data;

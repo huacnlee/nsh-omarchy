@@ -4,9 +4,12 @@ use nsh_core::element::IntoProp;
 use nsh_core::prelude::*;
 
 use crate::IconName;
+#[cfg(feature = "chart")]
+use crate::ui::charts;
 use crate::ui::display::{chips, markdown as md, surfaces, typography};
-use crate::ui::{charts, icon as glyph};
+use crate::ui::icon as glyph;
 
+#[cfg(feature = "chart")]
 pub use crate::ui::charts::{
     AreaChart, AreaChartElement, BarChart, BarChartElement, ChartCurve, ChartPoint, LineChart,
     LineChartElement, PieChart, PieChartElement, SeriesData,
@@ -162,21 +165,25 @@ pub fn markdown<M>(source: impl IntoProp<SharedString, M>) -> MarkdownElement {
 // ---- Charts ---------------------------------------------------------------
 
 /// A line per series: `line_chart(points).name("Desktop")`.
+#[cfg(feature = "chart")]
 pub fn line_chart<M>(data: impl IntoProp<Vec<ChartPoint>, M>) -> LineChartElement {
     charts::line_chart().data(data)
 }
 
 /// A tinted area per series: `area_chart(points).stacked(true)`.
+#[cfg(feature = "chart")]
 pub fn area_chart<M>(data: impl IntoProp<Vec<ChartPoint>, M>) -> AreaChartElement {
     charts::area_chart().data(data)
 }
 
 /// Square bars per label: `bar_chart(points).series(more)`.
+#[cfg(feature = "chart")]
 pub fn bar_chart<M>(data: impl IntoProp<Vec<ChartPoint>, M>) -> BarChartElement {
     charts::bar_chart().data(data)
 }
 
 /// Slices of a whole: `pie_chart(points).donut(0.6)`.
+#[cfg(feature = "chart")]
 pub fn pie_chart<M>(data: impl IntoProp<Vec<ChartPoint>, M>) -> PieChartElement {
     charts::pie_chart().data(data)
 }

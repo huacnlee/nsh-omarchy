@@ -1,7 +1,7 @@
 name: Release
 
 # Publishes the crate to crates.io when a `v*` tag is pushed, with the
-# repository secret `CARGO_TOKEN`. Run it by hand to publish a tag that
+# repository secret `CARGO_REGISTRY_TOKEN`. Run it by hand to publish a tag that
 # already exists.
 
 on:

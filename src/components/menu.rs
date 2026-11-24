@@ -163,8 +163,6 @@ pub(crate) fn checkable(
 ) -> MenuItemElement {
     item.checked(move || Some(checked()))
         .close_on_select(false)
-        .indicator(view())
-        .indicator_style(|s| s.w(px(0.0)))
 }
 
 /// The accent check at a checkable row's right edge, shown while `checked`

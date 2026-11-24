@@ -5,7 +5,7 @@ use nsh_core::prelude::*;
 
 use crate::components::icon::{IconName, icon};
 use crate::components::menu::{
-    checkable, menu_context, menu_divider, menu_dropdown, menu_heading, menu_shortcut, row_look,
+    check_mark, checkable, menu_context, menu_divider, menu_dropdown, menu_heading, menu_shortcut, row_look,
 };
 use crate::tokens;
 
@@ -123,8 +123,8 @@ pub struct MenuItemProps {
     /// A shortcut at the row's end, as the platform writes it: `"mod-s"`
     /// reads `cmd-s` on macOS, `ctrl-s` elsewhere.
     pub shortcut: Prop<Option<SharedString>>,
-    /// A checkable row: an accent check while `true`. Left out, the row is
-    /// not checkable.
+    /// A checkable row: an accent check at its right edge while `true`.
+    /// Left out, the row is not checkable.
     pub checked: Prop<Option<bool>>,
     /// Destructive: danger text.
     #[prop(default)]
@@ -171,6 +171,9 @@ pub fn MenuItem(props: MenuItemProps, cx: Scope<MenuItemEvent>) -> impl IntoElem
     }
     if let Some(keys) = props.shortcut.get_untracked() {
         row = row.child(menu_shortcut(keys));
+    }
+    if is_checkable {
+        row = row.child(check_mark(move || checked.get().unwrap_or(false)));
     }
     row
 }

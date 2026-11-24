@@ -11,7 +11,7 @@
 //! - rows: hover/focus wash with accent text (the cursor), pressed fill,
 //!   disabled text without washes;
 //! - shortcuts: right-aligned monospaced keycap text;
-//! - checkable rows: an accent check while checked;
+//! - checkable rows: an accent check at the right edge while checked;
 //! - separators (1px divider) and group headings.
 //!
 //! [`menu_dropdown`] and [`menu_context`] return the `nsh_base` elements, so
@@ -142,31 +142,41 @@ pub fn menu_row(label: impl IntoReactive<SharedString>) -> MenuItemElement {
     row_look(menu_item()).child(text(label).flex_1().number_of_lines(1))
 }
 
-/// A checkable row: an accent check before `label` while `checked` holds.
-/// It stays open when chosen; the app flips the value in `.on_select(..)`.
+/// A checkable row: an accent check at its right edge while `checked`
+/// holds. It stays open when chosen; the app flips the value in
+/// `.on_select(..)`.
 pub fn menu_check_row(
     label: impl IntoReactive<SharedString>,
-    checked: impl Fn() -> bool + 'static,
+    checked: impl Fn() -> bool + Clone + 'static,
 ) -> MenuItemElement {
-    checkable(row_look(menu_item()), checked).child(text(label).flex_1().number_of_lines(1))
+    checkable(row_look(menu_item()), checked.clone())
+        .child(text(label).flex_1().number_of_lines(1))
+        .child(check_mark(checked))
 }
 
-/// Makes `item` checkable: an accent check at its start while `checked`
-/// holds, and it stays open when chosen.
+/// Makes `item` checkable: it reports its state to assistive technologies
+/// and stays open when chosen. The check itself is [`check_mark`], placed
+/// after the row's label, at its right edge as a shortcut is.
 pub(crate) fn checkable(
     item: MenuItemElement,
     checked: impl Fn() -> bool + 'static,
 ) -> MenuItemElement {
     item.checked(move || Some(checked()))
         .close_on_select(false)
-        .indicator(super::icon::icon(super::icon::IconName::Check).size(px(12.0)))
-        .indicator_style(|s| {
-            s.w(px(12.0))
-                .items_center()
-                .opacity(0.0)
-                .text_color(move || tokens::accent())
-                .checked(|s| s.opacity(1.0))
-        })
+        .indicator(view())
+        .indicator_style(|s| s.w(px(0.0)))
+}
+
+/// The accent check at a checkable row's right edge, shown while `checked`
+/// holds and keeping its room otherwise so labels do not shift.
+pub(crate) fn check_mark(checked: impl Fn() -> bool + 'static) -> View {
+    view()
+        .ml(auto())
+        .pl(px(tokens::SPACE_4))
+        .items_center()
+        .opacity(move || if checked() { 1.0_f32 } else { 0.0 })
+        .text_color(move || tokens::accent())
+        .child(super::icon::icon(super::icon::IconName::Check).size(px(12.0)))
 }
 
 /// A row's keyboard shortcut, written as the platform writes it

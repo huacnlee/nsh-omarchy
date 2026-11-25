@@ -50,7 +50,7 @@ fn TabsHarness() -> impl IntoElement {
 
 #[test]
 fn a_tab_press_selects_it() -> Result<(), String> {
-    let mut app = start(Root::of::<TabsHarness>());
+    let mut app = start(nsh_testing::windowed_root::<TabsHarness>());
     app.wait_for("Current tab overview after 0")?;
     assert!(app.screen().selected("role:tab[Overview]")?);
     assert!(app.shows("3"), "the suffix shows");
@@ -68,7 +68,7 @@ fn a_tab_press_selects_it() -> Result<(), String> {
 
 #[test]
 fn arrow_keys_move_between_tabs_past_disabled_ones() -> Result<(), String> {
-    let mut app = start(Root::of::<TabsHarness>());
+    let mut app = start(nsh_testing::windowed_root::<TabsHarness>());
     app.wait_for("Current tab overview after 0")?;
     app.press_key("tab")?;
     app.press_key("right")?;
@@ -98,7 +98,7 @@ fn OwnTabsHarness() -> impl IntoElement {
 
 #[test]
 fn tabs_without_a_value_keep_their_own() -> Result<(), String> {
-    let mut app = start(Root::of::<OwnTabsHarness>());
+    let mut app = start(nsh_testing::windowed_root::<OwnTabsHarness>());
     app.wait_for("Asked none")?;
     assert!(app.screen().selected("role:tab[Week]")?, "the first enabled tab");
     app.press("Month")?;
@@ -137,7 +137,7 @@ fn SidebarHarness() -> impl IntoElement {
 
 #[test]
 fn a_sidebar_item_press_selects_it() -> Result<(), String> {
-    let mut app = start(Root::of::<SidebarHarness>());
+    let mut app = start(nsh_testing::windowed_root::<SidebarHarness>());
     app.wait_for("Mailbox inbox")?;
     for shown in ["Mail app", "Signed in", "Mail", "Labels", "12"] {
         assert!(app.shows(shown), "{shown} shows");
@@ -152,7 +152,7 @@ fn a_sidebar_item_press_selects_it() -> Result<(), String> {
 
 #[test]
 fn sidebar_keys_skip_disabled_items() -> Result<(), String> {
-    let mut app = start(Root::of::<SidebarHarness>());
+    let mut app = start(nsh_testing::windowed_root::<SidebarHarness>());
     app.wait_for("Mailbox inbox")?;
     app.press_key("tab")?;
     app.press_key("down")?;
@@ -185,7 +185,7 @@ fn AccordionHarness() -> impl IntoElement {
 
 #[test]
 fn an_accordion_opens_one_item_at_a_time() -> Result<(), String> {
-    let mut app = start(Root::of::<AccordionHarness>());
+    let mut app = start(nsh_testing::windowed_root::<AccordionHarness>());
     app.wait_for("Open []")?;
     app.press("role:button[First question]")?;
     app.wait_for("Open [one]")?;
@@ -215,7 +215,7 @@ fn OwnAccordionHarness() -> impl IntoElement {
 
 #[test]
 fn an_accordion_without_a_value_keeps_several_open() -> Result<(), String> {
-    let mut app = start(Root::of::<OwnAccordionHarness>());
+    let mut app = start(nsh_testing::windowed_root::<OwnAccordionHarness>());
     app.wait_for("Asked [-]")?;
     app.press("role:button[Display]")?;
     app.wait_for("Asked [display]")?;
@@ -248,7 +248,7 @@ fn CollapsibleHarness() -> impl IntoElement {
 
 #[test]
 fn a_collapsible_opens_and_closes() -> Result<(), String> {
-    let mut app = start(Root::of::<CollapsibleHarness>());
+    let mut app = start(nsh_testing::windowed_root::<CollapsibleHarness>());
     app.wait_for("Collapsible false own -")?;
     assert!(!app.shows("Hidden details"));
     app.press("label:Advanced")?;
@@ -283,7 +283,7 @@ fn PaginationHarness() -> impl IntoElement {
 
 #[test]
 fn pagination_moves_by_page_and_step() -> Result<(), String> {
-    let mut app = start(Root::of::<PaginationHarness>());
+    let mut app = start(nsh_testing::windowed_root::<PaginationHarness>());
     app.wait_for("Showing page 1")?;
     assert!(!app.screen().enabled("label:Previous page >> nth=0")?);
     app.press("label:Next page >> nth=0")?;
@@ -337,7 +337,7 @@ fn MenuHarness() -> impl IntoElement {
 
 #[test]
 fn a_menu_item_is_chosen_and_closes_the_menu() -> Result<(), String> {
-    let mut app = start(Root::of::<MenuHarness>());
+    let mut app = start(nsh_testing::windowed_root::<MenuHarness>());
     app.wait_for("Chose nothing")?;
     app.press("File")?;
     app.wait_for("New")?;
@@ -355,7 +355,7 @@ fn a_menu_item_is_chosen_and_closes_the_menu() -> Result<(), String> {
 
 #[test]
 fn a_disabled_menu_item_is_not_chosen() -> Result<(), String> {
-    let mut app = start(Root::of::<MenuHarness>());
+    let mut app = start(nsh_testing::windowed_root::<MenuHarness>());
     app.wait_for("Chose nothing")?;
     app.press("File")?;
     app.wait_for("Save")?;
@@ -365,7 +365,7 @@ fn a_disabled_menu_item_is_not_chosen() -> Result<(), String> {
 
 #[test]
 fn a_checked_item_toggles_and_keeps_the_menu_open() -> Result<(), String> {
-    let mut app = start(Root::of::<MenuHarness>());
+    let mut app = start(nsh_testing::windowed_root::<MenuHarness>());
     app.wait_for("Chose nothing")?;
     app.press("File")?;
     app.wait_for("Word wrap")?;
@@ -379,7 +379,7 @@ fn a_checked_item_toggles_and_keeps_the_menu_open() -> Result<(), String> {
 
 #[test]
 fn the_keyboard_opens_the_menu_and_chooses() -> Result<(), String> {
-    let mut app = start(Root::of::<MenuHarness>());
+    let mut app = start(nsh_testing::windowed_root::<MenuHarness>());
     app.wait_for("Chose nothing")?;
     app.press_key("tab")?;
     app.press_key("down")?;
@@ -412,7 +412,7 @@ fn ControlledMenuHarness() -> impl IntoElement {
 
 #[test]
 fn a_controlled_menu_follows_open() -> Result<(), String> {
-    let mut app = start(Root::of::<ControlledMenuHarness>());
+    let mut app = start(nsh_testing::windowed_root::<ControlledMenuHarness>());
     app.wait_for("Menu closed")?;
     app.press("Open it")?;
     app.wait_for("Undo")?;
@@ -449,7 +449,7 @@ fn ContextHarness() -> impl IntoElement {
 
 #[test]
 fn a_right_click_opens_the_context_menu() -> Result<(), String> {
-    let mut app = start(Root::of::<ContextHarness>());
+    let mut app = start(nsh_testing::windowed_root::<ContextHarness>());
     app.wait_for("Context chose nothing")?;
     app.right_click("Context area")?;
     app.wait_for("Paste")?;
@@ -477,7 +477,7 @@ fn TitleBarHarness() -> impl IntoElement {
 
 #[test]
 fn the_title_bar_shows_its_title_and_children() -> Result<(), String> {
-    let mut app = start(Root::of::<TitleBarHarness>());
+    let mut app = start(nsh_testing::windowed_root::<TitleBarHarness>());
     app.wait_for("Files")?;
     app.press("Share")?;
     app.wait_for("Shared 1")?;
@@ -485,13 +485,6 @@ fn the_title_bar_shows_its_title_and_children() -> Result<(), String> {
 }
 
 /// The menu's `mod-n` as the host platform writes it.
-const NEW_SHORTCUT: &str = if cfg!(target_os = "macos") {
-    "cmd-n"
-} else {
-    "ctrl-n"
-};
-const NEW_SHORTCUT_TEXT: &str = if cfg!(target_os = "macos") {
-    "text:cmd-n"
-} else {
-    "text:ctrl-n"
-};
+// The tests run as macOS (`start`), where `mod` is Command whatever the host.
+const NEW_SHORTCUT: &str = "cmd-n";
+const NEW_SHORTCUT_TEXT: &str = "text:cmd-n";

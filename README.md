@@ -34,7 +34,7 @@ and TSX.
 
 ## In a Rust app
 
-`nsh add nsh-omarchy` adds the crate to the app's `[dependencies]` (or add `nsh-omarchy = "0.1"` yourself). Call
+`nsh add nsh-omarchy` adds the crate to the app's `[dependencies]` (or add `nsh-omarchy = "0.2"` yourself). Call
 `init()` once in the root component, then build screens from the constructors. A constructor takes the component's
 required content; everything else is an optional builder with a default. This example is `tests/readme.rs`:
 

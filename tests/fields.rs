@@ -14,11 +14,15 @@ use nsh_testing::Headless;
 const WAIT: Duration = Duration::from_secs(5);
 
 fn start(root: Root) -> Headless {
+    start_on(Os::MacOs, root)
+}
+
+fn start_on(os: Os, root: Root) -> Headless {
     let mut config = EngineConfig {
         viewport: Size::new(px(1200.0), px(800.0)),
         ..EngineConfig::new(root)
     };
-    config.environment.os = Os::MacOs;
+    config.environment.os = os;
     // Noon UTC, 2026-10-28.
     config.clock = Clock::manual(SystemTime::UNIX_EPOCH + Duration::from_secs(1_793_188_800));
     let mut app = Headless::start(config).expect("the engine starts");
@@ -63,7 +67,7 @@ fn InputHarness() -> impl IntoElement {
 
 #[test]
 fn an_input_types_submits_and_keeps_its_own_value() -> Result<(), String> {
-    let mut app = start(Root::of::<InputHarness>());
+    let mut app = start(nsh_testing::windowed_root::<InputHarness>());
     app.wait_for("text:Return submits.")?;
     app.type_text("label:Hostname", "arch")?;
     app.wait_for("text:name: \"arch\"")?;
@@ -105,7 +109,7 @@ fn NumberHarness() -> impl IntoElement {
 
 #[test]
 fn a_number_input_steps_by_keys_and_buttons_within_its_bounds() -> Result<(), String> {
-    let mut app = start(Root::of::<NumberHarness>());
+    let mut app = start(nsh_testing::windowed_root::<NumberHarness>());
     app.wait_for("text:value: 4")?;
     app.wait_for("text:px")?;
     app.type_text("label:Window gaps", "")?;
@@ -148,7 +152,7 @@ fn OtpHarness() -> impl IntoElement {
 
 #[test]
 fn an_otp_input_takes_digits_and_completes() -> Result<(), String> {
-    let mut app = start(Root::of::<OtpHarness>());
+    let mut app = start(nsh_testing::windowed_root::<OtpHarness>());
     app.type_text("label:Verification code", "12a3")?;
     app.wait_for("text:code: \"123\" done: \"\"")?;
     app.type_text("label:Verification code", "456")?;
@@ -191,7 +195,7 @@ fn SelectHarness() -> impl IntoElement {
 
 #[test]
 fn a_select_chooses_by_press_and_by_keys() -> Result<(), String> {
-    let mut app = start(Root::of::<SelectHarness>());
+    let mut app = start(nsh_testing::windowed_root::<SelectHarness>());
     app.wait_for("text:value: dwindle")?;
     app.wait_for("text:Dwindle")?;
     app.press("role:combobox[Layout]")?;
@@ -212,7 +216,7 @@ fn a_select_chooses_by_press_and_by_keys() -> Result<(), String> {
 
 #[test]
 fn a_select_left_alone_keeps_its_choice() -> Result<(), String> {
-    let mut app = start(Root::of::<SelectHarness>());
+    let mut app = start(nsh_testing::windowed_root::<SelectHarness>());
     app.wait_for("text:Pick one")?;
     app.press("role:combobox[Own layout]")?;
     app.wait_for("role:listbox")?;
@@ -248,7 +252,7 @@ fn ComboboxHarness() -> impl IntoElement {
 
 #[test]
 fn a_combobox_filters_and_adds() -> Result<(), String> {
-    let mut app = start(Root::of::<ComboboxHarness>());
+    let mut app = start(nsh_testing::windowed_root::<ComboboxHarness>());
     app.wait_for("text:pinned: neovim")?;
     app.type_text("label:Pinned apps", "spo")?;
     app.wait_for("role:option[Spotify]")?;
@@ -289,7 +293,7 @@ fn CalendarHarness() -> impl IntoElement {
 
 #[test]
 fn a_calendar_picks_a_day_and_a_range() -> Result<(), String> {
-    let mut app = start(Root::of::<CalendarHarness>());
+    let mut app = start(nsh_testing::windowed_root::<CalendarHarness>());
     app.wait_for("text:October >> nth=0")?;
     app.press("label:2026-10-14 >> nth=0")?;
     app.wait_for("text:picked: 2026-10-14")?;
@@ -331,7 +335,9 @@ fn DatePickerHarness() -> impl IntoElement {
 
 #[test]
 fn a_date_picker_opens_picks_and_closes() -> Result<(), String> {
-    let mut app = start(Root::of::<DatePickerHarness>());
+    // On Linux: a click leaves the keyboard focus on the trigger, which
+    // Enter then opens again. On macOS a click does not focus a button.
+    let mut app = start_on(Os::Linux, nsh_testing::windowed_root::<DatePickerHarness>());
     app.wait_for("text:Choose a date")?;
     // The trigger formats its value.
     app.wait_for("text:Nov 19, 2026")?;
@@ -369,7 +375,7 @@ fn ColorHarness() -> impl IntoElement {
 
 #[test]
 fn a_color_picker_takes_a_typed_color() -> Result<(), String> {
-    let mut app = start(Root::of::<ColorHarness>());
+    let mut app = start(nsh_testing::windowed_root::<ColorHarness>());
     app.wait_for("label:Hue")?;
     app.wait_for("label:Opacity")?;
     app.clear("label:Hex color")?;
@@ -403,7 +409,7 @@ fn FieldHarness() -> impl IntoElement {
 
 #[test]
 fn a_field_shows_its_error_in_place_of_its_description() -> Result<(), String> {
-    let mut app = start(Root::of::<FieldHarness>());
+    let mut app = start(nsh_testing::windowed_root::<FieldHarness>());
     app.wait_for("text:Too short.")?;
     assert!(!app.screen().shows("text:At least 8 characters."));
     app.type_text("label:Password", "correct horse")?;
@@ -483,7 +489,7 @@ fn SetterHarness() -> impl IntoElement {
 
 #[test]
 fn value_setters_take_literals_strings_closures_and_signals() -> Result<(), String> {
-    let mut app = start(Root::of::<SetterHarness>());
+    let mut app = start(nsh_testing::windowed_root::<SetterHarness>());
     app.wait_for("text:Master")?;
     app.wait_for("text:Monocle")?;
     let screen = app.screen();

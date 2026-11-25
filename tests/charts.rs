@@ -2,7 +2,7 @@
 //! accessibility summary.
 
 use nsh_core::prelude::*;
-use nsh_engine::{EngineConfig, Points, Root, Size};
+use nsh_engine::{EngineConfig, Points, Size};
 use nsh_omarchy::{self as om, ChartCurve, ChartPoint, SeriesData};
 use nsh_testing::Headless;
 
@@ -57,7 +57,7 @@ fn Charts() -> impl IntoElement {
 fn start() -> Headless {
     Headless::start(EngineConfig {
         viewport: Size::new(Points(1000.0), Points(1600.0)),
-        ..EngineConfig::new(Root::of::<Charts>())
+        ..EngineConfig::new(nsh_testing::windowed_root::<Charts>())
     })
     .unwrap()
 }
@@ -85,7 +85,7 @@ fn Pie() -> impl IntoElement {
 
 #[test]
 fn a_pie_summarizes_its_shares() -> Result<(), String> {
-    let mut app = Headless::start(EngineConfig::new(Root::of::<Pie>())).unwrap();
+    let mut app = Headless::start(EngineConfig::new(nsh_testing::windowed_root::<Pie>())).unwrap();
     app.wait_for("label:Pie chart: Chrome 30%, Safari 22%, Firefox 20%, Edge 19%, Other 10%")?;
     Ok(())
 }

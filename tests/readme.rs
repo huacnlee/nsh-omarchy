@@ -1,7 +1,7 @@
 //! The Rust example of README.md, compiled and pressed through.
 
 use nsh_core::prelude::*;
-use nsh_engine::{EngineConfig, Root};
+use nsh_engine::EngineConfig;
 use nsh_omarchy::{self as om, tokens};
 use nsh_testing::Headless;
 
@@ -34,7 +34,7 @@ pub fn App() -> impl IntoElement {
 
 #[test]
 fn readme_example_runs() {
-    let mut app = Headless::start(EngineConfig::new(Root::of::<App>())).unwrap();
+    let mut app = Headless::start(EngineConfig::new(nsh_testing::windowed_root::<App>())).unwrap();
     app.wait_for("text:Saved 0 times").unwrap();
     app.press("role:switch[Notifications]").unwrap();
     app.press("role:button[Save]").unwrap();

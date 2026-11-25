@@ -77,7 +77,7 @@ fn Showcase() -> impl IntoElement {
 
 #[test]
 fn every_constructor_draws() -> Result<(), String> {
-    let mut app = start(Root::of::<Showcase>());
+    let mut app = start(nsh_testing::windowed_root::<Showcase>());
     expect_texts(
         &mut app,
         &[
@@ -132,7 +132,7 @@ fn Live() -> impl IntoElement {
 
 #[test]
 fn text_follows_its_signal() -> Result<(), String> {
-    let mut app = start(Root::of::<Live>());
+    let mut app = start(nsh_testing::windowed_root::<Live>());
     expect_texts(&mut app, &["1 windows", "1 NEW"])?;
     app.press("label:More")?;
     expect_texts(&mut app, &["2 windows", "2 NEW"])
@@ -153,7 +153,7 @@ fn Notes() -> impl IntoElement {
 
 #[test]
 fn markdown_reports_link_presses() -> Result<(), String> {
-    let mut app = start(Root::of::<Notes>());
+    let mut app = start(nsh_testing::windowed_root::<Notes>());
     expect_texts(&mut app, &["Release notes", "Link pressed: "])?;
     app.press("text:docs")?;
     app.wait_for("text:Link pressed: https://omarchy.org")

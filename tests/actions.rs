@@ -37,7 +37,7 @@ fn Buttons() -> impl IntoElement {
 
 #[test]
 fn a_button_press_runs_its_action() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Buttons>());
+    let mut app = desktop(nsh_testing::windowed_root::<Buttons>());
     app.wait_for("count=0")?;
     app.press("Apply")?;
     app.wait_for("count=1")?;
@@ -48,7 +48,7 @@ fn a_button_press_runs_its_action() -> Result<(), String> {
 
 #[test]
 fn a_disabled_button_takes_no_press() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Buttons>());
+    let mut app = desktop(nsh_testing::windowed_root::<Buttons>());
     app.wait_for("count=0")?;
     assert!(!app.screen().enabled("Unavailable")?);
     assert!(app.screen().enabled("Apply")?);
@@ -60,7 +60,7 @@ fn a_disabled_button_takes_no_press() -> Result<(), String> {
 
 #[test]
 fn the_keyboard_reaches_and_presses_buttons() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Buttons>());
+    let mut app = desktop(nsh_testing::windowed_root::<Buttons>());
     app.wait_for("count=0")?;
     app.press_key("tab")?;
     app.press_key("space")?;
@@ -96,7 +96,7 @@ fn Joined() -> impl IntoElement {
 
 #[test]
 fn a_button_group_passes_presses_and_disables_its_buttons() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Joined>());
+    let mut app = desktop(nsh_testing::windowed_root::<Joined>());
     app.wait_for("last=none")?;
     app.press("Paste")?;
     app.wait_for("last=paste")?;
@@ -150,7 +150,7 @@ fn pressed(app: &Headless, selector: &str) -> Result<Option<Checked>, String> {
 
 #[test]
 fn a_toggle_turns_on_and_off() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Toggles>());
+    let mut app = desktop(nsh_testing::windowed_root::<Toggles>());
     app.wait_for("favorite=false locked=0 wraps=0")?;
     assert_eq!(pressed(&app, "role:button[Favorite]")?, Some(Checked::False));
     app.press("role:button[Favorite]")?;
@@ -163,7 +163,7 @@ fn a_toggle_turns_on_and_off() -> Result<(), String> {
 
 #[test]
 fn an_uncontrolled_toggle_keeps_its_value() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Toggles>());
+    let mut app = desktop(nsh_testing::windowed_root::<Toggles>());
     app.wait_for("text:/wraps=0/")?;
     app.press("role:button[Wrap]")?;
     app.wait_for("text:/wraps=1/")?;
@@ -176,7 +176,7 @@ fn an_uncontrolled_toggle_keeps_its_value() -> Result<(), String> {
 
 #[test]
 fn a_disabled_toggle_stays_put() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Toggles>());
+    let mut app = desktop(nsh_testing::windowed_root::<Toggles>());
     app.wait_for("favorite=false locked=0 wraps=0")?;
     assert!(!app.screen().enabled("role:button[Locked]")?);
     let _ = app.press("role:button[Locked]");
@@ -187,7 +187,7 @@ fn a_disabled_toggle_stays_put() -> Result<(), String> {
 
 #[test]
 fn space_toggles_the_focused_toggle() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Toggles>());
+    let mut app = desktop(nsh_testing::windowed_root::<Toggles>());
     app.wait_for("favorite=false locked=0 wraps=0")?;
     app.press_key("tab")?;
     app.press_key("space")?;
@@ -239,7 +239,7 @@ fn Groups() -> impl IntoElement {
 
 #[test]
 fn a_toggle_group_reports_its_values() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Groups>());
+    let mut app = desktop(nsh_testing::windowed_root::<Groups>());
     app.wait_for("marks=italic align= after=0")?;
     assert_eq!(pressed(&app, "role:button[Italic]")?, Some(Checked::True));
     app.press("role:button[Bold]")?;
@@ -253,7 +253,7 @@ fn a_toggle_group_reports_its_values() -> Result<(), String> {
 
 #[test]
 fn a_single_group_keeps_one_value() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Groups>());
+    let mut app = desktop(nsh_testing::windowed_root::<Groups>());
     app.wait_for("marks=italic align= after=0")?;
     app.press("role:button[Left]")?;
     app.wait_for("text:/align=left /")?;
@@ -266,7 +266,7 @@ fn a_single_group_keeps_one_value() -> Result<(), String> {
 
 #[test]
 fn arrows_move_inside_a_toggle_group() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Groups>());
+    let mut app = desktop(nsh_testing::windowed_root::<Groups>());
     app.wait_for("marks=italic align= after=0")?;
     app.press_key("tab")?; // Before
     app.press_key("tab")?; // the group, at its pressed toggle (Italic)
@@ -300,7 +300,7 @@ fn Links() -> impl IntoElement {
 
 #[test]
 fn a_link_opens_its_href() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Links>());
+    let mut app = desktop(nsh_testing::windowed_root::<Links>());
     app.wait_for("opened=none")?;
     app.press("Manual")?;
     app.wait_until(
@@ -334,7 +334,7 @@ fn Example() -> impl IntoElement {
 
 #[test]
 fn the_api_example_compiles_and_runs() -> Result<(), String> {
-    let mut app = desktop(Root::of::<Example>());
+    let mut app = desktop(nsh_testing::windowed_root::<Example>());
     app.wait_for("saved=0")?;
     app.press("Save")?;
     app.wait_for("saved=1")?;

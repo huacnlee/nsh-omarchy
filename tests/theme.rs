@@ -10,7 +10,7 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use nsh_core::prelude::*;
-use nsh_engine::{EngineConfig, Points, Root, Size};
+use nsh_engine::{EngineConfig, Points, Size};
 use nsh_omarchy as om;
 use nsh_testing::Headless;
 
@@ -98,7 +98,7 @@ fn start() -> Headless {
     install();
     Headless::start(EngineConfig {
         viewport: Size::new(Points(1200.0), Points(800.0)),
-        ..EngineConfig::new(Root::of::<Themes>())
+        ..EngineConfig::new(nsh_testing::windowed_root::<Themes>())
     })
     .unwrap()
 }

@@ -8,7 +8,7 @@ use nsh_core::platform::Os;
 use nsh_core::prelude::*;
 use nsh_engine::{EngineConfig, Root, Size};
 use nsh_omarchy::{self as om, IconName};
-use nsh_testing::Headless;
+use nsh_testing::{DragOptions, Headless};
 
 const WAIT: Duration = Duration::from_secs(5);
 
@@ -58,7 +58,7 @@ fn TableHarness() -> impl IntoElement {
 
 #[test]
 fn a_table_row_selects_by_press_and_by_keyboard() -> Result<(), String> {
-    let mut app = start(Root::of::<TableHarness>());
+    let mut app = start(nsh_testing::windowed_root::<TableHarness>());
     app.wait_for("text:selected:none")?;
     app.wait_for("role:table[Processes]")?;
     app.wait_for("role:columnheader")?;
@@ -135,7 +135,7 @@ fn DataTableHarness() -> impl IntoElement {
 
 #[test]
 fn a_data_table_selects_and_sorts_by_id() -> Result<(), String> {
-    let mut app = start(Root::of::<DataTableHarness>());
+    let mut app = start(nsh_testing::windowed_root::<DataTableHarness>());
     app.wait_for("text:sort:none selected:none pressed:none")?;
     app.wait_for("text:bravo")?;
     app.press("text:bravo")?;
@@ -171,7 +171,7 @@ fn OwnDataTable() -> impl IntoElement {
 
 #[test]
 fn a_data_table_left_alone_keeps_its_own_selection() -> Result<(), String> {
-    let mut app = start(Root::of::<OwnDataTable>());
+    let mut app = start(nsh_testing::windowed_root::<OwnDataTable>());
     app.wait_for("text:alpha")?;
     app.press("text:charlie")?;
     app.wait_for("text:picked:c")?;
@@ -218,7 +218,7 @@ fn ListHarness() -> impl IntoElement {
 
 #[test]
 fn a_virtual_list_scrolls_and_keeps_its_selection_by_id() -> Result<(), String> {
-    let mut app = start(Root::of::<ListHarness>());
+    let mut app = start(nsh_testing::windowed_root::<ListHarness>());
     app.wait_for("label:Item 1")?;
     assert!(!app.screen().shows("Item 1500"), "far rows are not made");
     app.press("label:Item 3")?;
@@ -281,7 +281,7 @@ fn TreeHarness() -> impl IntoElement {
 
 #[test]
 fn a_tree_folder_expands_and_collapses() -> Result<(), String> {
-    let mut app = start(Root::of::<TreeHarness>());
+    let mut app = start(nsh_testing::windowed_root::<TreeHarness>());
     app.wait_for("role:treeitem[config]")?;
     assert!(!app.screen().shows("hypr"), "a closed folder hides its items");
     app.press("role:treeitem[config]")?;
@@ -309,7 +309,7 @@ fn OwnTree() -> impl IntoElement {
 
 #[test]
 fn a_tree_left_alone_keeps_its_own_state() -> Result<(), String> {
-    let mut app = start(Root::of::<OwnTree>());
+    let mut app = start(nsh_testing::windowed_root::<OwnTree>());
     app.press("role:treeitem[config]")?;
     app.wait_for("role:treeitem[hypr]")?;
     app.press("role:treeitem[hypr]")?;
@@ -348,11 +348,15 @@ fn ResizableHarness() -> impl IntoElement {
 
 #[test]
 fn resizable_panels_report_their_sizes_after_a_drag() -> Result<(), String> {
-    let mut app = start(Root::of::<ResizableHarness>());
+    let mut app = start(nsh_testing::windowed_root::<ResizableHarness>());
     app.wait_for("text:Left")?;
     app.wait_for("text:Bottom")?;
     app.wait_for("label:Resize panels vertically")?;
-    app.drag("label:Resize panels horizontally", Point::new(px(50.0), px(0.0)))?;
+    app.drag(
+        "label:Resize panels horizontally",
+        Point::new(px(50.0), px(0.0)),
+        DragOptions::default(),
+    )?;
     app.wait_for("text:sizes:250 350")?;
     Ok(())
 }
@@ -418,7 +422,7 @@ fn SetterForms() -> impl IntoElement {
 
 #[test]
 fn selected_takes_a_str_an_option_or_a_closure() -> Result<(), String> {
-    let mut app = start(Root::of::<SetterForms>());
+    let mut app = start(nsh_testing::windowed_root::<SetterForms>());
     app.wait_for("role:treeitem[hypr]")?;
     app.wait_until("hypr selected", WAIT, |s| s.selected("role:treeitem[hypr]") == Ok(true))?;
     Ok(())

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use nsh_core::{Checked, Color, MountBatch, MountItem, NodeId, ViewStyle, prelude::*};
-use nsh_engine::{EngineConfig, Os, Points, Root, Size};
+use nsh_engine::{EngineConfig, Os, Points, Size};
 use nsh_omarchy::{self as om, SliderValue};
 use nsh_testing::Headless;
 
@@ -14,7 +14,7 @@ use nsh_testing::Headless;
 fn open<C: Component<Props = ()>>(ready: &str) -> Result<Headless, String> {
     let mut config = EngineConfig {
         viewport: Size::new(Points(800.0), Points(600.0)),
-        ..EngineConfig::new(Root::of::<C>())
+        ..EngineConfig::new(nsh_testing::windowed_root::<C>())
     };
     config.environment.os = Os::MacOs;
     let mut app = Headless::start(config).map_err(|e| e.to_string())?;

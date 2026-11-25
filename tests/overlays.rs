@@ -76,7 +76,7 @@ fn DialogApp() -> impl IntoElement {
 
 #[test]
 fn a_dialog_opens_and_closes_by_escape_and_its_footer() -> Result<(), String> {
-    let mut app = start(Root::of::<DialogApp>());
+    let mut app = start(nsh_testing::windowed_root::<DialogApp>());
     app.wait_for("label:Rename workspace")?;
     app.press("label:Rename workspace")?;
     app.wait_for("text:3: code")?;
@@ -113,7 +113,7 @@ fn StickyDialogApp() -> impl IntoElement {
 
 #[test]
 fn a_dialog_can_ignore_escape() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<StickyDialogApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<StickyDialogApp>());
     app.wait_for("text:Stays")?;
     app.press_key("escape")?;
     app.run_for(Duration::from_millis(300))?;
@@ -143,7 +143,7 @@ fn AlertApp() -> impl IntoElement {
 
 #[test]
 fn an_alert_dialog_cancels_and_confirms() -> Result<(), String> {
-    let mut app = start(Root::of::<AlertApp>());
+    let mut app = start(nsh_testing::windowed_root::<AlertApp>());
     app.wait_for("label:Delete workspace")?;
     app.press("label:Delete workspace")?;
     app.wait_for("text:Delete workspace?")?;
@@ -213,7 +213,7 @@ fn LiveApp() -> impl IntoElement {
 
 #[test]
 fn overlay_texts_stay_live_while_open() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<LiveApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<LiveApp>());
     app.wait_for("label:Open dialog")?;
 
     app.press("label:Open dialog")?;
@@ -279,7 +279,7 @@ fn SheetApp() -> impl IntoElement {
 
 #[test]
 fn a_sheet_closes_by_its_button_escape_and_footer() -> Result<(), String> {
-    let mut app = start(Root::of::<SheetApp>());
+    let mut app = start(nsh_testing::windowed_root::<SheetApp>());
     app.wait_for("label:Open settings")?;
     app.press("label:Open settings")?;
     app.wait_for("text:Refresh rate")?;
@@ -337,7 +337,7 @@ fn PopupApp() -> impl IntoElement {
 
 #[test]
 fn a_popover_toggles_from_its_trigger_and_escape_closes_it() -> Result<(), String> {
-    let mut app = start(Root::of::<PopupApp>());
+    let mut app = start(nsh_testing::windowed_root::<PopupApp>());
     let content = "text:82%, about 5 hours left.";
     app.wait_for("label:Details")?;
     app.press("label:Details")?;
@@ -357,7 +357,7 @@ fn a_popover_toggles_from_its_trigger_and_escape_closes_it() -> Result<(), Strin
 
 #[test]
 fn a_tooltip_shows_after_the_pointer_rests() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<PopupApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<PopupApp>());
     app.wait_for("label:Save")?;
     app.hover("label:Save")?;
     assert!(!app.screen().shows("ctrl-s"), "not before the delay");
@@ -368,7 +368,7 @@ fn a_tooltip_shows_after_the_pointer_rests() -> Result<(), String> {
 
 #[test]
 fn a_hover_card_shows_after_the_pointer_rests() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<PopupApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<PopupApp>());
     app.wait_for("label:@dhh")?;
     app.hover("label:@dhh")?;
     assert!(!app.screen().shows("Creator of Omarchy."), "not before the delay");
@@ -417,7 +417,7 @@ fn ToastApp() -> impl IntoElement {
 
 #[test]
 fn a_toast_leaves_after_its_timeout() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<ToastApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<ToastApp>());
     app.wait_for("label:Notify")?;
     app.press("label:Notify")?;
     app.wait_for("text:Screenshot saved")?;
@@ -431,7 +431,7 @@ fn a_toast_leaves_after_its_timeout() -> Result<(), String> {
 
 #[test]
 fn an_error_toast_stays_until_dismissed() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<ToastApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<ToastApp>());
     app.wait_for("label:Error")?;
     app.press("label:Error")?;
     app.press("label:Sticky")?;
@@ -445,7 +445,7 @@ fn an_error_toast_stays_until_dismissed() -> Result<(), String> {
 
 #[test]
 fn a_toast_sets_its_own_timeout() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<ToastApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<ToastApp>());
     app.wait_for("label:Short")?;
     app.press("label:Short")?;
     app.wait_for("text:Brief")?;
@@ -456,7 +456,7 @@ fn a_toast_sets_its_own_timeout() -> Result<(), String> {
 
 #[test]
 fn a_toast_action_runs_and_dismisses_it() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<ToastApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<ToastApp>());
     app.wait_for("label:Saved")?;
     app.press("label:Saved")?;
     app.wait_for("text:Settings saved")?;
@@ -470,7 +470,7 @@ fn a_toast_action_runs_and_dismisses_it() -> Result<(), String> {
 
 #[test]
 fn dismiss_toast_removes_it_by_id() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<ToastApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<ToastApp>());
     app.wait_for("label:Saved")?;
     app.press("label:Saved")?;
     app.wait_for("text:Settings saved")?;
@@ -482,7 +482,7 @@ fn dismiss_toast_removes_it_by_id() -> Result<(), String> {
 
 #[test]
 fn toasting_a_shown_id_replaces_it() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<ToastApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<ToastApp>());
     app.wait_for("label:Progress")?;
     app.press("label:Progress")?;
     app.wait_for("text:Step 2")?;
@@ -493,7 +493,7 @@ fn toasting_a_shown_id_replaces_it() -> Result<(), String> {
 
 #[test]
 fn escape_dismisses_the_newest_toast() -> Result<(), String> {
-    let mut app = start_manual(Root::of::<ToastApp>());
+    let mut app = start_manual(nsh_testing::windowed_root::<ToastApp>());
     app.wait_for("label:Error")?;
     app.press("label:Error")?;
     app.wait_for("text:Update failed")?;
@@ -512,7 +512,7 @@ fn EarlyToastApp() -> impl IntoElement {
 
 #[test]
 fn a_toast_before_the_toaster_shows_once_it_mounts() -> Result<(), String> {
-    let mut app = start(Root::of::<EarlyToastApp>());
+    let mut app = start(nsh_testing::windowed_root::<EarlyToastApp>());
     app.wait_for("text:Welcome back")?;
     Ok(())
 }
@@ -540,7 +540,7 @@ fn ConfirmApp() -> impl IntoElement {
 
 #[test]
 fn confirm_reports_the_choice() -> Result<(), String> {
-    let mut app = start(Root::of::<ConfirmApp>());
+    let mut app = start(nsh_testing::windowed_root::<ConfirmApp>());
     app.wait_for("label:Delete files")?;
     app.on_dialog(|_| DialogAnswer::Press("Delete".to_owned()));
     app.press("label:Delete files")?;
